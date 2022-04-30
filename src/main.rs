@@ -17,10 +17,19 @@ fn main() -> Result<()> {
     color_eyre::install()?;
     let context = Context::parse();
 
-    let payload = fs::read(context.payload)?;
-    let p_builder = Payload::new(&payload);
-    println!("{:?}", p_builder.data);
-    let mut file = File::create("rust.bin")?;
-    file.write_all(&*p_builder.data)?;
+    let payload_bytes = fs::read(context.payload)?;
+    let payload = Payload::new(&payload_bytes);
+
+    let mut switch = Rcm::new(false);
+    switch.read_device_id();
+    switch.write(&payload.data)?;
+    switch.switch_to_highbuf()?;
+
+    println!("Smashing the stack!");
+
+    // we expect a timeout
+    let err = switch.trigger_controlled_memcopy().unwrap_err();
+    println!("Done, yay!, should be timeout: {}", err);
+
     Ok(())
 }

