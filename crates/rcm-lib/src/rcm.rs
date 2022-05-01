@@ -38,7 +38,7 @@ impl BufferState {
 pub enum RcmError {
     #[error("Expected timeout error after smashing the stack")]
     ExpectedError,
-    #[error("A usb error {0}")]
+    #[error("Usb Error: {0}")]
     UsbError(rusb::Error),
 }
 

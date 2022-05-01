@@ -5,12 +5,20 @@ use rusb::{DeviceHandle, GlobalContext};
 use thiserror::Error;
 
 /// Errors for converting a unit device to an init one
-#[derive(Error, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Error, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SwitchDeviceUninitError {
     #[error("Nintento Switch in RCM mode not found")]
     NotFound,
     #[error("Unable to claim interface: `{0}`")]
     BadInterface(u8),
+    #[error("Usb Error: {0}")]
+    UsbError(rusb::Error),
+}
+
+impl From<rusb::Error> for SwitchDeviceUninitError {
+    fn from(err: rusb::Error) -> Self {
+        Self::UsbError(err)
+    }
 }
 
 /// A switch device that has not been init yet
@@ -26,15 +34,32 @@ impl SwitchDeviceUninit {
         Self { vid, pid }
     }
 
+    fn open_device_with_vid_pid(vid: u16, pid: u16) -> rusb::Result<DeviceHandle<GlobalContext>> {
+        for device in rusb::devices().unwrap().iter() {
+            let device_desc = device.device_descriptor().unwrap();
+
+            if device_desc.vendor_id() == vid && device_desc.product_id() == pid {
+                return device.open();
+            }
+        }
+        Err(rusb::Error::NotFound)
+    }
+
     /// Tries to connect to the device and open and interface
     pub fn find_device(self, wait: bool) -> Result<SwitchDevice, SwitchDeviceUninitError> {
-        let mut device = rusb::open_device_with_vid_pid(self.vid, self.pid);
-        while wait && device.is_none() {
+        let mut device = Self::open_device_with_vid_pid(self.vid, self.pid);
+        while wait && device.is_err() {
             thread::sleep(Duration::from_secs(1));
-            device = rusb::open_device_with_vid_pid(self.vid, self.pid);
+            device = Self::open_device_with_vid_pid(self.vid, self.pid);
         }
 
-        let mut device = device.ok_or(SwitchDeviceUninitError::NotFound)?;
+        if let Err(err) = device {
+            if err == rusb::Error::NotFound {
+                return Err(SwitchDeviceUninitError::NotFound);
+            }
+        }
+
+        let mut device = device?;
         if device.claim_interface(0).is_err() {
             return Err(SwitchDeviceUninitError::BadInterface(0));
         }
