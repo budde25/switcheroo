@@ -2,6 +2,11 @@
 name = "rcm-hax"
 version = "0.1.0"
 edition = "2021"
+authors = ["Ethan Budd <budde25@protonmail.com>"]
+description = "A command line interface for switch RCM"
+keywords = ["CLI", "utilities"]
+categories = ["command-line-utilities"]
+readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
