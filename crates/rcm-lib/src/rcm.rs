@@ -1,3 +1,5 @@
+use std::ops::DerefMut;
+
 use thiserror::Error;
 
 use crate::device::{SwitchDevice, SwitchDeviceUninit, SwitchDeviceUninitError};
@@ -32,7 +34,7 @@ impl BufferState {
 pub enum RcmError {
     #[error("Expected timeout error after smashing the stack")]
     ExpectedError,
-    #[error("A usb error")]
+    #[error("A usb error {0}")]
     UsbError(rusb::Error),
 }
 
@@ -137,8 +139,11 @@ impl Rcm {
         self.switch.read(buf)
     }
 
-    fn read_device_id(&mut self) {
-        let mut buf = [b'\0'; 16];
-        self.read(&mut buf).unwrap();
+    /// Reads the device ID
+    /// Note: The is a necessary step before excuting
+    pub fn read_device_id(&mut self) -> Result<Box<[u8; 16]>, RcmError> {
+        let mut buf = Box::new([b'\0'; 16]);
+        self.read(buf.deref_mut())?;
+        Ok(buf)
     }
 }

@@ -28,6 +28,8 @@ fn main() -> Result<()> {
 
     println!("Smashing the stack!");
 
+    // We need to read the device id first
+    let _ = switch.read_device_id()?;
     switch.execute(payload)?;
 
     println!("Done!");
