@@ -6,6 +6,7 @@ use crate::device::{SwitchDevice, SwitchDeviceUninit, SwitchDeviceUninitError};
 use crate::vulnerability::Vulnerability;
 use crate::Payload;
 
+/// The current state of the Buffer
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum BufferState {
     High,
@@ -13,6 +14,7 @@ enum BufferState {
 }
 
 impl BufferState {
+    /// Toggle the buffer
     fn toggle(&mut self) {
         match self {
             BufferState::High => *self = BufferState::Low,
@@ -20,6 +22,7 @@ impl BufferState {
         }
     }
 
+    /// Gets the address of the buffer
     fn address(&self) -> usize {
         const COPY_BUFFER_ADDRESSES_LOW: usize = 0x40005000;
         const COPY_BUFFER_ADDRESSES_HIGH: usize = 0x40009000;
@@ -30,6 +33,7 @@ impl BufferState {
     }
 }
 
+/// An error for communicating with an RCM Device
 #[derive(Debug, Error)]
 pub enum RcmError {
     #[error("Expected timeout error after smashing the stack")]
@@ -44,6 +48,8 @@ impl From<rusb::Error> for RcmError {
     }
 }
 
+/// An RCM connection object
+/// This is the main interface to communicate with the switch
 pub struct Rcm {
     switch: SwitchDevice,
     current_buffer: BufferState,
@@ -51,6 +57,9 @@ pub struct Rcm {
 }
 
 impl Rcm {
+    /// Finds and connects to a device in RCM mode
+    /// This will error out if no device is connected unless wait: true is passed
+    /// If wait: true is passed this will block until it detects an rcm device
     pub fn new(wait: bool) -> Result<Self, SwitchDeviceUninitError> {
         let switch = SwitchDeviceUninit::default().find_device(wait)?;
 
@@ -61,6 +70,8 @@ impl Rcm {
         })
     }
 
+    /// This will execute the payload on the connected device
+    /// NOTE: Must first read the device id, or else this will fail
     pub fn execute(&mut self, payload: Payload) -> Result<(), RcmError> {
         self.write(payload.data())?;
         self.switch_to_highbuf()?;
@@ -135,6 +146,7 @@ impl Rcm {
         self.current_buffer.toggle();
     }
 
+    /// Read from the device
     fn read(&mut self, buf: &mut [u8]) -> rusb::Result<usize> {
         self.switch.read(buf)
     }
