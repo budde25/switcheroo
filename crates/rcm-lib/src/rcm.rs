@@ -34,7 +34,7 @@ impl BufferState {
 }
 
 /// An error for communicating with an RCM Device
-#[derive(Debug, Error)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Error)]
 pub enum RcmError {
     #[error("Expected timeout error after smashing the stack")]
     ExpectedError,
@@ -50,6 +50,7 @@ impl From<rusb::Error> for RcmError {
 
 /// An RCM connection object
 /// This is the main interface to communicate with the switch
+#[derive(Debug)]
 pub struct Rcm {
     switch: SwitchDevice,
     current_buffer: BufferState,

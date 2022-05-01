@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 /// A constructed payload, this is transfered to the switch in RCM mode to execute bootROM exploit
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Payload {
     data: Box<[u8]>,
 }
@@ -23,7 +23,7 @@ const RCM_PAYLOAD_ADDR: usize = 0x40010000;
 
 const REPEAT_COUNT: usize = (STACK_SPRAY_END - STACK_SPRAY_START) / 4;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PayloadError {
     #[error("Invalid payload size: `{0}` (expected >= {})", PAYLOAD_MIN_LENGTH)]
     PayloadTooShort(usize),
