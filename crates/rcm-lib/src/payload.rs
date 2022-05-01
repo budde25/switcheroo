@@ -1,20 +1,56 @@
+use thiserror::Error;
+
+/// A constructed payload, this is transfered to the switch in RCM mode to execute bootROM exploit
+#[derive(Debug, Clone)]
 pub struct Payload {
-    pub data: Box<[u8]>,
+    data: Box<[u8]>,
+}
+
+/// The max length for the total payload
+const BUILT_PAYLOAD_MAX_LENGTH: usize = 0x30298;
+// TODO: find out if this is true
+/// The min length of the provided payload (inclusive)
+const PAYLOAD_MIN_LENGTH: usize = PADDING_SIZE_2;
+/// The max length of the provided payload (exclusive)
+const PAYLOAD_MAX_LENGTH: usize = 183640;
+
+const STACK_SPRAY_START: usize = 0x40014E40;
+const STACK_SPRAY_END: usize = 0x40017000;
+const PADDING_SIZE_2: usize = STACK_SPRAY_START - PAYLOAD_START_ADDR;
+
+const PAYLOAD_START_ADDR: usize = 0x40010E40;
+const RCM_PAYLOAD_ADDR: usize = 0x40010000;
+
+const REPEAT_COUNT: usize = (STACK_SPRAY_END - STACK_SPRAY_START) / 4;
+
+#[derive(Error, Debug)]
+pub enum PayloadError {
+    #[error("Invalid payload size: `{0}` (expected >= {})", PAYLOAD_MIN_LENGTH)]
+    PayloadTooShort(usize),
+    #[error("Invalid payload size: `{0}` (expected < {})", PAYLOAD_MAX_LENGTH)]
+    PayloadTooLong(usize),
 }
 
 impl Payload {
-    pub fn new(payload: &[u8]) -> Self {
+    /// Construct a new payload
+    /// length should be >= 16384 and < 183640
+    pub fn new(payload: &[u8]) -> Result<Self, PayloadError> {
+        if payload.len() < PAYLOAD_MIN_LENGTH {
+            return Err(PayloadError::PayloadTooShort(payload.len()));
+        }
+
+        if payload.len() >= PAYLOAD_MAX_LENGTH {
+            return Err(PayloadError::PayloadTooLong(payload.len()));
+        }
+
         const INTERMEZZO: &[u8; 124] = include_bytes!("intermezzo/intermezzo.bin");
-        const MAX_LENGTH: u32 = 0x30298;
 
-        const PAYLOAD_START_ADDR: usize = 0x40010E40;
-        const RCM_PAYLOAD_ADDR: usize = 0x40010000;
-
-        let mut payload_builder: Vec<u8> = Vec::with_capacity(MAX_LENGTH as usize);
+        let mut payload_builder: Vec<u8> = Vec::with_capacity(BUILT_PAYLOAD_MAX_LENGTH);
         // start with the max_len arg
-        payload_builder.extend(MAX_LENGTH.to_le_bytes());
+        payload_builder.extend((BUILT_PAYLOAD_MAX_LENGTH as u32).to_le_bytes());
         // pad with data to get to the start of IRAM
-        payload_builder.extend([b'\0'; 680 - MAX_LENGTH.to_le_bytes().len()]);
+        payload_builder
+            .extend([b'\0'; 680 - (BUILT_PAYLOAD_MAX_LENGTH as u32).to_le_bytes().len()]);
         // add the intermezzo bin
         payload_builder.extend(INTERMEZZO);
 
@@ -22,11 +58,6 @@ impl Payload {
         payload_builder.extend([b'\0'; PADDING_SIZE_1]);
 
         // fit a a part of the payload before the stack spray
-        const STACK_SPRAY_START: usize = 0x40014E40;
-        const STACK_SPRAY_END: usize = 0x40017000;
-        const PADDING_SIZE_2: usize = STACK_SPRAY_START - PAYLOAD_START_ADDR;
-        const REPEAT_COUNT: usize = (STACK_SPRAY_END - STACK_SPRAY_START) / 4;
-        // TODO: fix potential panic
         let split = payload.split_at(PADDING_SIZE_2);
         payload_builder.extend(split.0);
         // start stack spray
@@ -42,10 +73,13 @@ impl Payload {
         assert_eq!(payload_builder.len() % 0x1000, 0);
 
         let data = payload_builder.into_boxed_slice();
-        assert!(data.len() <= MAX_LENGTH as usize);
-        Self { data }
+
+        assert!(data.len() <= BUILT_PAYLOAD_MAX_LENGTH);
+
+        Ok(Self { data })
     }
 
+    /// Get the data for the payload
     pub fn data(&self) -> &[u8] {
         &self.data
     }

@@ -22,17 +22,14 @@ fn main() -> Result<()> {
 
     let payload_bytes = fs::read(&args.payload)
         .wrap_err_with(|| format!("Failed to read payload from: {}", &args.payload.display()))?;
-    let payload = Payload::new(&payload_bytes);
+    let payload = Payload::new(&payload_bytes)?;
 
     let mut switch = Rcm::new(args.wait)?;
-    switch.write(&payload.data)?;
-    switch.switch_to_highbuf()?;
 
     println!("Smashing the stack!");
 
-    // we expect a timeout
-    let _err = switch.trigger_controlled_memcopy().unwrap_err();
-    println!("Done!");
+    switch.execute(payload)?;
 
+    println!("Done!");
     Ok(())
 }
