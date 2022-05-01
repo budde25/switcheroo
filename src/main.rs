@@ -1,10 +1,8 @@
-use std::fs::{self, File};
-use std::io::Write;
+use std::fs;
 use std::path::PathBuf;
 
 use clap::Parser;
 use color_eyre::eyre::Result;
-use color_eyre::Help;
 use rcm_lib::{Payload, Rcm};
 
 #[derive(Parser)]
@@ -20,7 +18,7 @@ fn main() -> Result<()> {
     let payload_bytes = fs::read(context.payload)?;
     let payload = Payload::new(&payload_bytes);
 
-    let mut switch = Rcm::new(false);
+    let mut switch = Rcm::new(false)?;
     switch.read_device_id();
     switch.write(&payload.data)?;
     switch.switch_to_highbuf()?;
