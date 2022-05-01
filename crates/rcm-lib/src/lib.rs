@@ -7,3 +7,4 @@ use device::SwitchDevice;
 
 pub use payload::Payload;
 pub use rcm::Rcm;
+pub mod error;
