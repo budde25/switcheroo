@@ -2,7 +2,7 @@ use std::ops::DerefMut;
 
 use crate::Error;
 
-use crate::device::{SwitchDevice, SwitchDeviceUninit};
+use crate::device::{SwitchDevice, SwitchDeviceRaw};
 use crate::vulnerability::Vulnerability;
 use crate::Payload;
 
@@ -47,13 +47,18 @@ impl Rcm {
     /// This will error out if no device is connected unless wait: true is passed
     /// If wait: true is passed this will block until it detects an rcm device
     pub fn new(wait: bool) -> Result<Self, Error> {
-        let switch = SwitchDeviceUninit::default().find_device(wait)?;
+        let switch = SwitchDeviceRaw::default().find_device(wait)?;
 
         Ok(Self {
             switch,
             current_buffer: BufferState::Low,
             _total_written: 0,
         })
+    }
+
+    pub fn init(&mut self) -> Result<(), Error> {
+        self.switch.init()?;
+        Ok(())
     }
 
     /// This will execute the payload on the connected device

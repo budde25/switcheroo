@@ -6,12 +6,12 @@ use rusb::{DeviceHandle, GlobalContext};
 
 /// A switch device that has not been init yet
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct SwitchDeviceUninit {
+pub struct SwitchDeviceRaw {
     vid: u16,
     pid: u16,
 }
 
-impl SwitchDeviceUninit {
+impl SwitchDeviceRaw {
     /// Creates a new uninit device with a custom vid and pid
     pub fn new(vid: u16, pid: u16) -> Self {
         Self { vid, pid }
@@ -42,16 +42,16 @@ impl SwitchDeviceUninit {
             }
         }
 
-        let mut device = device?;
-        if device.claim_interface(0).is_err() {
-            return Err(Error::UsbBadInterface(0));
-        }
+        let device = device?;
 
-        Ok(SwitchDevice { device })
+        Ok(SwitchDevice {
+            device,
+            claimed: false,
+        })
     }
 }
 
-impl Default for SwitchDeviceUninit {
+impl Default for SwitchDeviceRaw {
     fn default() -> Self {
         // Default Nintendo Switch RCM VID and PIC
         let vid = 0x0955;
@@ -65,9 +65,19 @@ impl Default for SwitchDeviceUninit {
 #[derive(Debug)]
 pub struct SwitchDevice {
     device: DeviceHandle<GlobalContext>,
+    claimed: bool,
 }
 
 impl SwitchDevice {
+    /// Init the device
+    pub fn init(&mut self) -> Result<(), Error> {
+        if !self.claimed {
+            self.device.claim_interface(0)?;
+            self.claimed = true;
+        }
+        Ok(())
+    }
+
     /// Read from the device into the buffer
     pub fn read(&self, buf: &mut [u8]) -> rusb::Result<usize> {
         self.device.read_bulk(0x81, buf, Duration::from_secs(1))

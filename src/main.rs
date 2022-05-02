@@ -50,7 +50,7 @@ fn execute(payload: PathBuf, wait: bool) -> Result<()> {
     let payload = Payload::new(&payload_bytes)?;
 
     let mut switch = Rcm::new(wait)?;
-
+    switch.init()?;
     println!("Smashing the stack!");
 
     // We need to read the device id first
