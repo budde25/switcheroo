@@ -1,5 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
+use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
@@ -36,7 +37,6 @@ pub fn gui() -> Result<()> {
         Box::new(|_cc| {
             Box::new(MyApp {
                 switch: arc2,
-                dropped_files: Vec::default(),
                 payload_data: None,
                 executable: false,
                 state: State::NotAvailable,
@@ -47,7 +47,7 @@ pub fn gui() -> Result<()> {
 
 struct MyApp {
     switch: Arc<Mutex<Result<Rcm, Error>>>,
-    dropped_files: Vec<egui::DroppedFile>,
+    //dropped_files: Vec<egui::DroppedFile>,
     payload_data: Option<PayloadData>,
     executable: bool,
     state: State,
@@ -70,15 +70,7 @@ impl eframe::App for MyApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             if ui.button("Select Payload").clicked() {
                 if let Some(path) = rfd::FileDialog::new().pick_file() {
-                    let file = std::fs::read(&path);
-                    if let Ok(data) = file {
-                        self.payload_data = Some(PayloadData {
-                            picked_path: path.display().to_string(),
-                            payload: Payload::new(&data),
-                        });
-                    } else {
-                        // TODO: handle error
-                    }
+                    self.payload_data = make_payload_data(&path);
                 }
             }
 
@@ -151,34 +143,17 @@ impl eframe::App for MyApp {
                     }
                 }
             }
-
-            // Show dropped files (if any):
-            if !self.dropped_files.is_empty() {
-                ui.group(|ui| {
-                    ui.label("Dropped files:");
-
-                    for file in &self.dropped_files {
-                        let mut info = if let Some(path) = &file.path {
-                            path.display().to_string()
-                        } else if !file.name.is_empty() {
-                            file.name.clone()
-                        } else {
-                            "???".to_owned()
-                        };
-                        if let Some(bytes) = &file.bytes {
-                            info += &format!(" ({} bytes)", bytes.len());
-                        }
-                        ui.label(info);
-                    }
-                });
-            }
         });
 
         preview_files_being_dropped(ctx);
 
         // Collect dropped files:
         if !ctx.input().raw.dropped_files.is_empty() {
-            self.dropped_files = ctx.input().raw.dropped_files.clone();
+            // runwrap safe cause we are not empty
+            let file = ctx.input().raw.dropped_files.last().unwrap().clone();
+            if let Some(path) = file.path {
+                self.payload_data = make_payload_data(&path);
+            }
         }
     }
 }
@@ -188,7 +163,7 @@ fn preview_files_being_dropped(ctx: &egui::Context) {
     use egui::*;
 
     if !ctx.input().raw.hovered_files.is_empty() {
-        let mut text = "Dropping files:\n".to_owned();
+        let mut text = "Dropping payload:\n".to_owned();
         for file in &ctx.input().raw.hovered_files {
             if let Some(path) = &file.path {
                 text += &format!("\n{}", path.display());
@@ -222,4 +197,16 @@ fn execute(switch: &mut Rcm, payload: &Payload) -> Result<(), Error> {
     let _ = switch.read_device_id()?;
     switch.execute(&payload)?;
     Ok(())
+}
+
+fn make_payload_data(path: &Path) -> Option<PayloadData> {
+    let file = std::fs::read(&path);
+    if let Ok(data) = file {
+        let payload_data = PayloadData {
+            picked_path: path.display().to_string(),
+            payload: Payload::new(&data),
+        };
+        return Some(payload_data);
+    }
+    None
 }
