@@ -14,6 +14,8 @@ pub enum Error {
     SwitchNotFound,
     #[error("Unable to claim interface: `{0}`")]
     UsbBadInterface(u8),
+    #[error("Linux environment error")]
+    LinuxEnvError,
     #[error("Usb Error: {0}")]
     UsbError(rusb::Error),
 }
