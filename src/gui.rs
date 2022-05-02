@@ -1,26 +1,56 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
+use std::sync::{Arc, Mutex};
+use std::thread;
+use std::time::Duration;
+
 use color_eyre::eyre::Result;
 use eframe;
-use rcm_lib::{Error, Payload};
+
+use rcm_lib::{Error, Payload, Rcm};
 
 pub fn gui() -> Result<()> {
+    let rcm = Rcm::new(false);
+    let arc = Arc::new(Mutex::new(rcm));
+    let arc2 = arc.clone();
+
+    thread::spawn(move || loop {
+        {
+            let lock = arc.lock();
+            if let Ok(mut inner) = lock {
+                let new = Rcm::new(false);
+                *inner = new;
+            }
+        }
+        thread::sleep(Duration::from_secs(1));
+    });
+
     let options = eframe::NativeOptions {
         drag_and_drop_support: true,
         ..Default::default()
     };
+
     eframe::run_native(
         "Switcharoo",
         options,
-        Box::new(|_cc| Box::new(MyApp::default())),
+        Box::new(|_cc| {
+            Box::new(MyApp {
+                switch: arc2,
+                dropped_files: Vec::default(),
+                payload_data: None,
+                executable: false,
+                available: false,
+            })
+        }),
     );
 }
 
-#[derive(Default)]
 struct MyApp {
+    switch: Arc<Mutex<Result<Rcm, Error>>>,
     dropped_files: Vec<egui::DroppedFile>,
     payload_data: Option<PayloadData>,
     executable: bool,
+    available: bool,
 }
 
 struct PayloadData {
@@ -57,7 +87,9 @@ impl eframe::App for MyApp {
                             ui.monospace(error);
                         }
                     });
-                    self.executable = true;
+                    if self.available {
+                        self.executable = true;
+                    }
                 } else {
                     self.executable = false;
                 }
@@ -69,20 +101,50 @@ impl eframe::App for MyApp {
                     .add_enabled(self.executable, egui::Button::new("Execute"))
                     .clicked()
                 {
-                    let mut switch = rcm_lib::Rcm::new(false).unwrap();
-                    switch.read_device_id().unwrap();
-                    switch
-                        .execute(
-                            self.payload_data
-                                .as_ref()
-                                .unwrap()
-                                .payload
-                                .as_ref()
-                                .unwrap(),
-                        )
+                    let payload = self
+                        .payload_data
+                        .as_ref()
+                        .unwrap()
+                        .payload
+                        .as_ref()
                         .unwrap();
+                    if let Ok(mut res) = self.switch.try_lock() {
+                        // TODO: fix race condition
+                        if let Ok(switch) = &mut *res {
+                            match execute(switch, payload) {
+                                Ok(_) => (),
+                                Err(e) => {
+                                    ui.horizontal(|ui| {
+                                        ui.label("Error");
+                                        ui.monospace(e.to_string());
+                                    });
+                                }
+                            }
+                            switch.init().unwrap();
+                            let _ = switch.read_device_id().unwrap();
+                            switch.execute(payload).unwrap();
+                            self.available = false;
+                        }
+                    }
                 }
             });
+
+            if self.available {
+                ui.label("Switch is plugged in and available");
+            } else {
+                ui.label("Switch is unavailable");
+            }
+
+            let arc = self.switch.try_lock();
+            if let Ok(lock) = arc {
+                let res = &*lock;
+                match res {
+                    Ok(_) => self.available = true,
+                    Err(_) => {
+                        self.available = false;
+                    }
+                }
+            }
 
             // Show dropped files (if any):
             if !self.dropped_files.is_empty() {
@@ -144,4 +206,14 @@ fn preview_files_being_dropped(ctx: &egui::Context) {
             Color32::WHITE,
         );
     }
+}
+
+fn execute(switch: &mut Rcm, payload: &Payload) -> Result<(), Error> {
+    switch.init()?;
+    println!("Smashing the stack!");
+
+    // We need to read the device id first
+    let _ = switch.read_device_id()?;
+    switch.execute(&payload)?;
+    Ok(())
 }
