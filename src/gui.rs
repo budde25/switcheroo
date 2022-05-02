@@ -13,18 +13,7 @@ use rcm_lib::{Error, Payload, Rcm};
 pub fn gui() -> Result<()> {
     let rcm = Rcm::new(false);
     let arc = Arc::new(Mutex::new(rcm));
-    let arc2 = arc.clone();
-
-    thread::spawn(move || loop {
-        {
-            let lock = arc.lock();
-            if let Ok(mut inner) = lock {
-                let new = Rcm::new(false);
-                *inner = new;
-            }
-        }
-        thread::sleep(Duration::from_secs(1));
-    });
+    let arc_clone = arc.clone();
 
     let options = eframe::NativeOptions {
         drag_and_drop_support: true,
@@ -34,9 +23,22 @@ pub fn gui() -> Result<()> {
     eframe::run_native(
         "Switcharoo",
         options,
-        Box::new(|_cc| {
+        Box::new(|cc| {
+            let ctx = cc.egui_ctx.clone();
+            thread::spawn(move || loop {
+                {
+                    let lock = arc.lock();
+                    if let Ok(mut inner) = lock {
+                        let new = Rcm::new(false);
+                        *inner = new;
+                        ctx.request_repaint();
+                    }
+                }
+                thread::sleep(Duration::from_secs(1));
+            });
+
             Box::new(MyApp {
-                switch: arc2,
+                switch: arc_clone,
                 payload_data: None,
                 executable: false,
                 state: State::NotAvailable,
@@ -68,6 +70,7 @@ struct PayloadData {
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
+            println!("a");
             if ui.button("Select Payload").clicked() {
                 if let Some(path) = rfd::FileDialog::new().pick_file() {
                     self.payload_data = make_payload_data(&path);
@@ -149,7 +152,7 @@ impl eframe::App for MyApp {
 
         // Collect dropped files:
         if !ctx.input().raw.dropped_files.is_empty() {
-            // runwrap safe cause we are not empty
+            // unwrap safe cause we are not empty
             let file = ctx.input().raw.dropped_files.last().unwrap().clone();
             if let Some(path) = file.path {
                 self.payload_data = make_payload_data(&path);
