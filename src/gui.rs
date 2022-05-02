@@ -70,7 +70,6 @@ struct PayloadData {
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            println!("a");
             if ui.button("Select Payload").clicked() {
                 if let Some(path) = rfd::FileDialog::new().pick_file() {
                     self.payload_data = make_payload_data(&path);
