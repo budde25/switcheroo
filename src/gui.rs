@@ -39,7 +39,7 @@ pub fn gui() -> Result<()> {
                 dropped_files: Vec::default(),
                 payload_data: None,
                 executable: false,
-                available: false,
+                state: State::NotAvailable,
             })
         }),
     );
@@ -50,7 +50,14 @@ struct MyApp {
     dropped_files: Vec<egui::DroppedFile>,
     payload_data: Option<PayloadData>,
     executable: bool,
-    available: bool,
+    state: State,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum State {
+    Available,
+    NotAvailable,
+    Done,
 }
 
 struct PayloadData {
@@ -87,7 +94,7 @@ impl eframe::App for MyApp {
                             ui.monospace(error);
                         }
                     });
-                    if self.available {
+                    if self.state == State::Available {
                         self.executable = true;
                     }
                 } else {
@@ -112,7 +119,10 @@ impl eframe::App for MyApp {
                         // TODO: fix race condition
                         if let Ok(switch) = &mut *res {
                             match execute(switch, payload) {
-                                Ok(_) => (),
+                                Ok(_) => {
+                                    self.state = State::Done;
+                                    self.executable = false;
+                                }
                                 Err(e) => {
                                     ui.horizontal(|ui| {
                                         ui.label("Error");
@@ -120,28 +130,24 @@ impl eframe::App for MyApp {
                                     });
                                 }
                             }
-                            switch.init().unwrap();
-                            let _ = switch.read_device_id().unwrap();
-                            switch.execute(payload).unwrap();
-                            self.available = false;
                         }
                     }
                 }
             });
 
-            if self.available {
-                ui.label("Switch is plugged in and available");
-            } else {
-                ui.label("Switch is unavailable");
-            }
+            match self.state {
+                State::Available => ui.label("Switch is plugged in and available"),
+                State::NotAvailable => ui.label("Switch is unavailable"),
+                State::Done => ui.label("Smashed the stack!"),
+            };
 
-            let arc = self.switch.try_lock();
-            if let Ok(lock) = arc {
-                let res = &*lock;
-                match res {
-                    Ok(_) => self.available = true,
-                    Err(_) => {
-                        self.available = false;
+            if self.state != State::Done {
+                let arc = self.switch.try_lock();
+                if let Ok(lock) = arc {
+                    let res = &*lock;
+                    match res {
+                        Ok(_) => self.state = State::Available,
+                        Err(_) => self.state = State::NotAvailable,
                     }
                 }
             }
