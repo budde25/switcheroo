@@ -58,7 +58,7 @@ impl Rcm {
 
     /// This will execute the payload on the connected device
     /// NOTE: Must first read the device id, or else this will fail
-    pub fn execute(&mut self, payload: Payload) -> Result<(), Error> {
+    pub fn execute(&mut self, payload: &Payload) -> Result<(), Error> {
         self.write(payload.data())?;
         self.switch_to_highbuf()?;
 

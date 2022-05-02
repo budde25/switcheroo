@@ -5,6 +5,8 @@ use clap::{Parser, Subcommand};
 use color_eyre::eyre::{Context, Result};
 use rcm_lib::{Error, Payload, Rcm};
 
+mod gui;
+
 #[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
 struct Cli {
@@ -25,6 +27,9 @@ enum Commands {
     },
     /// Checks if a Switch in RCM mode is detected
     Device,
+
+    /// Opens the GUI
+    Gui,
 }
 
 fn main() -> Result<()> {
@@ -34,6 +39,7 @@ fn main() -> Result<()> {
     match args.command {
         Commands::Execute { payload, wait } => execute(payload, wait)?,
         Commands::Device {} => device()?,
+        Commands::Gui {} => gui::gui()?,
     }
     Ok(())
 }
@@ -49,7 +55,7 @@ fn execute(payload: PathBuf, wait: bool) -> Result<()> {
 
     // We need to read the device id first
     let _ = switch.read_device_id()?;
-    switch.execute(payload)?;
+    switch.execute(&payload)?;
 
     println!("Done!");
     Ok(())
