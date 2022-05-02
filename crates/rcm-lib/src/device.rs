@@ -1,25 +1,8 @@
 use std::thread;
 use std::time::Duration;
 
+use crate::Error;
 use rusb::{DeviceHandle, GlobalContext};
-use thiserror::Error;
-
-/// Errors for converting a unit device to an init one
-#[derive(Error, Debug, Clone, Copy, PartialEq, Eq)]
-pub enum SwitchDeviceUninitError {
-    #[error("Nintento Switch in RCM mode not found")]
-    NotFound,
-    #[error("Unable to claim interface: `{0}`")]
-    BadInterface(u8),
-    #[error("Usb Error: {0}")]
-    UsbError(rusb::Error),
-}
-
-impl From<rusb::Error> for SwitchDeviceUninitError {
-    fn from(err: rusb::Error) -> Self {
-        Self::UsbError(err)
-    }
-}
 
 /// A switch device that has not been init yet
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -46,7 +29,7 @@ impl SwitchDeviceUninit {
     }
 
     /// Tries to connect to the device and open and interface
-    pub fn find_device(self, wait: bool) -> Result<SwitchDevice, SwitchDeviceUninitError> {
+    pub fn find_device(self, wait: bool) -> Result<SwitchDevice, Error> {
         let mut device = Self::open_device_with_vid_pid(self.vid, self.pid);
         while wait && device.is_err() {
             thread::sleep(Duration::from_secs(1));
@@ -55,13 +38,13 @@ impl SwitchDeviceUninit {
 
         if let Err(err) = device {
             if err == rusb::Error::NotFound {
-                return Err(SwitchDeviceUninitError::NotFound);
+                return Err(Error::SwitchNotFound);
             }
         }
 
         let mut device = device?;
         if device.claim_interface(0).is_err() {
-            return Err(SwitchDeviceUninitError::BadInterface(0));
+            return Err(Error::UsbBadInterface(0));
         }
 
         Ok(SwitchDevice { device })

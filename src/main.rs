@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
 use color_eyre::eyre::{Context, Result};
-use rcm_lib::{error::SwitchDeviceUninitError, Payload, Rcm};
+use rcm_lib::{Error, Payload, Rcm};
 
 #[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
@@ -57,11 +57,11 @@ fn execute(payload: PathBuf, wait: bool) -> Result<()> {
 
 fn device() -> Result<()> {
     let switch = Rcm::new(false);
-    if let Err(SwitchDeviceUninitError::NotFound) = switch {
+    if let Err(Error::SwitchNotFound) = switch {
         println!("[x] Switch in RCM mode not found")
     } else {
         switch?;
-        println!("[✓] Switch is connected")
+        println!("[✓] Switch is RCM mode and connected")
     }
 
     Ok(())

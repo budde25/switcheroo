@@ -1,8 +1,8 @@
 use std::ops::DerefMut;
 
-use thiserror::Error;
+use crate::Error;
 
-use crate::device::{SwitchDevice, SwitchDeviceUninit, SwitchDeviceUninitError};
+use crate::device::{SwitchDevice, SwitchDeviceUninit};
 use crate::vulnerability::Vulnerability;
 use crate::Payload;
 
@@ -33,21 +33,6 @@ impl BufferState {
     }
 }
 
-/// An error for communicating with an RCM Device
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Error)]
-pub enum RcmError {
-    #[error("Expected timeout error after smashing the stack")]
-    ExpectedError,
-    #[error("Usb Error: {0}")]
-    UsbError(rusb::Error),
-}
-
-impl From<rusb::Error> for RcmError {
-    fn from(err: rusb::Error) -> Self {
-        Self::UsbError(err)
-    }
-}
-
 /// An RCM connection object
 /// This is the main interface to communicate with the switch
 #[derive(Debug)]
@@ -61,7 +46,7 @@ impl Rcm {
     /// Finds and connects to a device in RCM mode
     /// This will error out if no device is connected unless wait: true is passed
     /// If wait: true is passed this will block until it detects an rcm device
-    pub fn new(wait: bool) -> Result<Self, SwitchDeviceUninitError> {
+    pub fn new(wait: bool) -> Result<Self, Error> {
         let switch = SwitchDeviceUninit::default().find_device(wait)?;
 
         Ok(Self {
@@ -73,7 +58,7 @@ impl Rcm {
 
     /// This will execute the payload on the connected device
     /// NOTE: Must first read the device id, or else this will fail
-    pub fn execute(&mut self, payload: Payload) -> Result<(), RcmError> {
+    pub fn execute(&mut self, payload: Payload) -> Result<(), Error> {
         self.write(payload.data())?;
         self.switch_to_highbuf()?;
 
@@ -82,15 +67,15 @@ impl Rcm {
         let res = self.trigger_controlled_memcopy();
         // We expect a timeout
         if let Err(err) = res {
-            if err == rusb::Error::Timeout {
+            if err == Error::UsbError(rusb::Error::Timeout) {
                 return Ok(());
             }
         }
-        Err(RcmError::ExpectedError)
+        Err(Error::RcmExpectedError)
     }
 
     /// Writes data to the RCM protocol endpoint
-    fn write(&mut self, buf: &[u8]) -> rusb::Result<usize> {
+    fn write(&mut self, buf: &[u8]) -> Result<usize, Error> {
         const PACKET_SIZE: usize = 0x1000;
         const MAX_LENGTH: usize = 0x30298;
 
@@ -109,7 +94,7 @@ impl Rcm {
             remaining_buf = &remaining_buf[data_to_transmit..];
             match self.write_buffer(chunk) {
                 Ok(size) => written += size,
-                Err(e) => return Err(e),
+                Err(e) => return Err(e.into()),
             };
         }
 
@@ -120,7 +105,7 @@ impl Rcm {
         self.current_buffer.address()
     }
 
-    fn switch_to_highbuf(&mut self) -> rusb::Result<()> {
+    fn switch_to_highbuf(&mut self) -> Result<(), Error> {
         if self.current_buffer != BufferState::High {
             let buf = &[b'\0'; 0x1000];
             self.write(buf)?;
@@ -128,14 +113,16 @@ impl Rcm {
         Ok(())
     }
 
-    fn trigger_controlled_memcopy(&self) -> rusb::Result<usize> {
+    fn trigger_controlled_memcopy(&self) -> Result<(), Error> {
         const STACK_END: usize = 0x40010000;
         let length = STACK_END - self.current_buff_addr();
-        self.trigger_controlled_memcopy_length(length)
+        self.trigger_controlled_memcopy_length(length)?;
+        Ok(())
     }
 
-    fn trigger_controlled_memcopy_length(&self, length: usize) -> rusb::Result<usize> {
-        self.switch.trigger(length)
+    fn trigger_controlled_memcopy_length(&self, length: usize) -> Result<(), Error> {
+        self.switch.trigger(length)?;
+        Ok(())
     }
 
     fn write_buffer(&mut self, buf: &[u8]) -> rusb::Result<usize> {
@@ -154,7 +141,7 @@ impl Rcm {
 
     /// Reads the device ID
     /// Note: The is a necessary step before excuting
-    pub fn read_device_id(&mut self) -> Result<Box<[u8; 16]>, RcmError> {
+    pub fn read_device_id(&mut self) -> Result<Box<[u8; 16]>, Error> {
         let mut buf = Box::new([b'\0'; 16]);
         self.read(buf.deref_mut())?;
         Ok(buf)
