@@ -1,8 +1,8 @@
-#compdef switcharoo
+#compdef switcheroo
 
 autoload -U is-at-least
 
-_switcharoo() {
+_switcheroo() {
     typeset -A opt_args
     typeset -a _arguments_options
     local ret=1
@@ -19,14 +19,14 @@ _switcharoo() {
 '--help[Print help information]' \
 '-V[Print version information]' \
 '--version[Print version information]' \
-":: :_switcharoo_commands" \
+":: :_switcheroo_commands" \
 "*::: :->switcheroo" \
 && ret=0
     case $state in
     (switcheroo)
         words=($line[1] "${words[@]}")
         (( CURRENT += 1 ))
-        curcontext="${curcontext%:*:*}:switcharoo-command-$line[1]:"
+        curcontext="${curcontext%:*:*}:switcheroo-command-$line[1]:"
         case $line[1] in
             (execute)
 _arguments "${_arguments_options[@]}" \
@@ -59,35 +59,35 @@ _arguments "${_arguments_options[@]}" \
 esac
 }
 
-(( $+functions[_switcharoo_commands] )) ||
-_switcharoo_commands() {
+(( $+functions[_switcheroo_commands] )) ||
+_switcheroo_commands() {
     local commands; commands=(
 'execute:Executes a payload' \
 'device:Checks if a Switch in RCM mode is detected' \
 'gui:Opens the GUI' \
 'help:Print this message or the help of the given subcommand(s)' \
     )
-    _describe -t commands 'switcharoo commands' commands "$@"
+    _describe -t commands 'switcheroo commands' commands "$@"
 }
-(( $+functions[_switcharoo__device_commands] )) ||
-_switcharoo__device_commands() {
+(( $+functions[_switcheroo__device_commands] )) ||
+_switcheroo__device_commands() {
     local commands; commands=()
-    _describe -t commands 'switcharoo device commands' commands "$@"
+    _describe -t commands 'switcheroo device commands' commands "$@"
 }
-(( $+functions[_switcharoo__execute_commands] )) ||
-_switcharoo__execute_commands() {
+(( $+functions[_switcheroo__execute_commands] )) ||
+_switcheroo__execute_commands() {
     local commands; commands=()
-    _describe -t commands 'switcharoo execute commands' commands "$@"
+    _describe -t commands 'switcheroo execute commands' commands "$@"
 }
-(( $+functions[_switcharoo__gui_commands] )) ||
-_switcharoo__gui_commands() {
+(( $+functions[_switcheroo__gui_commands] )) ||
+_switcheroo__gui_commands() {
     local commands; commands=()
-    _describe -t commands 'switcharoo gui commands' commands "$@"
+    _describe -t commands 'switcheroo gui commands' commands "$@"
 }
-(( $+functions[_switcharoo__help_commands] )) ||
-_switcharoo__help_commands() {
+(( $+functions[_switcheroo__help_commands] )) ||
+_switcheroo__help_commands() {
     local commands; commands=()
-    _describe -t commands 'switcharoo help commands' commands "$@"
+    _describe -t commands 'switcheroo help commands' commands "$@"
 }
 
-_switcharoo "$@"
+_switcheroo "$@"

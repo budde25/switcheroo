@@ -19,7 +19,7 @@ fn main() -> Result<(), Error> {
         let path = generate_to(
             shell,
             &mut cmd,     // We need to specify what generator to use
-            "switcharoo", // We need to specify the bin name manually
+            "switcheroo", // We need to specify the bin name manually
             &outdir,      // We need to specify where to write to
         )?;
         println!("cargo:warning=completion file is generated: {:?}", path);

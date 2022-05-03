@@ -38,7 +38,7 @@ pub fn gui() -> Result<()> {
     };
 
     eframe::run_native(
-        "Switcharoo",
+        "Switcheroo",
         options,
         Box::new(|cc| {
             let ctx = cc.egui_ctx.clone();
@@ -87,7 +87,7 @@ struct PayloadData {
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.label(RichText::new("Switcharoo").size(30.0).strong());
+            ui.label(RichText::new("Switcheroo").size(30.0).strong());
             ui.add_space(10.0);
             ui.group(|ui| {
                 ui.add_space(10.0);

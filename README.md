@@ -1,4 +1,4 @@
-# Switcharoo
+# Switcheroo
 
 [![License](https://flat.badgen.net/badge/license/GPL-2.0/blue)](LICENSE)
 
@@ -16,31 +16,31 @@ Written in Rust using [clap](https://github.com/clap-rs/clap) for the CLI and [e
 
 </br>
 <p align="center">
-<img width="" alt="Command Line Interface Example" src="https://raw.githubusercontent.com/budde25/switcharoo/main/extra/images/cli.png">
+<img width="" alt="Command Line Interface Example" src="https://raw.githubusercontent.com/budde25/switcheroo/main/extra/images/cli.png">
 </p>
 
 </br>
 <p align="center">
-<img width="" alt="Graphical User Interface Example" src="https://raw.githubusercontent.com/budde25/switcharoo/main/extra/images/gui.png">
+<img width="" alt="Graphical User Interface Example" src="https://raw.githubusercontent.com/budde25/switcheroo/main/extra/images/gui.png">
 </p>
 
 ## Usage
 
-The binary name is `switcharoo`  
+The binary name is `switcheroo`  
 
-To display application use `switcharoo help`  
-Use `switcharoo <subcommand> help` for help with that subcommand.
+To display application use `switcheroo help`  
+Use `switcheroo <subcommand> help` for help with that subcommand.
 
 ### Examples
 
 Execute a payload.  
-`switcharoo execute <path>`
+`switcheroo execute <path>`
 
 Check if the switch is connected.  
-`switcharoo device`
+`switcheroo device`
 
 Start the GUI.  
-`switcharoo gui`
+`switcheroo gui`
 
 ## Troubleshooting
 

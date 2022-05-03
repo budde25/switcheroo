@@ -1,4 +1,4 @@
-_switcharoo() {
+_switcheroo() {
     local i cur prev opts cmds
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
@@ -10,7 +10,7 @@ _switcharoo() {
     do
         case "${i}" in
             "$1")
-                cmd="switcharoo"
+                cmd="switcheroo"
                 ;;
             device)
                 cmd+="__device"
@@ -30,7 +30,7 @@ _switcharoo() {
     done
 
     case "${cmd}" in
-        switcharoo)
+        switcheroo)
             opts="-h -V --help --version execute device gui help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
@@ -44,7 +44,7 @@ _switcharoo() {
             COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
             return 0
             ;;
-        switcharoo__device)
+        switcheroo__device)
             opts="-h --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
@@ -58,7 +58,7 @@ _switcharoo() {
             COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
             return 0
             ;;
-        switcharoo__execute)
+        switcheroo__execute)
             opts="-w -h --wait --help <PAYLOAD>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
@@ -72,7 +72,7 @@ _switcharoo() {
             COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
             return 0
             ;;
-        switcharoo__gui)
+        switcheroo__gui)
             opts="-h --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
@@ -86,7 +86,7 @@ _switcharoo() {
             COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
             return 0
             ;;
-        switcharoo__help)
+        switcheroo__help)
             opts="<SUBCOMMAND>..."
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
@@ -103,4 +103,4 @@ _switcharoo() {
     esac
 }
 
-complete -F _switcharoo -o bashdefault -o default switcharoo
+complete -F _switcheroo -o bashdefault -o default switcheroo
