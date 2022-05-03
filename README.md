@@ -21,7 +21,7 @@ Written in Rust using [clap](https://github.com/clap-rs/clap) for the CLI and [e
 
 </br>
 <p align="center">
-<img width="" alt="Command Line Interface Example" src="https://raw.githubusercontent.com/budde25/switcharoo/main/extra/images/gui.png">
+<img width="" alt="Graphical User Interface Example" src="https://raw.githubusercontent.com/budde25/switcharoo/main/extra/images/gui.png">
 </p>
 
 ## Usage
