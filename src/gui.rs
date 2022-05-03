@@ -6,8 +6,10 @@ use std::thread;
 use std::time::Duration;
 
 use color_eyre::eyre::Result;
+use color_eyre::owo_colors::OwoColorize;
 use eframe;
 
+use egui::{Color32, Layout, RichText};
 use rcm_lib::{Error, Payload, Rcm};
 
 pub fn gui() -> Result<()> {
@@ -70,22 +72,21 @@ struct PayloadData {
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            if ui.button("Select Payload").clicked() {
-                if let Some(path) = rfd::FileDialog::new().pick_file() {
-                    self.payload_data = make_payload_data(&path);
-                }
-            }
-
+            ui.label(RichText::new("Switcharoo").size(30.0).strong());
+            ui.add_space(10.0);
             ui.group(|ui| {
+                ui.add_space(10.0);
                 if let Some(payload_data) = &self.payload_data {
                     ui.horizontal(|ui| {
                         if let Ok(_) = &payload_data.payload {
-                            ui.label("Payload:");
-                            ui.monospace(&payload_data.picked_path);
+                            ui.label(RichText::new("Payload:").size(16.0));
+                            ui.monospace(
+                                RichText::new(&payload_data.picked_path).color(Color32::BLUE),
+                            );
                         } else {
-                            ui.label("Error:");
+                            ui.label(RichText::new("Error:").color(Color32::RED).size(18.0));
                             let error = &payload_data.payload.as_ref().unwrap_err().to_string();
-                            ui.monospace(error);
+                            ui.monospace(RichText::new(error).color(Color32::RED).size(18.0));
                         }
                     });
                     if self.state == State::Available {
@@ -94,57 +95,100 @@ impl eframe::App for MyApp {
                 } else {
                     self.executable = false;
                 }
+                ui.add_space(10.0);
 
                 ui.separator();
 
-                // A greyed-out and non-interactive button:
-                if ui
-                    .add_enabled(self.executable, egui::Button::new("Execute"))
-                    .clicked()
-                {
-                    let payload = self
-                        .payload_data
-                        .as_ref()
-                        .unwrap()
-                        .payload
-                        .as_ref()
-                        .unwrap();
-                    if let Ok(mut res) = self.switch.try_lock() {
-                        // TODO: fix race condition
-                        if let Ok(switch) = &mut *res {
-                            match execute(switch, payload) {
-                                Ok(_) => {
-                                    self.state = State::Done;
-                                    self.executable = false;
-                                }
-                                Err(e) => {
-                                    ui.horizontal(|ui| {
-                                        ui.label("Error");
-                                        ui.monospace(e.to_string());
-                                    });
+                ui.add_space(10.0);
+
+                ui.vertical_centered(|ui| {
+                    ui.horizontal(|ui| {
+                        if ui
+                            .button(RichText::new("Select Payload").size(18.0))
+                            .clicked()
+                        {
+                            if let Some(path) = rfd::FileDialog::new().pick_file() {
+                                self.payload_data = make_payload_data(&path);
+                            }
+                        }
+
+                        if ui
+                            .add_enabled(
+                                self.executable,
+                                egui::Button::new(RichText::new("Execute").size(18.0)),
+                            )
+                            .clicked()
+                        {
+                            let payload = self
+                                .payload_data
+                                .as_ref()
+                                .unwrap()
+                                .payload
+                                .as_ref()
+                                .unwrap();
+                            if let Ok(mut res) = self.switch.try_lock() {
+                                // TODO: fix race condition
+                                if let Ok(switch) = &mut *res {
+                                    match execute(switch, payload) {
+                                        Ok(_) => {
+                                            self.state = State::Done;
+                                            self.executable = false;
+                                        }
+                                        Err(e) => {
+                                            ui.horizontal(|ui| {
+                                                ui.label(
+                                                    RichText::new("Error:")
+                                                        .color(Color32::RED)
+                                                        .size(18.0),
+                                                );
+                                                ui.monospace(
+                                                    RichText::new(e.to_string())
+                                                        .color(Color32::RED)
+                                                        .size(18.0),
+                                                );
+                                            });
+                                        }
+                                    }
                                 }
                             }
+                        }
+                    });
+                });
+            });
+
+            ui.centered_and_justified(|ui| {
+                match self.state {
+                    State::Available => ui.label(
+                        RichText::new("Switch RCM OK")
+                            .color(Color32::GREEN)
+                            .size(30.0)
+                            .strong(),
+                    ),
+                    State::NotAvailable => ui.label(
+                        RichText::new("Switch RCM Not Found")
+                            .color(Color32::RED)
+                            .size(30.0)
+                            .strong(),
+                    ),
+                    State::Done => ui.label(
+                        RichText::new("Smashed the Stack!")
+                            .color(Color32::BLUE)
+                            .size(30.0)
+                            .strong(),
+                    ),
+                };
+
+                if self.state != State::Done {
+                    let arc = self.switch.try_lock();
+                    if let Ok(lock) = arc {
+                        let res = &*lock;
+                        match res {
+                            Ok(_) => self.state = State::Available,
+                            Err(_) => self.state = State::NotAvailable,
                         }
                     }
                 }
             });
-
-            match self.state {
-                State::Available => ui.label("Switch is plugged in and available"),
-                State::NotAvailable => ui.label("Switch is unavailable"),
-                State::Done => ui.label("Smashed the stack!"),
-            };
-
-            if self.state != State::Done {
-                let arc = self.switch.try_lock();
-                if let Ok(lock) = arc {
-                    let res = &*lock;
-                    match res {
-                        Ok(_) => self.state = State::Available,
-                        Err(_) => self.state = State::NotAvailable,
-                    }
-                }
-            }
         });
 
         preview_files_being_dropped(ctx);
