@@ -1,5 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
+//use std::io::Cursor;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -7,7 +8,9 @@ use std::time::Duration;
 
 use color_eyre::eyre::Result;
 
+//use eframe::IconData;
 use egui::{Color32, RichText};
+//use image::io::Reader;
 use rcm_lib::{Error, Payload, Rcm};
 
 pub fn gui() -> Result<()> {
@@ -15,8 +18,22 @@ pub fn gui() -> Result<()> {
     let arc = Arc::new(Mutex::new(rcm));
     let arc_clone = arc.clone();
 
+    // const RAW_DATA: &[u8; 28408] = include_bytes!("../extra/Appicons/playstore.png");
+    // let reader = Reader::new(Cursor::new(RAW_DATA))
+    //     .with_guessed_format()
+    //     .expect("Cursor io never fails");
+
+    // let image = reader.decode()?;
+
+    // let icon = IconData {
+    //     rgba: image.to_rgba8().to_vec(),
+    //     width: image.width(),
+    //     height: image.height(),
+    // };
+
     let options = eframe::NativeOptions {
         drag_and_drop_support: true,
+        icon_data: None,
         ..Default::default()
     };
 

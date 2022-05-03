@@ -1,36 +1,14 @@
 use std::fs;
 use std::path::PathBuf;
 
-use clap::{Parser, Subcommand};
+use clap::StructOpt;
 use color_eyre::eyre::{Context, Result};
 use rcm_lib::{Error, Payload, Rcm};
 
+mod cli;
 mod gui;
 
-#[derive(Parser)]
-#[clap(author, version, about, long_about = None)]
-struct Cli {
-    #[clap(subcommand)]
-    command: Commands,
-}
-
-#[derive(Subcommand)]
-enum Commands {
-    /// Executes a payload
-    Execute {
-        /// Path to the payload file
-        payload: PathBuf,
-
-        /// Wait for device to be connected
-        #[clap(short, long)]
-        wait: bool,
-    },
-    /// Checks if a Switch in RCM mode is detected
-    Device,
-
-    /// Opens the GUI
-    Gui,
-}
+use cli::{Cli, Commands};
 
 fn main() -> Result<()> {
     color_eyre::install()?;

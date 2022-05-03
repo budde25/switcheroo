@@ -2,7 +2,7 @@
 
 [![License](https://flat.badgen.net/badge/license/GPL-2.0/blue)](LICENSE)
 
-A CLI and GUI for the rcm BootRom expoit (Fusée Gelée exploit for Nintendo Switch)
+A CLI and GUI for the RCM BootRom expoit (Fusée Gelée exploit for Nintendo Switch)
 
 Only works on unpatched Switches: <https://ismyswitchpatched.com/>
 
