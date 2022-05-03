@@ -14,6 +14,10 @@ Written in Rust using [clap](https://github.com/clap-rs/clap) for the CLI and [e
 * GUI inferface
 * Works on MacOS and Linux (Windows support is WIP)
 
+</br>
+<p align="center">
+<img width="" alt="Command Line Interface Example" src="https://raw.githubusercontent.com/budde25/switcharoo/main/extra/images/cli.png">
+</p>
 ## Usage
 
 The binary name is `switcharoo`  
