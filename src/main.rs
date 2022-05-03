@@ -1,5 +1,5 @@
-use std::fs;
 use std::path::PathBuf;
+use std::{env, fs};
 
 use clap::StructOpt;
 use color_eyre::eyre::{Context, Result};
@@ -11,6 +11,9 @@ mod gui;
 use cli::{Cli, Commands};
 
 fn main() -> Result<()> {
+    // check if we should start the gui
+    check_gui_mode()?;
+
     color_eyre::install()?;
     let args = Cli::parse();
 
@@ -48,5 +51,17 @@ fn device() -> Result<()> {
         println!("[✓] Switch is RCM mode and connected")
     }
 
+    Ok(())
+}
+
+fn check_gui_mode() -> Result<()> {
+    match env::var_os("SWITCHEROO_GUI_ONLY") {
+        None => return Ok(()),
+        Some(gui_only) => {
+            if gui_only == "0" {
+                gui::gui()?;
+            }
+        }
+    };
     Ok(())
 }

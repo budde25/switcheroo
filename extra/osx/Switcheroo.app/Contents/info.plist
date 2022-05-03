@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleExecutable</key>
+	<string>switcheroo</string>
+	<key>CFBundleIdentifier</key>
+	<string>io.ebudd</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>Switcheroo</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>0.11.0-dev</string>
+	<key>CFBundleSupportedPlatforms</key>
+	<array>
+		<string>MacOSX</string>
+	</array>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>CFBundleIconFile</key>
+	<string>switcheroo.icns</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSMainNibFile</key>
+	<string></string>
+	<key>NSSupportsAutomaticGraphicsSwitching</key>
+	<true/>
+	<key>CFBundleDisplayName</key>
+	<string>Switcheroo</string>
+	<key>NSRequiresAquaSystemAppearance</key>
+	<string>NO</string>
+	<key>LSMultipleInstancesProhibited</key>
+	<false/>
+	<key>LSEnvironment</key>
+	<dict>
+		<key>SWITCHEROO_GUI_ONLY</key>
+		<string>0</string>
+	</dict>
+</dict>
+</plist>
