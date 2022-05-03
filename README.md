@@ -18,6 +18,12 @@ Written in Rust using [clap](https://github.com/clap-rs/clap) for the CLI and [e
 <p align="center">
 <img width="" alt="Command Line Interface Example" src="https://raw.githubusercontent.com/budde25/switcharoo/main/extra/images/cli.png">
 </p>
+
+</br>
+<p align="center">
+<img width="" alt="Command Line Interface Example" src="https://raw.githubusercontent.com/budde25/switcharoo/main/extra/images/gui.png">
+</p>
+
 ## Usage
 
 The binary name is `switcharoo`  
