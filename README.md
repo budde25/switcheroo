@@ -1,6 +1,8 @@
 # Switcheroo
 
 [![License](https://flat.badgen.net/badge/license/GPL-2.0/blue)](LICENSE)
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/budde25/switcheroo/CI?label=CI)
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/budde25/switcheroo/CD?label=CD)
 
 A CLI and GUI for the RCM BootRom expoit (Fusée Gelée exploit for Nintendo Switch)
 
