@@ -6,10 +6,8 @@ use std::thread;
 use std::time::Duration;
 
 use color_eyre::eyre::Result;
-use color_eyre::owo_colors::OwoColorize;
-use eframe;
 
-use egui::{Color32, Layout, RichText};
+use egui::{Color32, RichText};
 use rcm_lib::{Error, Payload, Rcm};
 
 pub fn gui() -> Result<()> {
@@ -78,7 +76,7 @@ impl eframe::App for MyApp {
                 ui.add_space(10.0);
                 if let Some(payload_data) = &self.payload_data {
                     ui.horizontal(|ui| {
-                        if let Ok(_) = &payload_data.payload {
+                        if payload_data.payload.is_ok() {
                             ui.label(RichText::new("Payload:").size(16.0));
                             ui.monospace(
                                 RichText::new(&payload_data.picked_path).color(Color32::BLUE),
@@ -241,7 +239,7 @@ fn execute(switch: &mut Rcm, payload: &Payload) -> Result<(), Error> {
 
     // We need to read the device id first
     let _ = switch.read_device_id()?;
-    switch.execute(&payload)?;
+    switch.execute(payload)?;
     Ok(())
 }
 
