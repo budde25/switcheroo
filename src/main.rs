@@ -3,7 +3,7 @@ use std::{env, fs};
 
 use clap::StructOpt;
 use color_eyre::eyre::{Context, Result};
-use rcm_lib::{Error, Payload, Rcm};
+use tegra_rcm::{Error, Payload, Rcm};
 
 mod cli;
 mod gui;

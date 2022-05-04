@@ -9,7 +9,7 @@ use color_eyre::eyre::Result;
 
 use egui::{Color32, RichText};
 use egui_extras::RetainedImage;
-use rcm_lib::{Error, Payload, Rcm};
+use tegra_rcm::{Error, Payload, Rcm};
 
 pub fn gui() -> Result<()> {
     let rcm = Rcm::new(false);

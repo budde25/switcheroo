@@ -19,7 +19,7 @@ egui_extras = { version = "0.18.0", features = ["svg"] }
 eframe = "0.18.0"
 rfd = "0.8.2"
 
-rcm-lib = { version = "0.1.0", path = "crates/rcm-lib" }
+tegra-rcm = { version = "0.1.0", path = "crates/tegra-rcm" }
 
 [build-dependencies]
 clap_complete = "3.1.3"
@@ -27,4 +27,4 @@ clap = { version = "3.1.15", features = ["derive"] }
 
 
 [workspace]
-members = ["crates/rcm-lib"]
+members = ["crates/tegra-rcm"]
