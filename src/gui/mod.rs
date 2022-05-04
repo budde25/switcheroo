@@ -1,5 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
+mod image;
+
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -8,7 +10,7 @@ use std::time::Duration;
 use color_eyre::eyre::Result;
 
 use egui::{Color32, RichText};
-use egui_extras::RetainedImage;
+use image::Images;
 use tegra_rcm::{Error, Payload, Rcm};
 
 pub fn gui() -> Result<()> {
@@ -46,6 +48,7 @@ pub fn gui() -> Result<()> {
                 payload_data: None,
                 executable: false,
                 images,
+                dark_mode: false,
                 state: State::NotAvailable,
             })
         }),
@@ -54,54 +57,11 @@ pub fn gui() -> Result<()> {
 
 struct MyApp {
     switch: Arc<Mutex<Result<Rcm, Error>>>,
-    images: Images,
     payload_data: Option<PayloadData>,
-    executable: bool,
+    images: Images,
     state: State,
-}
-
-struct Images {
-    not_found: RetainedImage,
-    connected: RetainedImage,
-    done: RetainedImage,
-}
-
-impl Default for Images {
-    fn default() -> Self {
-        // TODO: still feels like this could be faster
-        let handler1 = thread::spawn(|| {
-            let not_found = RetainedImage::from_svg_bytes(
-                "Rcm Not Found",
-                include_bytes!("images/not_found.svg"),
-            )
-            .unwrap();
-            not_found
-        });
-
-        let handle2 = thread::spawn(|| {
-            let connected = RetainedImage::from_svg_bytes(
-                "Rcm Connected",
-                include_bytes!("images/connected.svg"),
-            )
-            .unwrap();
-            connected
-        });
-        let handle3 = thread::spawn(|| {
-            let done = RetainedImage::from_svg_bytes("Rcm Done", include_bytes!("images/done.svg"))
-                .unwrap();
-            done
-        });
-
-        let not_found = handler1.join().unwrap();
-        let connected = handle2.join().unwrap();
-        let done = handle3.join().unwrap();
-
-        Self {
-            not_found,
-            connected,
-            done,
-        }
-    }
+    executable: bool,
+    dark_mode: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -246,7 +206,7 @@ impl eframe::App for MyApp {
     }
 }
 
-/// Preview hovering files:
+/// Preview hovering files
 fn preview_files_being_dropped(ctx: &egui::Context) {
     use egui::*;
 
@@ -277,7 +237,9 @@ fn preview_files_being_dropped(ctx: &egui::Context) {
     }
 }
 
+/// Executes a payload returning any errors
 fn execute(switch: &mut Rcm, payload: &Payload) -> Result<(), Error> {
+    // its ok if it gets init more than once, it skips previous inits
     switch.init()?;
     println!("Smashing the stack!");
 
@@ -287,6 +249,8 @@ fn execute(switch: &mut Rcm, payload: &Payload) -> Result<(), Error> {
     Ok(())
 }
 
+/// Makes a payload from a given file path
+/// returns None on an error
 fn make_payload_data(path: &Path) -> Option<PayloadData> {
     let file = std::fs::read(&path);
     if let Ok(data) = file {
