@@ -16,7 +16,7 @@ color-eyre = "0.6.1"
 
 egui = "0.18.1"
 egui_extras = { version = "0.18.0", features = ["svg"] }
-eframe = "0.18.0"
+eframe = { version = "0.18.0", features = ["dark-light"] }
 rfd = "0.8.2"
 
 tegra-rcm = { version = "0.1.0", path = "crates/tegra-rcm" }

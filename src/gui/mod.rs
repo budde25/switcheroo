@@ -36,7 +36,6 @@ pub fn gui() -> Result<()> {
                 switch: rcm,
                 payload_data: None,
                 images,
-                dark_mode: false,
                 state: State::NotAvailable,
             })
         }),
@@ -48,7 +47,6 @@ struct MyApp {
     payload_data: Option<PayloadData>,
     images: Images,
     state: State,
-    dark_mode: bool,
 }
 
 impl MyApp {
