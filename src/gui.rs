@@ -1,6 +1,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
-//use std::io::Cursor;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -8,9 +7,8 @@ use std::time::Duration;
 
 use color_eyre::eyre::Result;
 
-//use eframe::IconData;
 use egui::{Color32, RichText};
-//use image::io::Reader;
+use egui_extras::RetainedImage;
 use rcm_lib::{Error, Payload, Rcm};
 
 pub fn gui() -> Result<()> {
@@ -18,18 +16,7 @@ pub fn gui() -> Result<()> {
     let arc = Arc::new(Mutex::new(rcm));
     let arc_clone = arc.clone();
 
-    // const RAW_DATA: &[u8; 28408] = include_bytes!("../extra/Appicons/playstore.png");
-    // let reader = Reader::new(Cursor::new(RAW_DATA))
-    //     .with_guessed_format()
-    //     .expect("Cursor io never fails");
-
-    // let image = reader.decode()?;
-
-    // let icon = IconData {
-    //     rgba: image.to_rgba8().to_vec(),
-    //     width: image.width(),
-    //     height: image.height(),
-    // };
+    let images = Images::default();
 
     let options = eframe::NativeOptions {
         drag_and_drop_support: true,
@@ -58,6 +45,7 @@ pub fn gui() -> Result<()> {
                 switch: arc_clone,
                 payload_data: None,
                 executable: false,
+                images,
                 state: State::NotAvailable,
             })
         }),
@@ -66,10 +54,54 @@ pub fn gui() -> Result<()> {
 
 struct MyApp {
     switch: Arc<Mutex<Result<Rcm, Error>>>,
-    //dropped_files: Vec<egui::DroppedFile>,
+    images: Images,
     payload_data: Option<PayloadData>,
     executable: bool,
     state: State,
+}
+
+struct Images {
+    not_found: RetainedImage,
+    connected: RetainedImage,
+    done: RetainedImage,
+}
+
+impl Default for Images {
+    fn default() -> Self {
+        // TODO: still feels like this could be faster
+        let handler1 = thread::spawn(|| {
+            let not_found = RetainedImage::from_svg_bytes(
+                "Rcm Not Found",
+                include_bytes!("images/not_found.svg"),
+            )
+            .unwrap();
+            not_found
+        });
+
+        let handle2 = thread::spawn(|| {
+            let connected = RetainedImage::from_svg_bytes(
+                "Rcm Connected",
+                include_bytes!("images/connected.svg"),
+            )
+            .unwrap();
+            connected
+        });
+        let handle3 = thread::spawn(|| {
+            let done = RetainedImage::from_svg_bytes("Rcm Done", include_bytes!("images/done.svg"))
+                .unwrap();
+            done
+        });
+
+        let not_found = handler1.join().unwrap();
+        let connected = handle2.join().unwrap();
+        let done = handle3.join().unwrap();
+
+        Self {
+            not_found,
+            connected,
+            done,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -96,19 +128,25 @@ impl eframe::App for MyApp {
                         if payload_data.payload.is_ok() {
                             ui.label(RichText::new("Payload:").size(16.0));
                             ui.monospace(
-                                RichText::new(&payload_data.picked_path).color(Color32::BLUE),
+                                RichText::new(&payload_data.picked_path)
+                                    .color(Color32::BLUE)
+                                    .size(16.0),
                             );
                         } else {
-                            ui.label(RichText::new("Error:").color(Color32::RED).size(18.0));
+                            ui.label(RichText::new("Error:").color(Color32::RED).size(16.0));
                             let error = &payload_data.payload.as_ref().unwrap_err().to_string();
-                            ui.monospace(RichText::new(error).color(Color32::RED).size(18.0));
+                            ui.monospace(RichText::new(error).color(Color32::RED).size(16.0));
                         }
                     });
                     if self.state == State::Available {
                         self.executable = true;
                     }
                 } else {
-                    self.executable = false;
+                    ui.horizontal(|ui| {
+                        ui.label(RichText::new("Payload:").size(16.0));
+                        ui.monospace(RichText::new("None").size(16.0));
+                        self.executable = false;
+                    });
                 }
                 ui.add_space(10.0);
 
@@ -173,24 +211,13 @@ impl eframe::App for MyApp {
 
             ui.centered_and_justified(|ui| {
                 match self.state {
-                    State::Available => ui.label(
-                        RichText::new("Switch RCM OK")
-                            .color(Color32::GREEN)
-                            .size(30.0)
-                            .strong(),
-                    ),
-                    State::NotAvailable => ui.label(
-                        RichText::new("Switch RCM Not Found")
-                            .color(Color32::RED)
-                            .size(30.0)
-                            .strong(),
-                    ),
-                    State::Done => ui.label(
-                        RichText::new("Smashed the Stack!")
-                            .color(Color32::BLUE)
-                            .size(30.0)
-                            .strong(),
-                    ),
+                    State::Available => {
+                        self.images.connected.show_max_size(ui, ui.available_size())
+                    }
+                    State::NotAvailable => {
+                        self.images.not_found.show_max_size(ui, ui.available_size())
+                    }
+                    State::Done => self.images.done.show_max_size(ui, ui.available_size()),
                 };
 
                 if self.state != State::Done {
