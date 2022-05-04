@@ -78,7 +78,9 @@ Here are some other simiar projects
 ## Credit
 
 Implemenation is largely based on the following reference implemenatinon:
-[Fusee Launcher](https://github.com/Qyriad/fusee-launcher)
+[Fusee Launcher](https://github.com/Qyriad/fusee-launcher)  
+Gui design inspired from the great:
+[TegraRcmGui](https://github.com/eliboa/TegraRcmGUI)  
 
 ## License
 
