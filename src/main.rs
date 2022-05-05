@@ -49,12 +49,22 @@ fn execute(payload: PathBuf, wait: bool) -> Result<()> {
 
 fn device() -> Result<()> {
     let switch = Rcm::new(false);
-    if let Err(Error::SwitchNotFound) = switch {
-        println!("[x] Switch in RCM mode not found")
-    } else {
-        switch?;
-        println!("[✓] Switch is RCM mode and connected")
-    }
+
+    let err = match switch {
+        Ok(_) => {
+            println!("[✓] Switch is RCM mode and connected");
+            return Ok(());
+        }
+        Err(e) => e,
+    };
+
+    match err {
+        Error::SwitchNotFound => println!("[x] Switch in RCM mode not found"),
+        Error::AccessDenied => {
+            switch.wrap_err_with(|| format!("USB permission error\nSee \"https://github.com/budde25/switcheroo#linux-permission-denied-error\" to troubleshoot"))?;
+        }
+        _ => return Err(err.into()),
+    };
 
     Ok(())
 }
