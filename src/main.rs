@@ -1,3 +1,5 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
+
 use std::path::PathBuf;
 use std::{env, fs};
 
@@ -6,12 +8,14 @@ use color_eyre::eyre::{Context, Result};
 use tegra_rcm::{Error, Payload, Rcm};
 
 mod cli;
+#[cfg(feature = "gui")]
 mod gui;
 
 use cli::{Cli, Commands};
 
 fn main() -> Result<()> {
     // check if we should start the gui
+    #[cfg(feature = "gui")]
     check_gui_mode()?;
 
     color_eyre::install()?;
@@ -20,6 +24,7 @@ fn main() -> Result<()> {
     match args.command {
         Commands::Execute { payload, wait } => execute(payload, wait)?,
         Commands::Device {} => device()?,
+        #[cfg(feature = "gui")]
         Commands::Gui {} => gui::gui()?,
     }
     Ok(())
@@ -54,6 +59,7 @@ fn device() -> Result<()> {
     Ok(())
 }
 
+#[cfg(feature = "gui")]
 fn check_gui_mode() -> Result<()> {
     match env::var_os("SWITCHEROO_GUI_ONLY") {
         None => return Ok(()),

@@ -24,5 +24,6 @@ pub enum Commands {
     Device,
 
     /// Opens the GUI
+    #[cfg(feature = "gui")]
     Gui,
 }
