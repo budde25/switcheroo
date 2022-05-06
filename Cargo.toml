@@ -32,3 +32,17 @@ gui = ["dep:egui", "dep:egui_extras", "dep:eframe", "dep:rfd"]
 
 [workspace]
 members = ["crates/tegra-rcm"]
+
+[package.metadata.deb]
+depends = "$auto"
+section = "utility"
+assets = [
+    ["target/release/switcheroo", "usr/bin/", "755"],
+    ["LICENSE.md", "usr/share/doc/switcheroo/LICENSE", "644"],
+    ["README.md", "usr/share/doc/switcheroo/README", "644"],
+
+    # TODO: generate automatically
+    ["extra/completions/switcheroo.bash", "usr/share/bash-completion/completions/switcheroo", "644"],
+    ["extra/completions/switcheroo.fish", "usr/share/fish/vendor_completions.d/switcheroo.fish", "644"],
+    ["extra/completions/_switcheroo", "usr/share/zsh/vendor-completions/", "644"],
+]

@@ -72,7 +72,7 @@ impl Rcm {
         let res = self.trigger_controlled_memcopy();
         // We expect a timeout
         if let Err(err) = res {
-            if err == Error::UsbError(rusb::Error::Timeout) {
+            if err == Error::Usb(rusb::Error::Timeout) {
                 return Ok(());
             }
         }

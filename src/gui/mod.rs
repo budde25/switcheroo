@@ -77,19 +77,26 @@ impl MyApp {
     }
 
     /// Check if we need to change our current state
-    fn check_change_state(&mut self) {
+    fn check_change_state(&mut self) -> Result<(), Error> {
         if self.state == State::Done {
-            return;
+            return Ok(());
         }
 
         let arc = self.switch.try_lock();
         if let Ok(lock) = arc {
             let res = &*lock;
             match res {
-                Ok(_) => self.state = State::Available,
-                Err(_) => self.state = State::NotAvailable,
+                Ok(_) => {
+                    self.state = State::Available;
+                    return Ok(());
+                }
+                Err(e) => {
+                    self.state = State::NotAvailable;
+                    return Err(*e);
+                }
             }
         }
+        Ok(())
     }
 }
 
@@ -162,17 +169,24 @@ impl eframe::App for MyApp {
                             let payload = self.payload().unwrap();
                             if let Ok(mut res) = self.switch.try_lock() {
                                 // TODO: fix race condition
-                                if let Ok(switch) = &mut *res {
-                                    match execute(switch, payload) {
+                                let rcm = &mut *res;
+                                match rcm {
+                                    Ok(switch) => match execute(switch, payload) {
                                         Ok(_) => self.state = State::Done,
                                         Err(e) => create_error(ui, &e.to_string()),
-                                    }
+                                    },
+                                    Err(e) => create_error_from_error(ui, *e),
                                 }
                             }
                         }
                     });
                 });
             });
+
+            match self.check_change_state() {
+                Ok(_) => (),
+                Err(e) => create_error_from_error(ui, e),
+            }
 
             ui.centered_and_justified(|ui| {
                 match self.state {
@@ -187,7 +201,6 @@ impl eframe::App for MyApp {
             });
         });
 
-        self.check_change_state();
         preview_files_being_dropped(ctx);
 
         // Collect dropped files:
@@ -207,6 +220,20 @@ fn create_error(ui: &mut Ui, error: &str) {
         ui.label(RichText::new("Error:").color(Color32::RED).size(18.0));
         ui.monospace(RichText::new(error).color(Color32::RED).size(18.0));
     });
+}
+
+fn create_error_from_error(ui: &mut Ui, error: Error) {
+    match error {
+        Error::SwitchNotFound => (),
+        Error::AccessDenied => {
+            create_error(
+                ui,
+                "USB permission error, see the following to troubleshoot",
+            );
+            ui.hyperlink("https://github.com/budde25/switcheroo#linux-permission-denied-error");
+        }
+        _ => create_error(ui, &error.to_string()),
+    };
 }
 
 /// Preview hovering files
