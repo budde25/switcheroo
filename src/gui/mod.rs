@@ -68,9 +68,9 @@ impl MyApp {
     fn payload(&self) -> Option<&Payload> {
         if let Some(payload_data) = &self.payload_data {
             if let Ok(payload) = &payload_data.payload {
-                Some(payload)
+                return Some(payload);
             } else {
-                None
+                return None;
             };
         };
         None
