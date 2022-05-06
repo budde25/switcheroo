@@ -76,3 +76,18 @@ impl Payload {
         &self.data
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::Payload;
+
+    /// Tests that we generate the same bin as the reference implmentation
+    #[test]
+    fn basic_correctness() {
+        let correct = include_bytes!("test/hekate_ctcaer_5.7.2_ref_payload.bin");
+        let payload = Payload::new(include_bytes!("test/hekate_ctcaer_5.7.2.bin"))
+            .expect("This should give us a valid payload");
+
+        assert_eq!(payload.data.as_ref(), correct);
+    }
+}
