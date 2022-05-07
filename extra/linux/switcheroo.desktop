@@ -8,4 +8,4 @@ Categories=Utility
 
 Name=Switcheroo
 Comment=A GUI for the Switch RCM BootRom expoit
-StartupWMClass=Switcheroo
+StartupWMClass=switcheroo
