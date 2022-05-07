@@ -1,8 +1,8 @@
 [Desktop Entry]
 Type=Application
 TryExec=switcheroo
-Exec=switcheroo --gui
-Icon=Switcheroo
+Exec=switcheroo gui
+Icon=switcheroo
 Terminal=false
 Categories=Utility
 
