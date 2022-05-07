@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+TryExec=switcheroo
+Exec=switcheroo --gui
+Icon=Switcheroo
+Terminal=false
+Categories=Utility
+
+Name=Switcheroo
+Comment=A GUI for the Switch RCM BootRom expoit
+StartupWMClass=Switcheroo

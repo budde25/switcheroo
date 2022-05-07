@@ -53,7 +53,6 @@ assets = [
         "644",
     ],
 
-    # TODO: generate automatically
     [
         "extra/completions/switcheroo.bash",
         "usr/share/bash-completion/completions/switcheroo",
@@ -67,6 +66,18 @@ assets = [
     [
         "extra/completions/_switcheroo",
         "usr/share/zsh/vendor-completions/",
+        "644",
+    ],
+    # desktop file
+    [
+        "extra/linux/switcheroo.desktop",
+        "usr/share/applications/switcheroo.desktop",
+        "644",
+    ],
+    # icon
+    [
+        "extra/logo/switcheroo.png",
+        "usr/share/pixmaps/switcheroo.png",
         "644",
     ],
 ]
