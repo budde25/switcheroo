@@ -3,4 +3,4 @@ Cargo.lock
 flamegraph.svg
 perf.data*
 .flatpak-builder/
-build_dir/
+build-dir/
