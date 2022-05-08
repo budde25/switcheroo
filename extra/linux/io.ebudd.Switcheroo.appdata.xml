@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2022 Ethan Budd -->
 <component type="desktop-application">
   <id>io.ebudd.Switcheroo</id>
   <!-- Translators: The application name -->
@@ -9,12 +10,12 @@
   <summary>A GUI for the Nintendo Switch RCM exploit</summary>
   <description>
     <p>
-        A CLI and GUI for the RCM BootRom expoit (Fusée Gelée exploit for Nintendo Switch)
+        A CLI and GUI for the RCM BootRom expoit (Fusée Gelée exploit for Nintendo Switch).
     </p>
   </description>
   <screenshots>
     <screenshot type="default">
-      <image>https://raw.githubusercontent.com/budde25/switcheroo/main/extra/images/gui.png</image>
+      <image>https://raw.githubusercontent.com/budde25/switcheroo/main/extra/images/gui-small.png</image>
       <caption>A GUI for the Nintendo Switch RCM exploit</caption>
     </screenshot>
   </screenshots>
@@ -26,10 +27,16 @@
   </keywords>
   <url type="homepage">https://github.com/budde25/switcheroo</url>
   <url type="bugtracker">https://github.com/budde25/switcheroo/issues</url>
- 
   <developer_name>Ethan Budd</developer_name>
    <provides>
   <id>io.ebudd.Switcheroo.desktop</id>
   </provides>
   <content_rating type="oars-1.0" />
+  <releases>
+    <release version="0.1.0" date="2022-05-8">
+      <description>
+        <p>Initial Release.</p>
+      </description>
+    </release>
+  </releases>
 </component>

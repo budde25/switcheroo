@@ -4,7 +4,7 @@ TryExec=switcheroo
 Exec=switcheroo gui
 Icon=io.ebudd.Switcheroo
 Terminal=false
-Categories=Utility
+Categories=Utility;
 
 Name=Switcheroo
 Comment=A GUI for the Switch RCM BootRom expoit
