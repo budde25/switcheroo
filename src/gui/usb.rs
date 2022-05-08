@@ -24,13 +24,15 @@ impl rusb::Hotplug<GlobalContext> for HotplugHandler {
             if device_desc.vendor_id() == SWITCH_VID && device_desc.product_id() == SWITCH_PID {
                 //println!("Switch arrived {:?}", device);
 
-                let dev = device.open().unwrap();
-                let rcm = Rcm::with_device_handle(dev);
+                // if this is not Ok, it probably got unpluged really fast
+                if let Ok(dev) = device.open() {
+                    let rcm = Rcm::with_device_handle(dev);
 
-                let lock = self.tswitch.lock();
-                if let Ok(mut inner) = lock {
-                    *inner = Ok(rcm);
-                    self.ctx.request_repaint();
+                    let lock = self.tswitch.lock();
+                    if let Ok(mut inner) = lock {
+                        *inner = Ok(rcm);
+                        self.ctx.request_repaint();
+                    }
                 }
             }
         }
