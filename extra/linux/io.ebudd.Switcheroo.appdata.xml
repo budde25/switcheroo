@@ -26,9 +26,10 @@
   </keywords>
   <url type="homepage">https://github.com/budde25/switcheroo</url>
   <url type="bugtracker">https://github.com/budde25/switcheroo/issues</url>
-  <update_contact>https://github.com/budde25/switcheroo/blob/master/README.md#Contact</update_contact>
+ 
   <developer_name>Ethan Budd</developer_name>
    <provides>
   <id>io.ebudd.Switcheroo.desktop</id>
   </provides>
+  <content_rating type="oars-1.0" />
 </component>
