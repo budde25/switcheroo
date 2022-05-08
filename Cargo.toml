@@ -70,14 +70,23 @@ assets = [
     ],
     # desktop file
     [
-        "extra/linux/switcheroo.desktop",
-        "usr/share/applications/switcheroo.desktop",
+        "extra/linux/io.ebudd.Switcheroo.desktop",
+        "usr/share/applications/io.ebudd.Switcheroo.desktop",
         "644",
     ],
     # icon
     [
-        "extra/logo/switcheroo.png",
-        "usr/share/pixmaps/switcheroo.png",
+        "extra/logo/io.ebudd.Switcheroo.png",
+        "usr/share/pixmaps/io.ebudd.Switcheroo.png",
         "644",
     ],
 ]
+
+[package.metadata.rpm]
+package = "switcheroo"
+
+[package.metadata.rpm.cargo]
+buildflags = ["--release"]
+
+[package.metadata.rpm.targets]
+switcheroo = { path = "/usr/bin/switcheroo" }

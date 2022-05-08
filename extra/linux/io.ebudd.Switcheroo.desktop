@@ -2,10 +2,10 @@
 Type=Application
 TryExec=switcheroo
 Exec=switcheroo gui
-Icon=switcheroo
+Icon=io.ebudd.Switcheroo
 Terminal=false
 Categories=Utility
 
 Name=Switcheroo
 Comment=A GUI for the Switch RCM BootRom expoit
-StartupWMClass=switcheroo
+StartupWMClass=Switcheroo
