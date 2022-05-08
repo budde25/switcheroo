@@ -1,5 +1,7 @@
 use std::ops::DerefMut;
 
+use rusb::{DeviceHandle, GlobalContext};
+
 use crate::Error;
 
 use crate::device::{SwitchDevice, SwitchDeviceRaw};
@@ -43,6 +45,16 @@ pub struct Rcm {
 }
 
 impl Rcm {
+    /// Create a new Rcm object from an existing DeviceHandle
+    /// Should not have its interface claimed yet
+    pub fn with_device_handle(device: DeviceHandle<GlobalContext>) -> Self {
+        Self {
+            switch: SwitchDevice::with_device_handle(device),
+            current_buffer: BufferState::Low,
+            _total_written: 0,
+        }
+    }
+
     /// Finds and connects to a device in RCM mode
     /// This will error out if no device is connected unless wait: true is passed
     /// If wait: true is passed this will block until it detects an rcm device

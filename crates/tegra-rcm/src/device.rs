@@ -12,6 +12,8 @@ pub struct SwitchDeviceRaw {
 }
 
 impl SwitchDeviceRaw {
+    pub const SWITCH_VID: u16 = 0x0955;
+    pub const SWITCH_PID: u16 = 0x7321;
     /// Creates a new uninit device with a custom vid and pid
     pub fn new(vid: u16, pid: u16) -> Self {
         Self { vid, pid }
@@ -54,10 +56,7 @@ impl SwitchDeviceRaw {
 impl Default for SwitchDeviceRaw {
     fn default() -> Self {
         // Default Nintendo Switch RCM VID and PIC
-        let vid = 0x0955;
-        let pid = 0x7321;
-
-        Self::new(vid, pid)
+        Self::new(Self::SWITCH_VID, Self::SWITCH_PID)
     }
 }
 
@@ -69,6 +68,13 @@ pub struct SwitchDevice {
 }
 
 impl SwitchDevice {
+    pub fn with_device_handle(device: DeviceHandle<GlobalContext>) -> Self {
+        Self {
+            device,
+            claimed: false,
+        }
+    }
+
     /// Init the device
     pub fn init(&mut self) -> Result<(), Error> {
         if !self.claimed {
