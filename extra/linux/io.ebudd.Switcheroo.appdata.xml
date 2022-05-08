@@ -4,7 +4,7 @@
   <!-- Translators: The application name -->
   <name>Switcheroo</name>
   <project_license>GPL-2.0-or-later</project_license>
-  <metadata_license>GPL-2.0-or-later</metadata_license>
+  <metadata_license>MIT</metadata_license>
   <!-- Translators: The application's summary / tagline -->
   <summary>A GUI for the Nintendo Switch RCM exploit</summary>
   <description>
@@ -28,4 +28,7 @@
   <url type="bugtracker">https://github.com/budde25/switcheroo/issues</url>
   <update_contact>https://github.com/budde25/switcheroo/blob/master/README.md#Contact</update_contact>
   <developer_name>Ethan Budd</developer_name>
+   <provides>
+  <id>io.ebudd.Switcheroo.desktop</id>
+  </provides>
 </component>
