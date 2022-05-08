@@ -4,3 +4,4 @@ flamegraph.svg
 perf.data*
 .flatpak-builder/
 build-dir/
+repo/

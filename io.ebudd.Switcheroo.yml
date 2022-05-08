@@ -12,7 +12,7 @@ finish-args:
   - "--socket=wayland"
   - "--device=dri"
   - "--filesystem=home"
-  - "--devices=all"
+  - "--device=all"
 modules:
   - name: switcheroo
     buildsystem: simple

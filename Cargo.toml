@@ -11,7 +11,7 @@ license = "GPL-2.0-or-later"
 
 
 [dependencies]
-clap = { version = "3.1.15", features = ["derive"] }
+clap = { version = "3.1.17", features = ["derive"] }
 color-eyre = "0.6.1"
 
 # gui only
@@ -21,10 +21,11 @@ eframe = { version = "0.18.0", features = ["dark-light"], optional = true }
 rfd = { version = "0.8.2", optional = true }
 
 tegra-rcm = { version = "0.1.0", path = "crates/tegra-rcm" }
+rusb = { version = "0.9.1" }
 
 [build-dependencies]
-clap_complete = "3.1.3"
-clap = { version = "3.1.15", features = ["derive"] }
+clap_complete = "3.1.4"
+clap = { version = "3.1.17", features = ["derive"] }
 
 [features]
 default = ["gui"]
