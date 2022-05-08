@@ -1,13 +1,12 @@
 mod image;
+mod usb;
 
 use std::path::Path;
 use std::sync::{Arc, Mutex};
-use std::thread;
-use std::time::Duration;
 
 use color_eyre::eyre::Result;
 
-use egui::{Button, Color32, Context, RichText, Ui};
+use egui::{Button, Color32, RichText, Ui};
 use image::Images;
 use tegra_rcm::{Error, Payload, Rcm};
 
@@ -28,7 +27,7 @@ pub fn gui() -> Result<()> {
         "Switcheroo",
         options,
         Box::new(|cc| {
-            spawn_rcm_check_thread(rcm.clone(), cc.egui_ctx.clone(), Duration::from_secs(1));
+            usb::spawn_thread(rcm.clone(), cc.egui_ctx.clone());
 
             Box::new(MyApp {
                 switch: rcm,
@@ -291,19 +290,4 @@ fn make_payload_data(path: &Path) -> Option<PayloadData> {
         return Some(payload_data);
     }
     None
-}
-
-/// Creates a backgroud thread that reports if there is a switch in RCM mode detected
-fn spawn_rcm_check_thread(tswitch: ThreadSwitchResult, ctx: Context, refresh: Duration) {
-    thread::spawn(move || loop {
-        {
-            let lock = tswitch.lock();
-            if let Ok(mut inner) = lock {
-                let new = Rcm::new(false);
-                *inner = new;
-                ctx.request_repaint();
-            }
-        }
-        thread::sleep(refresh);
-    });
 }

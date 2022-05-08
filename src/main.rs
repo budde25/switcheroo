@@ -61,7 +61,7 @@ fn device() -> Result<()> {
     match err {
         Error::SwitchNotFound => println!("[x] Switch in RCM mode not found"),
         Error::AccessDenied => {
-            switch.wrap_err_with(|| format!("USB permission error\nSee \"https://github.com/budde25/switcheroo#linux-permission-denied-error\" to troubleshoot"))?;
+            switch.wrap_err_with(|| "USB permission error\nSee \"https://github.com/budde25/switcheroo#linux-permission-denied-error\" to troubleshoot".to_string())?;
         }
         _ => return Err(err.into()),
     };
