@@ -66,7 +66,7 @@ assets = [
     ],
     [
         "extra/completions/_switcheroo",
-        "usr/share/zsh/vendor-completions/",
+        "usr/share/zsh/vendor-completions/_switcheroo",
         "644",
     ],
     # desktop file
@@ -78,7 +78,13 @@ assets = [
     # icon
     [
         "extra/logo/io.ebudd.Switcheroo.png",
-        "usr/share/pixmaps/io.ebudd.Switcheroo.png",
+        "/usr/share/icons/hicolor/512x512/apps/io.ebudd.Swithcheroo.png",
+        "644",
+    ],
+    # meta info
+    [
+        "extra/linux/io.ebudd.Switcheroo.appdata.xml",
+        "/usr/share/metainfo/io.ebudd.Switcheroo.appdata.xml",
         "644",
     ],
 ]
