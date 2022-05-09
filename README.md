@@ -1,8 +1,8 @@
 # Switcheroo
 
 [![License](https://flat.badgen.net/badge/license/GPL-2.0/blue)](LICENSE)
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/budde25/switcheroo/CI?label=CI)
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/budde25/switcheroo/CD?label=CD)
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/budde25/switcheroo/CI?style=flat-square)
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/budde25/switcheroo/CD?style=flat-square)
 
 A CLI and GUI for the RCM BootRom expoit (Fusée Gelée exploit for Nintendo Switch)
 
@@ -63,6 +63,11 @@ then reload the udev rules:
 `sudo udevadm control --reload-rules`
 
 Finally unplug and plug back in the switch.  
+
+### Linux: Flatpak not detecting Switch
+
+Due to a limitation of flatpak not allowing access to udev, the flatpak version only works if the Switch is already in rcm mode and plugged in when it is launched.
+If the application is launched wihout these conditions being met, it will never show `RCM OK`
 
 ## Similar projects
 
