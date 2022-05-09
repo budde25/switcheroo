@@ -4,7 +4,7 @@
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/budde25/switcheroo/CI?style=flat-square)
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/budde25/switcheroo/CD?style=flat-square)
 
-A CLI and GUI for the RCM BootRom expoit (Fusée Gelée exploit for Nintendo Switch)
+A CLI and GUI for the RCM BootRom exploit (Fusée Gelée exploit for Nintendo Switch)
 
 Only works on unpatched Switches: <https://ismyswitchpatched.com/>
 
@@ -13,7 +13,7 @@ Written in Rust using [clap](https://github.com/clap-rs/clap) for the CLI and [e
 ## Features
 
 * CLI interface
-* GUI inferface
+* GUI interface
 * Works on MacOS and Linux (Windows support is WIP)
 
 </br>
@@ -67,11 +67,11 @@ Finally unplug and plug back in the switch.
 ### Linux: Flatpak not detecting Switch
 
 Due to a limitation of flatpak not allowing access to udev, the flatpak version only works if the Switch is already in rcm mode and plugged in when it is launched.
-If the application is launched wihout these conditions being met, it will never show `RCM OK`
+If the application is launched without these conditions being met, it will never show `RCM OK`
 
 ## Similar projects
 
-Here are some other simiar projects
+Here are some other similar projects
 
 * [TegraRcmGUI](https://github.com/eliboa/TegraRcmGUI) GUI for Windows
 * [Fusée Launcher](https://github.com/Cease-and-DeSwitch/fusee-launcher) CLI for (Linux, Windows, MacOS)
@@ -82,7 +82,7 @@ Here are some other simiar projects
 
 ## Credit
 
-Implemenation is largely based on the following reference implemenatinon:
+Implemenation is largely based on the following reference implementation:
 [Fusee Launcher](https://github.com/Qyriad/fusee-launcher)  
 Gui design inspired from the great:
 [TegraRcmGui](https://github.com/eliboa/TegraRcmGUI)  
