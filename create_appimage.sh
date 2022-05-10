@@ -1,7 +1,6 @@
 #!/bin/sh
 
-rm Switcheroo*.AppImage
-cargo clean
+rm -f Switcheroo*.AppImage
 
 cargo build --release
 
@@ -21,4 +20,4 @@ mkdir -p target/AppDir/usr/share/icons/hicolor/512x512/apps
 cp extra/logo/io.ebudd.Switcheroo.png target/AppDir/usr/share/icons/hicolor/512x512/apps
 
 appimage-builder --recipe appimage.yml --appdir target/AppDir --skip-tests --log DEBUG --skip-appimage
-appimagetool --runtime-file appimage-build/runtime-x86_64 --guess target/AppDir Switcheroo-0.1.0-x86_64.AppImage
+appimagetool --guess target/AppDir Switcheroo.AppImage
