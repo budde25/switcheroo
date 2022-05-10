@@ -69,6 +69,6 @@ workflows:
       - linux-arm64:
           filters:
             branches:
-              only: main
+              ignore: /.*/
             tags:
               only: /^[0-9]+.[0-9]+.[0-9]*$/
