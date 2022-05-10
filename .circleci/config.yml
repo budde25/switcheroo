@@ -45,7 +45,7 @@ jobs:
       - run:
           name: Install AppImage dependencies
           command: |
-              pip install appimage-builder
+              python3 -m pip install appimage-builder
               wget https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-aarch64.AppImage
               chmod +x *.AppImage
               sudo mv *.AppImage /usr/bin/appimagetool
