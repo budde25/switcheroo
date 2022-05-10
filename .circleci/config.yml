@@ -62,7 +62,7 @@ jobs:
       - run:
           name: Upload Release
           command: |
-            echo "command will be `ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -replace ${CIRCLE_TAG} switcheroo-*`"
+            echo "Command will be: ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -replace ${CIRCLE_TAG} switcheroo-*"
             ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -replace ${CIRCLE_TAG} switcheroo-*
 
 # Invoke jobs via workflows
