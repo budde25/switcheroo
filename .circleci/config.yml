@@ -13,9 +13,9 @@ jobs:
       image: ubuntu-2004:current
     resource_class: arm.medium
     steps:
+      - checkout
       - restore_cache:
           key: project-cache
-      - checkout
       - rust/install
       - run:
           name: Install ghr
@@ -26,10 +26,10 @@ jobs:
       - run:
           name: Install AppImage dependencies
           command: |
-              sudo python3 -m pip install appimage-builder
-              wget https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-aarch64.AppImage
-              chmod +x *.AppImage
-              sudo mv *.AppImage /usr/bin/appimagetool
+            sudo python3 -m pip install appimage-builder
+            wget https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-aarch64.AppImage
+            chmod +x *.AppImage
+            sudo mv *.AppImage /usr/bin/appimagetool
       - run:
           name: Create AppImage
           command: |
