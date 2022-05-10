@@ -58,7 +58,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libssl-dev rpm
+          sudo apt-get install -y libgtk-3-dev libssl-dev rpm appstream appstream-util
       - name: Install cargo deb
         run: cargo install cargo-deb
       - name: Create .deb package

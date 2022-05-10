@@ -22,7 +22,9 @@ jobs:
           command: go install github.com/tcnksm/ghr@latest
       - run:
           name: Install dependencies
-          command: sudo apt-get install libssl-dev rpm libgtk-3-dev patchelf
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y libssl-dev rpm libgtk-3-dev patchelf appstream appstream-util
       - run:
           name: Install AppImage dependencies
           command: |
