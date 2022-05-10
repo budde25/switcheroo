@@ -5,11 +5,6 @@ version: 2.1
 orbs:
   rust: circleci/rust@1.6.0
 
-filters:
-  branches:
-    only: main
-  tags:
-    only: /^[0-9]+.[0-9]+.[0-9]*$/
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
@@ -71,4 +66,9 @@ jobs:
 workflows:
   linux-arm64-workflow:
     jobs:
-      - linux-arm64
+      - linux-arm64:
+          filters:
+            branches:
+              only: main
+            tags:
+              only: /^[0-9]+.[0-9]+.[0-9]*$/
