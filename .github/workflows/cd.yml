@@ -2,7 +2,7 @@ name: CD
 
 on:
   push:
-    tags: ["v[0-9]+.[0-9]+.[0-9]+*"]
+    tags: ["[0-9]+.[0-9]+.[0-9]+*"]
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -14,6 +14,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+
+      # selecting a toolchain either by action or manual `rustup` calls should happen
+      # before the plugin, as it uses the current rustc version as its cache key
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+
+      - uses: Swatinem/rust-cache@v1
+
       - name: Install ARM target
         run: rustup update && rustup target add aarch64-apple-darwin
       - name: Test
@@ -24,7 +34,7 @@ jobs:
         run: make dmg-universal
       - uses: actions/upload-artifact@v3
         with:
-          name: Switcheroo_${GITHUB_REF##*/}_universal.dmg
+          name: switcheroo-${{ github.ref_name }}_universal.dmg
           path: ./target/release/osx/Switcheroo.dmg
 
   linux:
@@ -32,19 +42,37 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+
+      # selecting a toolchain either by action or manual `rustup` calls should happen
+      # before the plugin, as it uses the current rustc version as its cache key
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+
+      - uses: Swatinem/rust-cache@v1
+
       - name: Install dependencies
         run: |
           sudo apt-get install -y libclang-dev libgtk-3-dev libxcb-render0-dev libxcb-shape0-dev \
-          libxcb-xfixes0-dev libspeechd-dev libxkbcommon-dev libssl-dev
+          libxcb-xfixes0-dev libspeechd-dev libxkbcommon-dev libssl-dev rpm
       - name: Install cargo deb
         run: cargo install cargo-deb
       - name: Create .deb package
         run: cargo deb --output switcheroo.deb
       - uses: actions/upload-artifact@v3
         with:
-          name: switcheroo-${GITHUB_REF##*/}_amd64.deb
-          path: ./target/debian/switcheroo.deb
-      - name: Install appimage dependencies
+          name: switcheroo-${{ github.ref_name }}_amd64.deb
+          path: switcheroo.deb
+      - name: Install cargo rpm
+        run: cargo install cargo-rpm
+      - name: Create .rpm package
+        run: cargo rpm build
+      - uses: actions/upload-artifact@v3
+        with:
+          name: switcheroo-${{ github.ref_name }}_amd64.rpm
+          path: target/release/rpmbuild/RPMS/x86_64/switcheroo*.rpm
+      - name: Install AppImage dependencies
         run: |
           wget https://github.com/AppImageCrafters/appimage-builder/releases/download/v1.0.0/appimage-builder-1.0.0-d3ce41f-x86_64.AppImage
           chmod +x *.AppImage
@@ -56,5 +84,5 @@ jobs:
         run: ./create_appimage.sh
       - uses: actions/upload-artifact@v3
         with:
-          name: switcheroo-${GITHUB_REF##*/}_amd64.AppImage
+          name: switcheroo-${{ github.ref_name }}_amd64.AppImage
           path: Switcheroo*.AppImage
