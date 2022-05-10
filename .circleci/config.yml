@@ -2,25 +2,69 @@
 # See: https://circleci.com/docs/2.0/configuration-reference
 version: 2.1
 
+orbs:
+  rust: circleci/rust@1.6.0
+
+filters:
+  branches:
+    only: main
+  tags:
+    only: /^[0-9]+.[0-9]+.[0-9]*$/
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
-  say-hello:
-    # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
-    # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
-    docker:
-      - image: cimg/base:stable
-    # Add steps to the job
-    # See: https://circleci.com/docs/2.0/configuration-reference/#steps
+  linux-arm64:
+    machine:
+      image: ubuntu-2004:current
+    resource_class: arm.medium
     steps:
       - checkout
+      - rust/install
       - run:
-          name: "Say hello"
-          command: "echo Hello, World!"
+          name: Install ghr
+          command: go get -u github.com/tcnksm/ghr
+      - run:
+          name: Install dependencies
+          command: sudo apt-get install libssl-dev rpm libgtk-3-dev
+      - run:
+          name: Install cargo-deb
+          command: cargo install cargo deb
+      - run:
+          name: Install cargo-rpm
+          command: cargo install cargo deb
+      - run:
+          name: Create deb package
+          command: |
+            cargo deb --output switcheroo.deb
+            mv switcheroo.deb switcheroo-${ CIRCLE_TAG }_arm64.deb
+      - run:
+          name: Create rpm package
+          command: |
+            cargo rpm build
+            mv target/release/rpmbuild/RPMS/aarch64/switcheroo*.rpm switcheroo-${ CIRCLE_TAG }_arm64.rpm
+      - run:
+          name: Install AppImage dependencies
+          command: |
+              pip install appimage-builder
+              wget https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-aarch64.AppImage
+              chmod +x *.AppImage
+              sudo mv *.AppImage /usr/bin/appimagetool
+      - run:
+          name: Create AppImage
+          command: |
+            ./create_appimage.sh
+            mv Switcheroo*.AppImage switcheroo-${ CIRCLE_TAG }_arm64.AppImage
+      - run:
+          name: Upload Release
+          command: |
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -replace ${CIRCLE_TAG} switcheroo-*
+
+      
+      
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
-  say-hello-workflow:
+  linux-arm64-workflow:
     jobs:
-      - say-hello
+      - linux-arm64
