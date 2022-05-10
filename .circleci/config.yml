@@ -28,10 +28,10 @@ jobs:
           command: sudo apt-get install libssl-dev rpm libgtk-3-dev
       - run:
           name: Install cargo-deb
-          command: cargo install cargo deb
+          command: cargo install cargo-deb
       - run:
           name: Install cargo-rpm
-          command: cargo install cargo deb
+          command: cargo install cargo-rpm
       - run:
           name: Create deb package
           command: |
