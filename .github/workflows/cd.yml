@@ -31,11 +31,14 @@ jobs:
       - name: Build ARM
         run: cargo build --release --target=aarch64-apple-darwin
       - name: Make DMG
-        run: make dmg-universal
-      - uses: actions/upload-artifact@v3
+        run: |
+          make dmg-universal
+          mv target/release/osx/Switcheroo.dmg switcheroo-${{ github.ref_name }}_universal.dmg
+      - name: Upload Release
+        uses: softprops/action-gh-release@v1
         with:
-          name: switcheroo-${{ github.ref_name }}_universal.dmg
-          path: ./target/release/osx/Switcheroo.dmg
+          files: |
+            switcheroo*.dmg
 
   linux:
     runs-on: ubuntu-latest
@@ -54,24 +57,19 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-get install -y libclang-dev libgtk-3-dev libxcb-render0-dev libxcb-shape0-dev \
-          libxcb-xfixes0-dev libspeechd-dev libxkbcommon-dev libssl-dev rpm
+          sudo apt-get install -y libgtk-3-dev libssl-dev rpm
       - name: Install cargo deb
         run: cargo install cargo-deb
       - name: Create .deb package
-        run: cargo deb --output switcheroo.deb
-      - uses: actions/upload-artifact@v3
-        with:
-          name: switcheroo-${{ github.ref_name }}_amd64.deb
-          path: switcheroo.deb
+        run: |
+          cargo deb --output switcheroo.deb
+          mv switcheroo.deb switcheroo-${{ github.ref_name }}_amd64.deb
       - name: Install cargo rpm
         run: cargo install cargo-rpm
       - name: Create .rpm package
-        run: cargo rpm build
-      - uses: actions/upload-artifact@v3
-        with:
-          name: switcheroo-${{ github.ref_name }}_amd64.rpm
-          path: target/release/rpmbuild/RPMS/x86_64/switcheroo*.rpm
+        run: |
+          cargo rpm build
+          mv target/release/rpmbuild/RPMS/x86_64/switcheroo*.rpm switcheroo-${{ github.ref_name }}_amd64.rpm
       - name: Install AppImage dependencies
         run: |
           wget https://github.com/AppImageCrafters/appimage-builder/releases/download/v1.0.0/appimage-builder-1.0.0-d3ce41f-x86_64.AppImage
@@ -80,9 +78,14 @@ jobs:
           wget https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-x86_64.AppImage
           chmod +x *.AppImage
           sudo mv *.AppImage /usr/bin/appimagetool
-      - name: create appimage
-        run: ./create_appimage.sh
-      - uses: actions/upload-artifact@v3
+      - name: Create AppImage
+        run: |
+          ./create_appimage.sh
+          mv Switcheroo*.AppImage switcheroo-${{ github.ref_name }}_amd64.AppImage
+      - name: Upload Release
+        uses: softprops/action-gh-release@v1
         with:
-          name: switcheroo-${{ github.ref_name }}_amd64.AppImage
-          path: Switcheroo*.AppImage
+          files: |
+            switcheroo*.AppImage
+            switcheroo*.deb
+            switcheroo*.rpm
