@@ -36,12 +36,12 @@ jobs:
           name: Create deb package
           command: |
             cargo deb --output switcheroo.deb
-            mv switcheroo.deb switcheroo-${ CIRCLE_TAG }_arm64.deb
+            mv switcheroo.deb switcheroo-${CIRCLE_TAG}_arm64.deb
       - run:
           name: Create rpm package
           command: |
             cargo rpm build
-            mv target/release/rpmbuild/RPMS/aarch64/switcheroo*.rpm switcheroo-${ CIRCLE_TAG }_arm64.rpm
+            mv target/release/rpmbuild/RPMS/aarch64/switcheroo*.rpm switcheroo-${CIRCLE_TAG}_arm64.rpm
       - run:
           name: Install AppImage dependencies
           command: |
@@ -53,7 +53,7 @@ jobs:
           name: Create AppImage
           command: |
             ./create_appimage.sh
-            mv Switcheroo*.AppImage switcheroo-${ CIRCLE_TAG }_arm64.AppImage
+            mv Switcheroo*.AppImage switcheroo-${CIRCLE_TAG}_arm64.AppImage
       - run:
           name: Upload Release
           command: |
