@@ -18,6 +18,8 @@ jobs:
       image: ubuntu-2004:current
     resource_class: arm.medium
     steps:
+      - restore_cache:
+          key: project-cache
       - checkout
       - rust/install
       - run:
@@ -54,11 +56,15 @@ jobs:
           command: |
             cargo rpm build
             mv target/release/rpmbuild/RPMS/aarch64/switcheroo*.rpm switcheroo-${CIRCLE_TAG}_arm64.rpm
+      - save_cache:
+          key: project-cache
+          paths:
+            - "~/.cargo"
+            - "./target"
       - run:
           name: Upload Release
           command: |
             ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -replace ${CIRCLE_TAG} switcheroo-*
-      
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
