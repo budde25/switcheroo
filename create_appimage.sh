@@ -4,6 +4,7 @@ rm -f Switcheroo*.AppImage
 
 cargo build --release
 
+rm -rf target/AppDir
 mkdir -p target/AppDir/usr/bin
 cp target/release/switcheroo target/AppDir/usr/bin
 
