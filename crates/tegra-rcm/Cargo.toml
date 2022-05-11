@@ -7,7 +7,7 @@ authors = ["Ethan Budd <budde25@protonmail.com>"]
 description = "A library to help exploit the bootROM exploit for the Tegra X1's RCM mode"
 repository = "https://github.com/budde25/switcheroo/tree/main/crates/tegra-rcm"
 readme = "README.md"
-
+categories = ["os"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
