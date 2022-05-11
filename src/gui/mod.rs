@@ -8,6 +8,7 @@ use color_eyre::eyre::Result;
 
 use egui::{Button, Color32, RichText, Ui};
 use image::Images;
+use native_dialog::FileDialog;
 use tegra_rcm::{Error, Payload, Rcm};
 
 type ThreadSwitchResult = Arc<Mutex<Result<Rcm, Error>>>;
@@ -152,7 +153,7 @@ impl eframe::App for MyApp {
                             .button(RichText::new("Select Payload").size(18.0))
                             .clicked()
                         {
-                            if let Some(path) = rfd::FileDialog::new().pick_file() {
+                            if let Some(path) = FileDialog::new().show_open_single_file().unwrap() {
                                 self.payload_data = make_payload_data(&path);
                             }
                         }

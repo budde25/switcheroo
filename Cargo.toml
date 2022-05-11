@@ -11,25 +11,25 @@ license = "GPL-2.0-or-later"
 
 
 [dependencies]
-clap = { version = "3.1.17", features = ["derive"] }
+clap = { version = "3.1.18", features = ["derive"] }
 color-eyre = "0.6.1"
 
 # gui only
 egui = { version = "0.18.1", optional = true }
 egui_extras = { version = "0.18.0", features = ["svg"], optional = true }
 eframe = { version = "0.18.0", features = ["dark-light"], optional = true }
-rfd = { version = "0.8.2", optional = true }
+native-dialog = { version = "0.6.3", optional = true }
 
 tegra-rcm = { version = "0.1.0", path = "crates/tegra-rcm" }
-rusb = { version = "0.9.1" }
+rusb = "0.9.1"
 
 [build-dependencies]
 clap_complete = "3.1.4"
-clap = { version = "3.1.17", features = ["derive"] }
+clap = { version = "3.1.18", features = ["derive"] }
 
 [features]
 default = ["gui"]
-gui = ["dep:egui", "dep:egui_extras", "dep:eframe", "dep:rfd"]
+gui = ["dep:egui", "dep:egui_extras", "dep:eframe", "dep:native-dialog"]
 
 [workspace]
 members = ["crates/tegra-rcm"]
