@@ -68,6 +68,8 @@ impl Rcm {
         })
     }
 
+    /// Used to initialize the RCM device connection, this should only be done once
+    /// and should be done before interacting in any way
     pub fn init(&mut self) -> Result<(), Error> {
         self.switch.init()?;
         Ok(())
