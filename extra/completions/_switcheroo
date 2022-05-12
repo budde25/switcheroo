@@ -19,6 +19,8 @@ _switcheroo() {
 '--help[Print help information]' \
 '-V[Print version information]' \
 '--version[Print version information]' \
+'*-v[]' \
+'*--verbose[]' \
 ":: :_switcheroo_commands" \
 "*::: :->switcheroo" \
 && ret=0

@@ -6,6 +6,8 @@ use std::{env, fs};
 use clap::StructOpt;
 use color_eyre::eyre::{Context, Result};
 use tegra_rcm::{Error, Payload, Rcm};
+use tracing_subscriber::prelude::*;
+use tracing_subscriber::{filter::LevelFilter, fmt, EnvFilter};
 
 mod cli;
 #[cfg(feature = "gui")]
@@ -14,13 +16,26 @@ mod gui;
 use cli::{Cli, Commands};
 
 fn main() -> Result<()> {
+    let args = Cli::parse();
+
+    let filter = EnvFilter::from_default_env();
+    let filter = match args.verbose {
+        1 => filter.add_directive(LevelFilter::INFO.into()),
+        2 => filter.add_directive(LevelFilter::DEBUG.into()),
+        3 => filter.add_directive(LevelFilter::TRACE.into()),
+        _ => filter.add_directive(LevelFilter::WARN.into()),
+    };
+
+    tracing_subscriber::registry()
+        .with(fmt::layer())
+        .with(filter)
+        .init();
+
     // check if we should start the gui
     #[cfg(feature = "gui")]
     check_gui_mode()?;
 
     color_eyre::install()?;
-    let args = Cli::parse();
-
     match args.command {
         Commands::Execute { payload, wait } => execute(payload, wait)?,
         Commands::Device {} => device()?,

@@ -1,6 +1,7 @@
 use crate::Error;
+use tracing::{event, Level};
 
-/// A constructed payload, this is transfered to the switch in RCM mode to execute bootROM exploit
+/// A constructed payload, this is transferred to the switch in RCM mode to execute bootROM exploit
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Payload {
     data: Box<[u8]>,
@@ -35,7 +36,14 @@ impl Payload {
             return Err(Error::PayloadTooLong(payload.len()));
         }
 
+        event!(
+            Level::DEBUG,
+            "provided payload in size bounds with a size is: {} bytes",
+            payload.len()
+        );
+
         const INTERMEZZO: &[u8; 124] = include_bytes!("intermezzo/intermezzo.bin");
+        event!(Level::TRACE, "Injected intermezzo.bin");
 
         let mut payload_builder: Vec<u8> = Vec::with_capacity(BUILT_PAYLOAD_MAX_LENGTH);
         // start with the max_len arg
@@ -67,6 +75,11 @@ impl Payload {
         let data = payload_builder.into_boxed_slice();
 
         assert!(data.len() <= BUILT_PAYLOAD_MAX_LENGTH);
+        event!(
+            Level::DEBUG,
+            "Complete payload has been build with a size of: {} bytes",
+            length = data.len()
+        );
 
         Ok(Self { data })
     }

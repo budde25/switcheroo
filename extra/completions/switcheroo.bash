@@ -31,7 +31,7 @@ _switcheroo() {
 
     case "${cmd}" in
         switcheroo)
-            opts="-h -V --help --version execute device gui help"
+            opts="-h -V -v --help --version --verbose execute device gui help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0

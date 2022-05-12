@@ -7,6 +7,9 @@ use clap::{Parser, Subcommand};
 pub struct Cli {
     #[clap(subcommand)]
     pub command: Commands,
+
+    #[clap(short, long, parse(from_occurrences))]
+    pub verbose: usize,
 }
 
 #[derive(Subcommand)]

@@ -1,5 +1,6 @@
 complete -c switcheroo -n "__fish_use_subcommand" -s h -l help -d 'Print help information'
 complete -c switcheroo -n "__fish_use_subcommand" -s V -l version -d 'Print version information'
+complete -c switcheroo -n "__fish_use_subcommand" -s v -l verbose
 complete -c switcheroo -n "__fish_use_subcommand" -f -a "execute" -d 'Executes a payload'
 complete -c switcheroo -n "__fish_use_subcommand" -f -a "device" -d 'Checks if a Switch in RCM mode is detected'
 complete -c switcheroo -n "__fish_use_subcommand" -f -a "gui" -d 'Opens the GUI'
