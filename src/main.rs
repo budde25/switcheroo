@@ -16,6 +16,12 @@ mod gui;
 use cli::{Cli, Commands};
 
 fn main() -> Result<()> {
+    // check if we should start the gui
+    #[cfg(feature = "gui")]
+    check_gui_mode()?;
+
+    color_eyre::install()?;
+
     let args = Cli::parse();
 
     let filter = EnvFilter::from_default_env();
@@ -31,11 +37,6 @@ fn main() -> Result<()> {
         .with(filter)
         .init();
 
-    // check if we should start the gui
-    #[cfg(feature = "gui")]
-    check_gui_mode()?;
-
-    color_eyre::install()?;
     match args.command {
         Commands::Execute { payload, wait } => execute(payload, wait)?,
         Commands::Device {} => device()?,
