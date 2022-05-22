@@ -16,7 +16,7 @@ pub enum Error {
     #[error("Expected timeout error after smashing the stack")]
     RcmExpectedError,
     /// We cannot find a switch in RCM mode connected
-    #[error("Nintento Switch in RCM mode not found")]
+    #[error("Nintendo Switch in RCM mode not found")]
     SwitchNotFound,
     /// Unable to claim the Switches interface
     #[error("Unable to claim interface: `{0}`")]

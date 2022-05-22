@@ -94,7 +94,7 @@ impl Payload {
 mod tests {
     use super::Payload;
 
-    /// Tests that we generate the same bin as the reference implmentation
+    /// Tests that we generate the same bin as the reference implementation
     #[test]
     fn basic_correctness() {
         let correct = include_bytes!("test/hekate_ctcaer_5.7.2_ref_payload.bin");
