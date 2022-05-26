@@ -12,9 +12,11 @@ mod error;
 mod payload;
 mod rcm;
 mod vulnerability;
+mod hotplug;
 
 use device::SwitchDevice;
 
 pub use error::{Error, Result};
 pub use payload::Payload;
 pub use rcm::Rcm;
+pub use hotplug::{Actions, create_hotplug};

@@ -1,7 +1,5 @@
 use std::ops::DerefMut;
 
-use rusb::{DeviceHandle, GlobalContext};
-
 use crate::Result;
 
 use crate::device::{SwitchDevice, SwitchDeviceRaw};
@@ -47,9 +45,9 @@ pub struct Rcm {
 impl Rcm {
     /// Create a new Rcm object from an existing DeviceHandle
     /// Should not have its interface claimed yet
-    pub fn with_device_handle(device: DeviceHandle<GlobalContext>) -> Self {
+    pub(crate) fn with_device(device: SwitchDevice) -> Self {
         Self {
-            switch: SwitchDevice::with_device_handle(device),
+            switch: device,
             current_buffer: BufferState::Low,
             total_written: 0,
         }
@@ -106,7 +104,7 @@ impl Rcm {
             remaining_buf = &remaining_buf[data_to_transmit..];
             match self.write_buffer(chunk) {
                 Ok(size) => written += size,
-                Err(e) => return Err(e.into()),
+                Err(e) => return Err(e),
             };
         }
         // update the current amount of bytes written
