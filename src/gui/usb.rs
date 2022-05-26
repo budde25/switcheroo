@@ -22,9 +22,7 @@ impl rusb::Hotplug<GlobalContext> for HotplugHandler {
     fn device_arrived(&mut self, device: Device<GlobalContext>) {
         if let Ok(device_desc) = device.device_descriptor() {
             if device_desc.vendor_id() == SWITCH_VID && device_desc.product_id() == SWITCH_PID {
-                //println!("Switch arrived {:?}", device);
-
-                // if this is not Ok, it probably got unpluged really fast
+                // if this is not Ok, it probably got unplugged really fast
                 if let Ok(dev) = device.open() {
                     let rcm = Rcm::with_device_handle(dev);
 

@@ -83,7 +83,7 @@ Here are some other similar projects
 
 ## Credit
 
-Implemenation is largely based on the following reference implementation:
+Implementation is largely based on the following reference implementation:
 [Fusee Launcher](https://github.com/Qyriad/fusee-launcher)  
 Gui design inspired from the great:
 [TegraRcmGui](https://github.com/eliboa/TegraRcmGUI)  
