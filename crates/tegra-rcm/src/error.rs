@@ -31,10 +31,12 @@ pub enum Error {
     #[error("Access denied (insufficient permissions)")]
     AccessDenied,
     /// This is a catchall error for various other things that can go wrong with libusb, contains rusb's Error type
+    #[cfg(not(target_os = "windows"))]
     #[error(transparent)]
     Usb(rusb::Error),
 }
 
+#[cfg(not(target_os = "windows"))]
 impl From<rusb::Error> for Error {
     fn from(err: rusb::Error) -> Self {
         match err {

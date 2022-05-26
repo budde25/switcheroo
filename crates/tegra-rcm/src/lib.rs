@@ -9,14 +9,16 @@
 
 mod device;
 mod error;
+#[cfg(not(target_os = "windows"))]
+mod hotplug;
 mod payload;
 mod rcm;
 mod vulnerability;
-mod hotplug;
 
 use device::SwitchDevice;
 
 pub use error::{Error, Result};
+#[cfg(not(target_os = "windows"))]
+pub use hotplug::{create_hotplug, Actions};
 pub use payload::Payload;
 pub use rcm::Rcm;
-pub use hotplug::{Actions, create_hotplug};

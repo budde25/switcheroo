@@ -15,8 +15,12 @@ impl Default for Images {
         let connected_handle = load_image("Rcm Connected", include_bytes!("images/connected.svg"));
         let done_handle = load_image("Rcm Complete", include_bytes!("images/done.svg"));
 
-        let not_found = not_found_handle.join().expect("Thread should be able to join");
-        let connected = connected_handle.join().expect("Thread should be able to join");
+        let not_found = not_found_handle
+            .join()
+            .expect("Thread should be able to join");
+        let connected = connected_handle
+            .join()
+            .expect("Thread should be able to join");
         let done = done_handle.join().expect("Thread should be able to join");
 
         Self {
@@ -28,5 +32,7 @@ impl Default for Images {
 }
 
 fn load_image(debug_name: &'static str, image_bytes: &'static [u8]) -> JoinHandle<RetainedImage> {
-    thread::spawn(move || RetainedImage::from_svg_bytes(debug_name, image_bytes).expect("Image should be valid svg"))
+    thread::spawn(move || {
+        RetainedImage::from_svg_bytes(debug_name, image_bytes).expect("Image should be valid svg")
+    })
 }

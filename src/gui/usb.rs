@@ -2,7 +2,7 @@ use std::thread;
 
 use crate::Error;
 
-use tegra_rcm::{Rcm, Actions, create_hotplug};
+use tegra_rcm::{create_hotplug, Actions, Rcm};
 
 use egui::Context;
 
@@ -35,5 +35,5 @@ impl Actions for HotplugHandler {
 
 /// Spawn a separate thread too
 pub fn spawn_thread(tswitch: ThreadSwitchResult, ctx: Context) {
-    thread::spawn(move || create_hotplug(Box::new(HotplugHandler {tswitch, ctx})));
+    thread::spawn(move || create_hotplug(Box::new(HotplugHandler { tswitch, ctx })));
 }

@@ -1,7 +1,7 @@
-use rusb::{GlobalContext, Device, DeviceHandle, HotplugBuilder, UsbContext};
+use rusb::{Device, DeviceHandle, GlobalContext, HotplugBuilder, UsbContext};
 
-use crate::Rcm;
 use crate::device::{SwitchDevice, SWITCH_PID, SWITCH_VID};
+use crate::Rcm;
 
 impl Rcm {
     /// Create a new Rcm object from an existing DeviceHandle
@@ -11,7 +11,9 @@ impl Rcm {
     }
 }
 
-struct HotplugHandler { inner: Box<dyn Actions>}
+struct HotplugHandler {
+    inner: Box<dyn Actions>,
+}
 unsafe impl Send for HotplugHandler {}
 
 impl rusb::Hotplug<GlobalContext> for HotplugHandler {

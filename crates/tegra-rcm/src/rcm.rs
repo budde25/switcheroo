@@ -2,7 +2,7 @@ use std::ops::DerefMut;
 
 use crate::Result;
 
-use crate::device::{SwitchDevice, SwitchDeviceRaw};
+use crate::device::{Device, DeviceRaw, SwitchDevice, SwitchDeviceRaw};
 use crate::vulnerability::Vulnerability;
 use crate::Payload;
 
@@ -100,7 +100,7 @@ impl Rcm {
             let data_to_transmit = length_remaining.min(PACKET_SIZE);
             length_remaining -= data_to_transmit;
 
-            let chunk = &remaining_buf[..data_to_transmit];
+            let mut chunk = &remaining_buf[..data_to_transmit];
             remaining_buf = &remaining_buf[data_to_transmit..];
             match self.write_buffer(chunk) {
                 Ok(size) => written += size,
@@ -140,7 +140,7 @@ impl Rcm {
     fn write_buffer(&mut self, buf: &[u8]) -> Result<usize> {
         self.toggle_buffer();
         let written = self.switch.write(buf)?;
-        Ok(written) 
+        Ok(written)
     }
 
     fn toggle_buffer(&mut self) {
