@@ -1,10 +1,7 @@
 use rusb::{GlobalContext, Device, DeviceHandle, HotplugBuilder, UsbContext};
 
 use crate::Rcm;
-use crate::device::SwitchDevice;
-
-const SWITCH_VID: u16 = 0x0955;
-const SWITCH_PID: u16 = 0x7321;
+use crate::device::{SwitchDevice, SWITCH_PID, SWITCH_VID};
 
 impl Rcm {
     /// Create a new Rcm object from an existing DeviceHandle
@@ -60,10 +57,10 @@ pub fn create_hotplug(data: Box<dyn Actions>) {
     }
 }
 
-/// TODO
+/// Defines the two actions for when a device is plugged in or removed
 pub trait Actions {
-    /// TODO
+    /// A switch device has a arrived
     fn arrives(&mut self, rcm: Rcm);
-    /// TODO
+    /// A switch device has left
     fn leaves(&mut self);
 }

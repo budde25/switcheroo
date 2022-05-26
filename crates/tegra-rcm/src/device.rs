@@ -4,6 +4,9 @@ use std::time::Duration;
 use crate::Error;
 use rusb::{DeviceHandle, GlobalContext};
 
+pub const SWITCH_VID: u16 = 0x0955;
+pub const SWITCH_PID: u16 = 0x7321;
+
 /// A switch device that has not been init yet
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SwitchDeviceRaw {
@@ -12,8 +15,7 @@ pub struct SwitchDeviceRaw {
 }
 
 impl SwitchDeviceRaw {
-    pub const SWITCH_VID: u16 = 0x0955;
-    pub const SWITCH_PID: u16 = 0x7321;
+    
     /// Creates a new uninit device with a custom vid and pid
     pub fn new(vid: u16, pid: u16) -> Self {
         Self { vid, pid }
@@ -56,7 +58,7 @@ impl SwitchDeviceRaw {
 impl Default for SwitchDeviceRaw {
     fn default() -> Self {
         // Default Nintendo Switch RCM VID and PIC
-        Self::new(Self::SWITCH_VID, Self::SWITCH_PID)
+        Self::new(SWITCH_VID, SWITCH_PID)
     }
 }
 

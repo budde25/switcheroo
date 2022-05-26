@@ -43,7 +43,7 @@ pub struct Rcm {
 }
 
 impl Rcm {
-    /// Create a new Rcm object from an existing DeviceHandle
+    /// Create a new Rcm object from an existing SwitchDevice
     /// Should not have its interface claimed yet
     pub(crate) fn with_device(device: SwitchDevice) -> Self {
         Self {
