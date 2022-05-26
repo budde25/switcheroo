@@ -2,7 +2,7 @@ use std::ops::DerefMut;
 
 use rusb::{DeviceHandle, GlobalContext};
 
-use crate::Error;
+use crate::Result;
 
 use crate::device::{SwitchDevice, SwitchDeviceRaw};
 use crate::vulnerability::Vulnerability;
@@ -41,7 +41,7 @@ impl BufferState {
 pub struct Rcm {
     switch: SwitchDevice,
     current_buffer: BufferState,
-    _total_written: usize,
+    total_written: usize,
 }
 
 impl Rcm {
@@ -51,50 +51,43 @@ impl Rcm {
         Self {
             switch: SwitchDevice::with_device_handle(device),
             current_buffer: BufferState::Low,
-            _total_written: 0,
+            total_written: 0,
         }
     }
 
     /// Finds and connects to a device in RCM mode
     /// This will error out if no device is connected unless wait: true is passed
     /// If wait: true is passed this will block until it detects an rcm device
-    pub fn new(wait: bool) -> Result<Self, Error> {
+    pub fn new(wait: bool) -> Result<Self> {
         let switch = SwitchDeviceRaw::default().find_device(wait)?;
 
         Ok(Self {
             switch,
             current_buffer: BufferState::Low,
-            _total_written: 0,
+            total_written: 0,
         })
     }
 
     /// Used to initialize the RCM device connection, this should only be done once
     /// and should be done before interacting in any way
-    pub fn init(&mut self) -> Result<(), Error> {
+    pub fn init(&mut self) -> Result<()> {
         self.switch.init()?;
         Ok(())
     }
 
     /// This will execute the payload on the connected device
     /// NOTE: Must first read the device id, or else this will fail
-    pub fn execute(&mut self, payload: &Payload) -> Result<(), Error> {
+    pub fn execute(&mut self, payload: &Payload) -> Result<()> {
         self.write(payload.data())?;
         self.switch_to_highbuf()?;
 
         // smashing the stack
 
-        let res = self.trigger_controlled_memcopy();
-        // We expect a timeout
-        if let Err(err) = res {
-            if err == Error::Usb(rusb::Error::Timeout) {
-                return Ok(());
-            }
-        }
-        Err(Error::RcmExpectedError)
+        self.trigger_controlled_memcopy()
     }
 
     /// Writes data to the RCM protocol endpoint
-    fn write(&mut self, buf: &[u8]) -> Result<usize, Error> {
+    fn write(&mut self, buf: &[u8]) -> Result<usize> {
         const PACKET_SIZE: usize = 0x1000;
         const MAX_LENGTH: usize = 0x30298;
 
@@ -116,6 +109,8 @@ impl Rcm {
                 Err(e) => return Err(e.into()),
             };
         }
+        // update the current amount of bytes written
+        self.total_written += written;
 
         Ok(written)
     }
@@ -124,7 +119,7 @@ impl Rcm {
         self.current_buffer.address()
     }
 
-    fn switch_to_highbuf(&mut self) -> Result<(), Error> {
+    fn switch_to_highbuf(&mut self) -> Result<()> {
         if self.current_buffer != BufferState::High {
             let buf = &[b'\0'; 0x1000];
             self.write(buf)?;
@@ -132,21 +127,22 @@ impl Rcm {
         Ok(())
     }
 
-    fn trigger_controlled_memcopy(&self) -> Result<(), Error> {
+    fn trigger_controlled_memcopy(&self) -> Result<()> {
         const STACK_END: usize = 0x40010000;
         let length = STACK_END - self.current_buff_addr();
         self.trigger_controlled_memcopy_length(length)?;
         Ok(())
     }
 
-    fn trigger_controlled_memcopy_length(&self, length: usize) -> Result<(), Error> {
+    fn trigger_controlled_memcopy_length(&self, length: usize) -> Result<()> {
         self.switch.trigger(length)?;
         Ok(())
     }
 
-    fn write_buffer(&mut self, buf: &[u8]) -> rusb::Result<usize> {
+    fn write_buffer(&mut self, buf: &[u8]) -> Result<usize> {
         self.toggle_buffer();
-        self.switch.write(buf)
+        let written = self.switch.write(buf)?;
+        Ok(written) 
     }
 
     fn toggle_buffer(&mut self) {
@@ -154,13 +150,14 @@ impl Rcm {
     }
 
     /// Read from the device
-    fn read(&mut self, buf: &mut [u8]) -> rusb::Result<usize> {
-        self.switch.read(buf)
+    fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
+        let read = self.switch.read(buf)?;
+        Ok(read)
     }
 
     /// Reads the device ID
-    /// Note: The is a necessary step before excuting
-    pub fn read_device_id(&mut self) -> Result<Box<[u8; 16]>, Error> {
+    /// Note: The is a necessary step before executing
+    pub fn read_device_id(&mut self) -> Result<Box<[u8; 16]>> {
         let mut buf = Box::new([b'\0'; 16]);
         self.read(buf.deref_mut())?;
         Ok(buf)

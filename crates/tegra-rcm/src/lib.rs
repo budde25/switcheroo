@@ -15,6 +15,6 @@ mod vulnerability;
 
 use device::SwitchDevice;
 
-pub use error::Error;
+pub use error::{Error, Result};
 pub use payload::Payload;
 pub use rcm::Rcm;
