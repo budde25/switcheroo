@@ -1,5 +1,7 @@
 use std::ops::DerefMut;
 
+use tracing::debug;
+
 use crate::Result;
 
 use crate::device::{Device, DeviceRaw, SwitchDevice, SwitchDeviceRaw};
@@ -126,6 +128,8 @@ impl Rcm {
     }
 
     fn trigger_controlled_memcopy(&self) -> Result<()> {
+        debug!("Wrote a total of {} bytes to the switch, performing the controlled memcopy", self.total_written);
+    
         const STACK_END: usize = 0x40010000;
         let length = STACK_END - self.current_buff_addr();
         self.trigger_controlled_memcopy_length(length)?;
