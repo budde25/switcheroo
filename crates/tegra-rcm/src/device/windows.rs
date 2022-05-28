@@ -44,6 +44,10 @@ impl SwitchDevice {
             claimed: false,
         }
     }
+
+    pub fn device(&self) -> &DeviceHandle {
+        &self.device
+    }
 }
 
 impl SwitchDeviceRaw {

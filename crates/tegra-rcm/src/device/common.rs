@@ -44,6 +44,10 @@ impl SwitchDevice {
             claimed: false,
         }
     }
+
+    fn device(&self) -> DeviceHandle<GlobalContext> {
+        self.device
+    }
 }
 
 impl SwitchDeviceRaw {
