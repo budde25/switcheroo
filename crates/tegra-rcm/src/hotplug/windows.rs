@@ -1,12 +1,12 @@
-use rusb::{Device, DeviceHandle, GlobalContext, HotplugBuilder, UsbContext};
+use libusbk::DeviceHandle;
 
-use crate::device::{SwitchDevice, SWITCH_PID, SWITCH_VID};
-use crate::Rcm;
+use crate::device::{Device, SwitchDevice, SWITCH_PID, SWITCH_VID};
+use crate::{Actions, Rcm};
 
 impl Rcm {
     /// Create a new Rcm object from an existing DeviceHandle
     /// Should not have its interface claimed yet
-    fn with_device_handle(device: DeviceHandle<GlobalContext>) -> Self {
+    fn with_device_handle(device: DeviceHandle) -> Self {
         Self::with_device(SwitchDevice::with_device_handle(device))
     }
 }
@@ -16,9 +16,9 @@ struct HotplugHandler {
 }
 unsafe impl Send for HotplugHandler {}
 
-impl rusb::Hotplug<GlobalContext> for HotplugHandler {
+impl libusbk::Hotplug for HotplugHandler {
     /// Gets called whenever a new usb device arrives
-    fn device_arrived(&mut self, device: Device<GlobalContext>) {
+    fn device_arrived(&mut self, device: Device) {
         if let Ok(device_desc) = device.device_descriptor() {
             if device_desc.vendor_id() == SWITCH_VID && device_desc.product_id() == SWITCH_PID {
                 // if this is not Ok, it probably got unplugged really fast
@@ -31,7 +31,7 @@ impl rusb::Hotplug<GlobalContext> for HotplugHandler {
     }
 
     /// Gets called whenever a usb device leaves
-    fn device_left(&mut self, device: Device<GlobalContext>) {
+    fn device_left(&mut self, device: Device) {
         if let Ok(device_desc) = device.device_descriptor() {
             if device_desc.vendor_id() == SWITCH_VID && device_desc.product_id() == SWITCH_PID {
                 self.inner.leaves();
@@ -42,7 +42,7 @@ impl rusb::Hotplug<GlobalContext> for HotplugHandler {
 
 /// create a hotplug setup, this blocks
 pub fn create_hotplug(data: Box<dyn Actions>) {
-    if rusb::has_hotplug() {
+    if libusk::has_hotplug() {
         let context = rusb::GlobalContext::default();
 
         let _hotplug = HotplugBuilder::new()
@@ -55,14 +55,6 @@ pub fn create_hotplug(data: Box<dyn Actions>) {
             context.handle_events(None).unwrap();
         }
     } else {
-        panic!("libusb hotplug API unsupported");
+        panic!("libusbK hotplug API unsupported");
     }
-}
-
-/// Defines the two actions for when a device is plugged in or removed
-pub trait Actions {
-    /// A switch device has a arrived
-    fn arrives(&mut self, rcm: Rcm);
-    /// A switch device has left
-    fn leaves(&mut self);
 }
