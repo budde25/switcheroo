@@ -45,8 +45,8 @@ impl SwitchDevice {
         }
     }
 
-    fn device(&self) -> DeviceHandle<GlobalContext> {
-        self.device
+    pub fn device(&self) -> &DeviceHandle<GlobalContext> {
+        &self.device
     }
 }
 
