@@ -23,7 +23,7 @@ nix = "0.24.1"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 libusbk = { version = "0.1.0", path = "../../../libusbk-rs" }
-winapi = { version = "0.3.9", features = ["ioapiset"] }
+winapi = { version = "0.3.9", features = ["ioapiset", "errhandlingapi"] }
 
 [dev-dependencies]
 criterion = "0.3"
