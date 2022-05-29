@@ -14,6 +14,7 @@ categories = ["os"]
 thiserror = "1.0.31"
 tracing = "0.1.34"
 
+# rusb is used by linux and mac
 [target.'cfg(not(target_os = "windows"))'.dependencies]
 rusb = "0.9.1"
 

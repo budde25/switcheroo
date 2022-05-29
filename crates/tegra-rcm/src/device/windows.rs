@@ -1,7 +1,7 @@
 use std::thread;
 use std::time::Duration;
 
-use libusbk::{DeviceHandle, DeviceList};
+use libusbk::{DeviceHandle, DeviceList, DriverId};
 
 use super::DeviceRaw;
 use super::{Device, SwitchDeviceRaw};
@@ -18,21 +18,24 @@ impl Device for SwitchDevice {
     /// Init the device
     fn init(&mut self) -> Result<()> {
         if !self.claimed {
-            self.device.claim_interface(0, false).unwrap();
             self.claimed = true;
+        }
+        let driver_id = self.device().driver_id();
+        if driver_id != DriverId::LibUsbK {
+            return Err(crate::Error::WrongDriver(driver_id));
         }
         Ok(())
     }
 
     /// Read from the device into the buffer
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
-        let amount = self.device.read_pipe(0x81, buf).unwrap();
+        let amount = self.device.read_pipe(0x81, buf)?;
         Ok(amount as usize)
     }
 
     /// Write to the device from the buffer
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
-        let amount = self.device.write_pipe(0x01, buf).unwrap();
+        let amount = self.device.write_pipe(0x01, buf)?;
         Ok(amount as usize)
     }
 }
@@ -52,10 +55,10 @@ impl SwitchDevice {
 
 impl SwitchDeviceRaw {
     fn open_device_with_vid_pid(vid: u16, pid: u16) -> Result<DeviceHandle> {
-        let devices = DeviceList::new().unwrap();
+        let devices = DeviceList::new()?;
         let device = devices.find_with_vid_and_pid(vid as i32, pid as i32);
         if let Ok(dev) = device {
-            let handle = dev.open().unwrap();
+            let handle = dev.open()?;
             return Ok(handle);
         }
 
