@@ -43,10 +43,8 @@ pub fn create_hotplug(data: Box<dyn Actions>) {
 
         register.init().unwrap();
 
-        loop {
-            // blocks thread
-            // context.handle_events(None).unwrap();
-        }
+        let leak = Box::new(register);
+        let _ = Box::leak(leak);
     } else {
         panic!("libusbK hotplug API unsupported");
     }
