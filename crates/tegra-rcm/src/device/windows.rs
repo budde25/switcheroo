@@ -20,11 +20,7 @@ impl Device for SwitchDevice {
         if !self.claimed {
             self.claimed = true;
         }
-        let driver_id = self.device().driver_id();
-        if driver_id != DriverId::LibUsbK {
-            return Err(crate::Error::WrongDriver(driver_id));
-        }
-        Ok(())
+        self.validate()
     }
 
     /// Read from the device into the buffer
@@ -37,6 +33,14 @@ impl Device for SwitchDevice {
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
         let amount = self.device.write_pipe(0x01, buf)?;
         Ok(amount as usize)
+    }
+
+    fn validate(&self) -> Result<()> {
+        let driver_id = self.device().driver_id();
+        if driver_id != DriverId::LibUsbK {
+            return Err(crate::Error::WrongDriver(driver_id));
+        }
+        Ok(())
     }
 }
 

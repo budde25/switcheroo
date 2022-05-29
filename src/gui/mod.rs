@@ -1,7 +1,7 @@
 mod image;
 mod usb;
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
 use color_eyre::eyre::Result;
@@ -35,6 +35,7 @@ pub fn gui() -> Result<()> {
                 payload_data: None,
                 images,
                 state: State::NotAvailable,
+                error: None,
             })
         }),
     );
@@ -45,11 +46,16 @@ struct MyApp {
     payload_data: Option<PayloadData>,
     images: Images,
     state: State,
+    error: Option<Error>,
 }
 
 impl MyApp {
     // we can execute if we have a payload and rcm is available
     fn executable(&self) -> bool {
+        if self.error.is_some() {
+            return false;
+        }
+
         // we can't be excutable in this state
         match self.state {
             State::NotAvailable => return false,
@@ -77,26 +83,29 @@ impl MyApp {
     }
 
     /// Check if we need to change our current state
-    fn check_change_state(&mut self) -> Result<(), Error> {
+    fn check_change_state(&mut self) {
         if self.state == State::Done {
-            return Ok(());
+            return;
         }
 
         let arc = self.switch.try_lock();
         if let Ok(lock) = arc {
             let res = &*lock;
             match res {
-                Ok(_) => {
+                Ok(rcm) => {
+                    if let Err(e) = rcm.validate() {
+                        self.error = Some(e)
+                    }
                     self.state = State::Available;
-                    return Ok(());
                 }
                 Err(e) => {
+                    if *e != Error::SwitchNotFound {
+                        self.error = Some(*e)
+                    }
                     self.state = State::NotAvailable;
-                    return Err(*e);
                 }
             }
         }
-        Ok(())
     }
 }
 
@@ -110,7 +119,27 @@ enum State {
 #[derive(Debug)]
 struct PayloadData {
     payload: Result<Payload, Error>,
-    picked_path: String,
+    path: PathBuf,
+}
+
+impl PayloadData {
+    /// Makes a payload from a given file path
+    /// returns None on an error
+    pub fn from_path(path: &Path) -> Option<Self> {
+        let file = std::fs::read(&path);
+        if let Ok(data) = file {
+            let payload_data = PayloadData {
+                path: path.to_owned(),
+                payload: Payload::new(&data),
+            };
+            return Some(payload_data);
+        }
+        None
+    }
+
+    fn file_name(&self) -> &str {
+        self.path.file_name().unwrap().to_str().unwrap()
+    }
 }
 
 impl eframe::App for MyApp {
@@ -128,7 +157,7 @@ impl eframe::App for MyApp {
                             ui.horizontal(|ui| {
                                 ui.label(RichText::new("Payload:").size(16.0));
                                 ui.monospace(
-                                    RichText::new(&payload_data.picked_path)
+                                    RichText::new(payload_data.file_name())
                                         .color(Color32::BLUE)
                                         .size(16.0),
                                 );
@@ -154,7 +183,7 @@ impl eframe::App for MyApp {
                             .clicked()
                         {
                             if let Some(path) = FileDialog::new().show_open_single_file().unwrap() {
-                                self.payload_data = make_payload_data(&path);
+                                self.payload_data = PayloadData::from_path(&path);
                             }
                         }
 
@@ -173,9 +202,9 @@ impl eframe::App for MyApp {
                                 match rcm {
                                     Ok(switch) => match execute(switch, payload) {
                                         Ok(_) => self.state = State::Done,
-                                        Err(e) => create_error(ui, &e.to_string()),
+                                        Err(e) => self.error = Some(e),
                                     },
-                                    Err(e) => create_error_from_error(ui, *e),
+                                    Err(e) => self.error = Some(*e),
                                 }
                             }
                         }
@@ -183,9 +212,10 @@ impl eframe::App for MyApp {
                 });
             });
 
-            match self.check_change_state() {
-                Ok(_) => (),
-                Err(e) => create_error_from_error(ui, e),
+            self.check_change_state();
+
+            if let Some(e) = self.error {
+                create_error_from_error(ui, e);
             }
 
             ui.centered_and_justified(|ui| {
@@ -208,7 +238,7 @@ impl eframe::App for MyApp {
             // unwrap safe cause we are not empty
             let file = ctx.input().raw.dropped_files.last().unwrap().clone();
             if let Some(path) = file.path {
-                self.payload_data = make_payload_data(&path);
+                self.payload_data = PayloadData::from_path(&path);
             }
         }
     }
@@ -231,6 +261,15 @@ fn create_error_from_error(ui: &mut Ui, error: Error) {
                 "USB permission error, see the following to troubleshoot",
             );
             ui.hyperlink("https://github.com/budde25/switcheroo#linux-permission-denied-error");
+        }
+        Error::WrongDriver(i) => {
+            create_error(
+            ui,
+            &format!(
+                "Wrong USB driver installed, expected libusbK but found `{}`, see the following to troubleshoot",
+                i),
+            );
+            ui.hyperlink("https://github.com/budde25/switcheroo#windows-wrong-driver-error");
         }
         _ => create_error(ui, &error.to_string()),
     };
@@ -277,18 +316,4 @@ fn execute(switch: &mut Rcm, payload: &Payload) -> Result<(), Error> {
     let _ = switch.read_device_id()?;
     switch.execute(payload)?;
     Ok(())
-}
-
-/// Makes a payload from a given file path
-/// returns None on an error
-fn make_payload_data(path: &Path) -> Option<PayloadData> {
-    let file = std::fs::read(&path);
-    if let Ok(data) = file {
-        let payload_data = PayloadData {
-            picked_path: path.display().to_string(),
-            payload: Payload::new(&data),
-        };
-        return Some(payload_data);
-    }
-    None
 }

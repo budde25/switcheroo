@@ -21,7 +21,7 @@ impl Device for SwitchDevice {
             self.device.claim_interface(0)?;
             self.claimed = true;
         }
-        Ok(())
+        self.validate()
     }
 
     /// Read from the device into the buffer
@@ -34,6 +34,10 @@ impl Device for SwitchDevice {
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
         let amount = self.device.write_bulk(0x01, buf, Duration::from_secs(1))?;
         Ok(amount)
+    }
+
+    fn validate(&self) -> Result<()> {
+        Ok(())
     }
 }
 

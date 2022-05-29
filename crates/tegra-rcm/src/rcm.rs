@@ -75,6 +75,12 @@ impl Rcm {
         Ok(())
     }
 
+    /// Performs basic checks to ensure that the switch is ok to use
+    /// On windows this checks if the correct driver is installed
+    pub fn validate(&self) -> Result<()> {
+        self.switch.validate()
+    }
+
     /// This will execute the payload on the connected device
     /// NOTE: Must first read the device id, or else this will fail
     pub fn execute(&mut self, payload: &Payload) -> Result<()> {

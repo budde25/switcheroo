@@ -17,6 +17,7 @@ pub(crate) trait Device {
     fn init(&mut self) -> Result<()>;
     fn read(&mut self, buf: &mut [u8]) -> Result<usize>;
     fn write(&mut self, buf: &[u8]) -> Result<usize>;
+    fn validate(&self) -> Result<()>;
 }
 
 pub(crate) trait DeviceRaw {
