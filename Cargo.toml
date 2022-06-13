@@ -10,7 +10,7 @@ readme = "README.md"
 license = "GPL-2.0-or-later"
 
 [dependencies]
-clap = { version = "3.1.18", features = ["derive"] }
+clap = { version = "3.2.1", features = ["derive"] }
 color-eyre = "0.6.1"
 eframe = { version = "0.18.0", features = ["dark-light"], optional = true }
 egui = { version = "0.18.1", optional = true }
@@ -21,8 +21,8 @@ tegra-rcm = { version = "0.1.0", path = "crates/tegra-rcm" }
 tracing-subscriber = { version = "0.3.11", features = ["env-filter"] }
 
 [build-dependencies]
-clap = { version = "3.1.18", features = ["derive"] }
-clap_complete = "3.1.4"
+clap = { version = "3.2.1", features = ["derive"] }
+clap_complete = "3.2.1"
 
 [features]
 default = ["gui"]

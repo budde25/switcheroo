@@ -8,25 +8,27 @@ pub struct Cli {
     #[clap(subcommand)]
     pub command: Commands,
 
-    #[clap(short, long, parse(from_occurrences))]
-    pub verbose: usize,
+    /// Verbosity
+    #[clap(short, long, action = clap::ArgAction::Count)]
+    pub verbose: u8,
 }
 
 #[derive(Subcommand)]
 pub enum Commands {
-    /// Executes a payload
+    /// Executes a provided payload
     Execute {
         /// Path to the payload file
+        #[clap(action)]
         payload: PathBuf,
 
         /// Wait for device to be connected
-        #[clap(short, long)]
+        #[clap(short, long, action)]
         wait: bool,
     },
     /// Checks if a Switch in RCM mode is detected
     Device,
 
-    /// Opens the GUI
+    /// Opens the Graphical User Interface
     #[cfg(feature = "gui")]
     Gui,
 }

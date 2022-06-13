@@ -1,9 +1,9 @@
 complete -c switcheroo -n "__fish_use_subcommand" -s h -l help -d 'Print help information'
 complete -c switcheroo -n "__fish_use_subcommand" -s V -l version -d 'Print version information'
-complete -c switcheroo -n "__fish_use_subcommand" -s v -l verbose
-complete -c switcheroo -n "__fish_use_subcommand" -f -a "execute" -d 'Executes a payload'
+complete -c switcheroo -n "__fish_use_subcommand" -s v -l verbose -d 'Verbosity'
+complete -c switcheroo -n "__fish_use_subcommand" -f -a "execute" -d 'Executes a provided payload'
 complete -c switcheroo -n "__fish_use_subcommand" -f -a "device" -d 'Checks if a Switch in RCM mode is detected'
-complete -c switcheroo -n "__fish_use_subcommand" -f -a "gui" -d 'Opens the GUI'
+complete -c switcheroo -n "__fish_use_subcommand" -f -a "gui" -d 'Opens the Graphical User Interface'
 complete -c switcheroo -n "__fish_use_subcommand" -f -a "help" -d 'Print this message or the help of the given subcommand(s)'
 complete -c switcheroo -n "__fish_seen_subcommand_from execute" -s w -l wait -d 'Wait for device to be connected'
 complete -c switcheroo -n "__fish_seen_subcommand_from execute" -s h -l help -d 'Print help information'
