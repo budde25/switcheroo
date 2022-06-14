@@ -1,4 +1,4 @@
-use rusb::{Device, DeviceHandle, GlobalContext, HotplugBuilder, UsbContext, has_hotplug, Hotplug};
+use rusb::{has_hotplug, Device, DeviceHandle, GlobalContext, Hotplug, HotplugBuilder, UsbContext};
 
 use super::Actions;
 use crate::device::{SwitchDevice, SWITCH_PID, SWITCH_VID};
