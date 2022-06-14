@@ -17,9 +17,13 @@ pub struct Cli {
 pub enum Commands {
     /// Executes a provided payload
     Execute {
-        /// Path to the payload file
+        /// Path to the payload file, or a favorite if flag is passed
         #[clap(action)]
-        payload: PathBuf,
+        payload: String,
+
+        /// Use a favorite payload
+        #[clap(short, long, action)]
+        favorite: bool,
 
         /// Wait for device to be connected
         #[clap(short, long, action)]
@@ -27,6 +31,22 @@ pub enum Commands {
     },
     /// Checks if a Switch in RCM mode is detected
     Device,
+
+    /// Lists favorites
+    List,
+
+    /// Add a favorite
+    Add {
+        /// Path to the payload file
+        #[clap(action)]
+        payload: PathBuf,
+    },
+
+    /// Remove a favorite
+    Remove {
+        #[clap(action)]
+        favorite: String,
+    },
 
     /// Opens the Graphical User Interface
     #[cfg(feature = "gui")]

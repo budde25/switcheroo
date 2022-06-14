@@ -12,6 +12,9 @@ _switcheroo() {
             "$1")
                 cmd="switcheroo"
                 ;;
+            add)
+                cmd+="__add"
+                ;;
             device)
                 cmd+="__device"
                 ;;
@@ -24,6 +27,12 @@ _switcheroo() {
             help)
                 cmd+="__help"
                 ;;
+            list)
+                cmd+="__list"
+                ;;
+            remove)
+                cmd+="__remove"
+                ;;
             *)
                 ;;
         esac
@@ -31,8 +40,22 @@ _switcheroo() {
 
     case "${cmd}" in
         switcheroo)
-            opts="-h -V -v --help --version --verbose execute device gui help"
+            opts="-h -V -v --help --version --verbose execute device list add remove gui help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        switcheroo__add)
+            opts="-h --help <PAYLOAD>"
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
             fi
@@ -59,7 +82,7 @@ _switcheroo() {
             return 0
             ;;
         switcheroo__execute)
-            opts="-w -h --wait --help <PAYLOAD>"
+            opts="-f -w -h --favorite --wait --help <PAYLOAD>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -88,6 +111,34 @@ _switcheroo() {
             ;;
         switcheroo__help)
             opts="<SUBCOMMAND>..."
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        switcheroo__list)
+            opts="-h --help"
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        switcheroo__remove)
+            opts="-h --help <FAVORITE>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
