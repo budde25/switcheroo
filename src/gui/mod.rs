@@ -321,17 +321,19 @@ impl PayloadData {
 impl eframe::App for MyApp{
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            // Title
-            ui.label(RichText::new("Switcheroo").size(30.0).strong());
-            
-            /*
             ui.horizontal(|ui| {
+                // Title
+                ui.label(RichText::new("Switcheroo").size(24.0).strong());
+
+                ui.separator();
                 egui::widgets::global_dark_light_mode_switch(ui);
+
+                /*
                 ui.separator();
                 ui.selectable_value(&mut self.tab, Tab::Main,"Main");
                 ui.selectable_value(&mut self.tab, Tab::PayloadManager,"Payload Manager");
+                */
             })
-            */
         });
 
         /*
