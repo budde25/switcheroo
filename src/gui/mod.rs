@@ -10,6 +10,8 @@ use egui::{Button, Color32, RichText, Ui};
 use image::Images;
 use native_dialog::FileDialog;
 use tegra_rcm::{Error, Payload, Rcm};
+use super::favorites::Favorites;
+
 
 type ThreadSwitchResult = Arc<Mutex<Result<Rcm, Error>>>;
 
@@ -28,6 +30,10 @@ pub fn gui() -> Result<()> {
         "Switcheroo",
         options,
         Box::new(|cc| {
+            let mut style = egui::style::Style::default();
+            style.visuals = egui::style::Visuals::dark();
+            cc.egui_ctx.set_style(style);
+
             usb::spawn_thread(rcm.clone(), cc.egui_ctx.clone());
 
             Box::new(MyApp {
@@ -36,6 +42,8 @@ pub fn gui() -> Result<()> {
                 images,
                 state: State::NotAvailable,
                 error: None,
+                //tab: Tab::Main,
+                favorites: Favorites::new().ok(),
             })
         }),
     );
@@ -47,6 +55,8 @@ struct MyApp {
     images: Images,
     state: State,
     error: Option<Error>,
+    //tab: Tab,
+    favorites: Option<Favorites>,
 }
 
 impl MyApp {
@@ -70,7 +80,7 @@ impl MyApp {
         false
     }
 
-    // get the payload its available
+    // get the payload if its available
     fn payload(&self) -> Option<&Payload> {
         if let Some(payload_data) = &self.payload_data {
             if let Ok(payload) = &payload_data.payload {
@@ -107,6 +117,164 @@ impl MyApp {
             }
         }
     }
+
+    fn main_tab(&mut self, ctx: &egui::Context) {
+        egui::CentralPanel::default().show(ctx, |ui| {
+            ui.group(|ui| {
+                ui.add_space(10.0);
+                if let Some(payload_data) = &self.payload_data {
+                    match payload_data.payload {
+                        Ok(_) => {
+                            ui.horizontal(|ui| {
+                                ui.label(RichText::new("Payload:").size(16.0));
+                                ui.monospace(
+                                    RichText::new(payload_data.file_name())
+                                        .color(Color32::BLUE)
+                                        .size(16.0),
+                                );
+                            });
+                        }
+                        Err(e) => create_error(ui, &e.to_string()),
+                    }
+                } else {
+                    ui.horizontal(|ui| {
+                        ui.label(RichText::new("Payload:").size(16.0));
+                        ui.monospace(RichText::new("None").size(16.0));
+                    });
+                }
+
+                if let Some(favorites) = self.favorites.as_ref() {
+                    ui.add_space(10.0);
+                    ui.separator();
+                    ui.add_space(10.0);
+
+                    let list = favorites.list();
+
+                    match list {
+                        Ok(dirs) => {
+                            let vec: Vec<std::fs::DirEntry> = dirs.filter_map(|e| e.ok()).collect();
+    
+                            if vec.len() == 0 {
+                                ui.label(RichText::new("You don't seem to have any favorites yet! 😢"));
+                            } else {
+                                vec.iter().for_each(|entry_res| {
+                                    let entry = entry_res;
+            
+                                    let file_name = entry.file_name();
+            
+                                    ui.horizontal(|ui| {
+                                        ui.label(file_name.to_str().unwrap());
+                                        if ui.button(RichText::new("Load")).on_hover_text("Load favorite.").clicked() {
+                                            self.payload_data = PayloadData::from_path(&entry.path());
+                                        }
+                                        if ui.button(RichText::new("Remove")).on_hover_text("Remove from favorites.").clicked() {
+                                            self.favorites.as_ref().unwrap().remove(&file_name.to_string_lossy()).unwrap();
+                                        }
+                                    });  
+                                })
+                            }
+                        },
+                        Err(_) => {
+                            ui.label("Failed to read directory, possibly missing permissions.");
+                        },
+                    }
+                }
+
+                ui.add_space(10.0);
+                ui.separator();
+                ui.add_space(10.0);
+
+                ui.horizontal(|ui| {
+                    if ui.button(RichText::new("📂").size(50.0)).on_hover_text("Load payload from file").clicked() {
+                        if let Some(path) = FileDialog::new().show_open_single_file().unwrap() {
+                            self.payload_data = PayloadData::from_path(&path);
+                        }
+                    }
+
+                    if let Some(favorites) = self.favorites.as_ref() {
+                        let mut should_enabled = self.payload_data.is_some();
+
+                        if let Some(payload_data) = &self.payload_data {
+                            let current_loaded_name = payload_data.path
+                                .file_name()
+                                .unwrap()
+                                .to_string_lossy();
+
+                            let already_favorited = favorites
+                                .get(&current_loaded_name)
+                                .unwrap_or(None)
+                                .is_some();   
+
+                            should_enabled = !already_favorited;
+
+                            if !payload_data.path.exists() {
+                                should_enabled = false;
+                            }
+                        }
+
+                        if ui.add_enabled(should_enabled, egui::Button::new(RichText::new("♥").size(50.0)))
+                        .on_hover_text("Add currently loaded payload to favorites")
+                        .clicked() {
+                            if let Some(payload_data) = &self.payload_data {
+                                favorites.add(&payload_data.path, true).unwrap();
+                            }
+                        }
+                    }
+
+                    if self.state == State::Done {
+                        if ui.button(RichText::new("↺").size(50.0)).on_hover_text("Reset status").clicked() {
+                            self.state = State::NotAvailable
+                        }
+                    } else {
+                        if ui.add_enabled(
+                            self.executable(),
+                            Button::new(RichText::new("💉").size(50.0))
+                        ).on_hover_text("Inject loaded payload").clicked() {
+                            // we are safe to unwrap because we can only get the payload if we are executable
+                            let payload = self.payload().unwrap();
+                            if let Ok(mut res) = self.switch.try_lock() {
+                                // TODO: fix race condition
+                                let rcm = &mut *res;
+                                match rcm {
+                                    Ok(switch) => match execute(switch, payload) {
+                                        Ok(_) => self.state = State::Done,
+                                        Err(e) => self.error = Some(e),
+                                    },
+                                    Err(e) => self.error = Some(*e),
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+
+            self.check_change_state();
+
+            if let Some(e) = self.error {
+                create_error_from_error(ui, e);
+            }
+
+            ui.centered_and_justified(|ui| {
+                match self.state {
+                    State::Available => {
+                        self.images.connected.show_max_size(ui, ui.available_size())
+                    }
+                    State::NotAvailable => {
+                        self.images.not_found.show_max_size(ui, ui.available_size())
+                    }
+                    State::Done => self.images.done.show_max_size(ui, ui.available_size()),
+                };
+            });
+        });
+    }
+
+    /*
+    fn payload_manager(&mut self, ctx: &egui::Context) {
+        egui::CentralPanel::default().show(ctx, |ui| {
+            ui.label("Todo");
+        });
+    }
+    */
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -115,6 +283,14 @@ enum State {
     Available,
     Done,
 }
+
+/*
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Tab {
+    Main,
+    PayloadManager
+}
+*/
 
 #[derive(Debug)]
 struct PayloadData {
@@ -142,94 +318,30 @@ impl PayloadData {
     }
 }
 
-impl eframe::App for MyApp {
+impl eframe::App for MyApp{
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        egui::CentralPanel::default().show(ctx, |ui| {
+        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // Title
             ui.label(RichText::new("Switcheroo").size(30.0).strong());
-            ui.add_space(10.0);
-
-            ui.group(|ui| {
-                ui.add_space(10.0);
-                if let Some(payload_data) = &self.payload_data {
-                    match payload_data.payload {
-                        Ok(_) => {
-                            ui.horizontal(|ui| {
-                                ui.label(RichText::new("Payload:").size(16.0));
-                                ui.monospace(
-                                    RichText::new(payload_data.file_name())
-                                        .color(Color32::BLUE)
-                                        .size(16.0),
-                                );
-                            });
-                        }
-                        Err(e) => create_error(ui, &e.to_string()),
-                    }
-                } else {
-                    ui.horizontal(|ui| {
-                        ui.label(RichText::new("Payload:").size(16.0));
-                        ui.monospace(RichText::new("None").size(16.0));
-                    });
-                }
-
-                ui.add_space(10.0);
+            
+            /*
+            ui.horizontal(|ui| {
+                egui::widgets::global_dark_light_mode_switch(ui);
                 ui.separator();
-                ui.add_space(10.0);
-
-                ui.vertical_centered(|ui| {
-                    ui.horizontal(|ui| {
-                        if ui
-                            .button(RichText::new("Select Payload").size(18.0))
-                            .clicked()
-                        {
-                            if let Some(path) = FileDialog::new().show_open_single_file().unwrap() {
-                                self.payload_data = PayloadData::from_path(&path);
-                            }
-                        }
-
-                        if ui
-                            .add_enabled(
-                                self.executable(),
-                                Button::new(RichText::new("Execute").size(18.0)),
-                            )
-                            .clicked()
-                        {
-                            // we are safe to unwrap because we can only get the payload if we are executable
-                            let payload = self.payload().unwrap();
-                            if let Ok(mut res) = self.switch.try_lock() {
-                                // TODO: fix race condition
-                                let rcm = &mut *res;
-                                match rcm {
-                                    Ok(switch) => match execute(switch, payload) {
-                                        Ok(_) => self.state = State::Done,
-                                        Err(e) => self.error = Some(e),
-                                    },
-                                    Err(e) => self.error = Some(*e),
-                                }
-                            }
-                        }
-                    });
-                });
-            });
-
-            self.check_change_state();
-
-            if let Some(e) = self.error {
-                create_error_from_error(ui, e);
-            }
-
-            ui.centered_and_justified(|ui| {
-                match self.state {
-                    State::Available => {
-                        self.images.connected.show_max_size(ui, ui.available_size())
-                    }
-                    State::NotAvailable => {
-                        self.images.not_found.show_max_size(ui, ui.available_size())
-                    }
-                    State::Done => self.images.done.show_max_size(ui, ui.available_size()),
-                };
-            });
+                ui.selectable_value(&mut self.tab, Tab::Main,"Main");
+                ui.selectable_value(&mut self.tab, Tab::PayloadManager,"Payload Manager");
+            })
+            */
         });
+
+        /*
+        match self.tab {
+            Tab::Main => self.main_tab(ctx),
+            Tab::PayloadManager => self.payload_manager(ctx),
+        }
+        */
+
+        self.main_tab(ctx);
 
         preview_files_being_dropped(ctx);
 
@@ -311,7 +423,6 @@ fn preview_files_being_dropped(ctx: &egui::Context) {
 fn execute(switch: &mut Rcm, payload: &Payload) -> Result<(), Error> {
     // its ok if it gets init more than once, it skips previous inits
     switch.init()?;
-    println!("Smashing the stack!");
 
     // We need to read the device id first
     let _ = switch.read_device_id()?;
