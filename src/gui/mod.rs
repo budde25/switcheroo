@@ -36,7 +36,8 @@ pub fn gui() -> Result<()> {
 
             usb::spawn_thread(rcm.clone(), cc.egui_ctx.clone());
 
-            Box::new(MyApp {
+            // We have to do it like this, we need to update the cache when loading up.
+            let mut app = MyApp {
                 switch: rcm,
                 payload_data: None,
                 images,
@@ -44,7 +45,12 @@ pub fn gui() -> Result<()> {
                 error: None,
                 //tab: Tab::Main,
                 favorites: Favorites::new().ok(),
-            })
+                favorites_cache: vec![]
+            };
+
+            app.update_favorite_cache();
+
+            Box::new(app)
         }),
     );
 }
@@ -57,6 +63,7 @@ struct MyApp {
     error: Option<Error>,
     //tab: Tab,
     favorites: Option<Favorites>,
+    favorites_cache: Vec<PathBuf>
 }
 
 impl MyApp {
@@ -118,6 +125,20 @@ impl MyApp {
         }
     }
 
+    fn update_favorite_cache(&mut self) {
+        if let Some(favorites) = &self.favorites {
+            match favorites.list() {
+                Ok(list) => {
+                    self.favorites_cache = list
+                        .filter_map(|e| e.ok())
+                        .map(|e| e.path())
+                        .collect();
+                },
+                Err(_) => eprintln!("Failed to read favorite directory, are we possibly missing permissions?"),
+            }
+        }
+    }
+
     fn main_tab(&mut self, ctx: &egui::Context) {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.group(|ui| {
@@ -143,40 +164,32 @@ impl MyApp {
                     });
                 }
 
-                if let Some(favorites) = self.favorites.as_ref() {
+                // If favorites could be initialized
+                if self.favorites.as_ref().is_some() {
                     ui.add_space(10.0);
                     ui.separator();
                     ui.add_space(10.0);
 
-                    let list = favorites.list();
+                    let favorites = self.favorites_cache.clone();
 
-                    match list {
-                        Ok(dirs) => {
-                            let vec: Vec<std::fs::DirEntry> = dirs.filter_map(|e| e.ok()).collect();
-    
-                            if vec.len() == 0 {
-                                ui.label(RichText::new("You don't seem to have any favorites yet! 😢"));
-                            } else {
-                                vec.iter().for_each(|entry_res| {
-                                    let entry = entry_res;
-            
-                                    let file_name = entry.file_name();
-            
-                                    ui.horizontal(|ui| {
-                                        ui.label(file_name.to_str().unwrap());
-                                        if ui.button(RichText::new("Load")).on_hover_text("Load favorite.").clicked() {
-                                            self.payload_data = PayloadData::from_path(&entry.path());
-                                        }
-                                        if ui.button(RichText::new("Remove")).on_hover_text("Remove from favorites.").clicked() {
-                                            self.favorites.as_ref().unwrap().remove(&file_name.to_string_lossy()).unwrap();
-                                        }
-                                    });  
-                                })
-                            }
-                        },
-                        Err(_) => {
-                            ui.label("Failed to read directory, possibly missing permissions.");
-                        },
+                    if favorites.len() == 0 {
+                        ui.label(RichText::new("You don't seem to have any favorites yet! 😢"));
+                    } else {
+                        for entry in favorites {
+                            // We should be safe to unwrap, list should only contain paths to files.
+                            let file_name = entry.file_name().unwrap();
+
+                            ui.horizontal(|ui| {
+                                ui.label(&*file_name.to_string_lossy());
+                                if ui.button(RichText::new("Load")).on_hover_text("Load favorite.").clicked() {
+                                    self.payload_data = PayloadData::from_path(&entry);
+                                }
+                                if ui.button(RichText::new("Remove")).on_hover_text("Remove from favorites.").clicked() {
+                                    self.favorites.as_ref().unwrap().remove(&file_name.to_string_lossy()).unwrap();
+                                    self.update_favorite_cache()
+                                }
+                            });  
+                        }
                     }
                 }
 
@@ -217,6 +230,7 @@ impl MyApp {
                         .clicked() {
                             if let Some(payload_data) = &self.payload_data {
                                 favorites.add(&payload_data.path, true).unwrap();
+                                self.update_favorite_cache();
                             }
                         }
                     }

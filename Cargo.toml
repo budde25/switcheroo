@@ -94,3 +94,6 @@ buildflags = ["--release"]
 
 [package.metadata.rpm.targets]
 switcheroo = { path = "/usr/bin/switcheroo" }
+
+[profile.release]
+strip = "symbols"
