@@ -18,7 +18,7 @@ impl Favorites {
             None => bail!("failed to load data_dir"),
         };
 
-        let favorites = data_dir.join(data_dir.join("favorites"));
+        let favorites = data_dir.join(data_dir.join("switcheroo/favorites"));
 
         if !favorites.is_dir() {
             fs::create_dir_all(&favorites)?;
