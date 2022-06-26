@@ -1,18 +1,19 @@
 [package]
+keywords = ["exploit", "cross-platform"]
 name = "tegra-rcm"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 license = "GPL-2.0-or-later"
 authors = ["Ethan Budd <budde25@protonmail.com>"]
 description = "A library to help exploit the bootROM exploit for the Tegra X1's RCM mode"
 repository = "https://github.com/budde25/switcheroo/tree/main/crates/tegra-rcm"
 readme = "README.md"
-categories = ["os"]
+categories = ["os", "hardware-support"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 thiserror = "1.0.31"
-tracing = "0.1.34"
+tracing = "0.1.35"
 
 # rusb is used by linux and mac
 [target.'cfg(not(target_os = "windows"))'.dependencies]
