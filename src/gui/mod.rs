@@ -6,12 +6,11 @@ use std::sync::{Arc, Mutex};
 
 use color_eyre::eyre::Result;
 
+use super::favorites::Favorites;
 use egui::{Button, Color32, RichText, Ui};
 use image::Images;
 use native_dialog::FileDialog;
 use tegra_rcm::{Error, Payload, Rcm};
-use super::favorites::Favorites;
-
 
 type ThreadSwitchResult = Arc<Mutex<Result<Rcm, Error>>>;
 
@@ -45,7 +44,7 @@ pub fn gui() -> Result<()> {
                 error: None,
                 //tab: Tab::Main,
                 favorites: Favorites::new().ok(),
-                favorites_cache: vec![]
+                favorites_cache: vec![],
             };
 
             app.update_favorite_cache();
@@ -63,7 +62,7 @@ struct MyApp {
     error: Option<Error>,
     //tab: Tab,
     favorites: Option<Favorites>,
-    favorites_cache: Vec<PathBuf>
+    favorites_cache: Vec<PathBuf>,
 }
 
 impl MyApp {
@@ -129,12 +128,11 @@ impl MyApp {
         if let Some(favorites) = &self.favorites {
             match favorites.list() {
                 Ok(list) => {
-                    self.favorites_cache = list
-                        .filter_map(|e| e.ok())
-                        .map(|e| e.path())
-                        .collect();
-                },
-                Err(_) => eprintln!("Failed to read favorite directory, are we possibly missing permissions?"),
+                    self.favorites_cache = list.filter_map(|e| e.ok()).map(|e| e.path()).collect();
+                }
+                Err(_) => eprintln!(
+                    "Failed to read favorite directory, are we possibly missing permissions?"
+                ),
             }
         }
     }
@@ -172,8 +170,10 @@ impl MyApp {
 
                     let favorites = self.favorites_cache.clone();
 
-                    if favorites.len() == 0 {
-                        ui.label(RichText::new("You don't seem to have any favorites yet! 😢"));
+                    if favorites.is_empty() {
+                        ui.label(RichText::new(
+                            "You don't seem to have any favorites yet! 😢",
+                        ));
                     } else {
                         for entry in favorites {
                             // We should be safe to unwrap, list should only contain paths to files.
@@ -181,14 +181,26 @@ impl MyApp {
 
                             ui.horizontal(|ui| {
                                 ui.label(&*file_name.to_string_lossy());
-                                if ui.button(RichText::new("Load")).on_hover_text("Load favorite.").clicked() {
+                                if ui
+                                    .button(RichText::new("Load"))
+                                    .on_hover_text("Load favorite.")
+                                    .clicked()
+                                {
                                     self.payload_data = PayloadData::from_path(&entry);
                                 }
-                                if ui.button(RichText::new("Remove")).on_hover_text("Remove from favorites.").clicked() {
-                                    self.favorites.as_ref().unwrap().remove(&file_name.to_string_lossy()).unwrap();
+                                if ui
+                                    .button(RichText::new("Remove"))
+                                    .on_hover_text("Remove from favorites.")
+                                    .clicked()
+                                {
+                                    self.favorites
+                                        .as_ref()
+                                        .unwrap()
+                                        .remove(&file_name.to_string_lossy())
+                                        .unwrap();
                                     self.update_favorite_cache()
                                 }
-                            });  
+                            });
                         }
                     }
                 }
@@ -198,7 +210,11 @@ impl MyApp {
                 ui.add_space(10.0);
 
                 ui.horizontal(|ui| {
-                    if ui.button(RichText::new("📂").size(50.0)).on_hover_text("Load payload from file").clicked() {
+                    if ui
+                        .button(RichText::new("📂").size(50.0))
+                        .on_hover_text("Load payload from file")
+                        .clicked()
+                    {
                         if let Some(path) = FileDialog::new().show_open_single_file().unwrap() {
                             self.payload_data = PayloadData::from_path(&path);
                         }
@@ -208,15 +224,13 @@ impl MyApp {
                         let mut should_enabled = self.payload_data.is_some();
 
                         if let Some(payload_data) = &self.payload_data {
-                            let current_loaded_name = payload_data.path
-                                .file_name()
-                                .unwrap()
-                                .to_string_lossy();
+                            let current_loaded_name =
+                                payload_data.path.file_name().unwrap().to_string_lossy();
 
                             let already_favorited = favorites
                                 .get(&current_loaded_name)
                                 .unwrap_or(None)
-                                .is_some();   
+                                .is_some();
 
                             should_enabled = !already_favorited;
 
@@ -225,9 +239,14 @@ impl MyApp {
                             }
                         }
 
-                        if ui.add_enabled(should_enabled, egui::Button::new(RichText::new("♥").size(50.0)))
-                        .on_hover_text("Add currently loaded payload to favorites")
-                        .clicked() {
+                        if ui
+                            .add_enabled(
+                                should_enabled,
+                                egui::Button::new(RichText::new("♥").size(50.0)),
+                            )
+                            .on_hover_text("Add currently loaded payload to favorites")
+                            .clicked()
+                        {
                             if let Some(payload_data) = &self.payload_data {
                                 favorites.add(&payload_data.path, true).unwrap();
                                 self.update_favorite_cache();
@@ -236,26 +255,32 @@ impl MyApp {
                     }
 
                     if self.state == State::Done {
-                        if ui.button(RichText::new("↺").size(50.0)).on_hover_text("Reset status").clicked() {
+                        if ui
+                            .button(RichText::new("↺").size(50.0))
+                            .on_hover_text("Reset status")
+                            .clicked()
+                        {
                             self.state = State::NotAvailable
                         }
-                    } else {
-                        if ui.add_enabled(
+                    } else if ui
+                        .add_enabled(
                             self.executable(),
-                            Button::new(RichText::new("💉").size(50.0))
-                        ).on_hover_text("Inject loaded payload").clicked() {
-                            // we are safe to unwrap because we can only get the payload if we are executable
-                            let payload = self.payload().unwrap();
-                            if let Ok(mut res) = self.switch.try_lock() {
-                                // TODO: fix race condition
-                                let rcm = &mut *res;
-                                match rcm {
-                                    Ok(switch) => match execute(switch, payload) {
-                                        Ok(_) => self.state = State::Done,
-                                        Err(e) => self.error = Some(e),
-                                    },
-                                    Err(e) => self.error = Some(*e),
-                                }
+                            Button::new(RichText::new("💉").size(50.0)),
+                        )
+                        .on_hover_text("Inject loaded payload")
+                        .clicked()
+                    {
+                        // we are safe to unwrap because we can only get the payload if we are executable
+                        let payload = self.payload().unwrap();
+                        if let Ok(mut res) = self.switch.try_lock() {
+                            // TODO: fix race condition
+                            let rcm = &mut *res;
+                            match rcm {
+                                Ok(switch) => match execute(switch, payload) {
+                                    Ok(_) => self.state = State::Done,
+                                    Err(e) => self.error = Some(e),
+                                },
+                                Err(e) => self.error = Some(*e),
                             }
                         }
                     }
@@ -332,7 +357,7 @@ impl PayloadData {
     }
 }
 
-impl eframe::App for MyApp{
+impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             ui.horizontal(|ui| {
