@@ -18,26 +18,15 @@ mod gui;
 use cli::{Cli, Commands};
 
 fn main() -> Result<()> {
+    color_eyre::install()?;
+
     // check if we should start the gui
     #[cfg(feature = "gui")]
     check_gui_mode()?;
 
-    color_eyre::install()?;
-
     let args = Cli::parse();
 
-    let filter = EnvFilter::from_default_env();
-    let filter = match args.verbose {
-        1 => filter.add_directive(LevelFilter::INFO.into()),
-        2 => filter.add_directive(LevelFilter::DEBUG.into()),
-        3 => filter.add_directive(LevelFilter::TRACE.into()),
-        _ => filter.add_directive(LevelFilter::WARN.into()),
-    };
-
-    tracing_subscriber::registry()
-        .with(fmt::layer())
-        .with(filter)
-        .init();
+    set_log_level(args.verbose);
 
     match args.command {
         Commands::Execute {
@@ -53,6 +42,22 @@ fn main() -> Result<()> {
         Commands::Gui {} => gui::gui()?,
     }
     Ok(())
+}
+
+/// sets the log level
+fn set_log_level(verbosity: u8) {
+    let filter = EnvFilter::from_default_env();
+    let filter = match verbosity {
+        1 => filter.add_directive(LevelFilter::INFO.into()),
+        2 => filter.add_directive(LevelFilter::DEBUG.into()),
+        3 => filter.add_directive(LevelFilter::TRACE.into()),
+        _ => filter.add_directive(LevelFilter::WARN.into()),
+    };
+
+    tracing_subscriber::registry()
+        .with(fmt::layer())
+        .with(filter)
+        .init();
 }
 
 fn execute(payload: String, favorite: bool, wait: bool) -> Result<()> {
@@ -147,6 +152,7 @@ fn check_gui_mode() -> Result<()> {
         None => return Ok(()),
         Some(gui_only) => {
             if gui_only == "0" {
+                set_log_level(3);
                 gui::gui()?;
             }
         }
