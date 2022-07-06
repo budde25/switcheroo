@@ -1,10 +1,7 @@
-use std::thread;
-
 use crate::Error;
-
+use eframe::egui::Context;
+use std::thread;
 use tegra_rcm::{create_hotplug, Actions, Rcm};
-
-use egui::Context;
 
 use super::ThreadSwitchResult;
 

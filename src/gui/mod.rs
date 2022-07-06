@@ -7,7 +7,9 @@ use std::sync::{Arc, Mutex};
 use color_eyre::eyre::Result;
 
 use super::favorites::Favorites;
-use egui::{Button, Color32, RichText, Ui};
+use eframe::egui::{
+    style, widgets, Button, CentralPanel, Color32, Context, RichText, TopBottomPanel, Ui,
+};
 use image::Images;
 use native_dialog::FileDialog;
 use tegra_rcm::{Error, Payload, Rcm};
@@ -29,8 +31,8 @@ pub fn gui() -> Result<()> {
         "Switcheroo",
         options,
         Box::new(|cc| {
-            let mut style = egui::style::Style::default();
-            style.visuals = egui::style::Visuals::dark();
+            let mut style = style::Style::default();
+            style.visuals = style::Visuals::dark();
             cc.egui_ctx.set_style(style);
 
             usb::spawn_thread(rcm.clone(), cc.egui_ctx.clone());
@@ -137,8 +139,8 @@ impl MyApp {
         }
     }
 
-    fn main_tab(&mut self, ctx: &egui::Context) {
-        egui::CentralPanel::default().show(ctx, |ui| {
+    fn main_tab(&mut self, ctx: &Context) {
+        CentralPanel::default().show(ctx, |ui| {
             ui.group(|ui| {
                 ui.add_space(10.0);
                 if let Some(payload_data) = &self.payload_data {
@@ -240,10 +242,7 @@ impl MyApp {
                         }
 
                         if ui
-                            .add_enabled(
-                                should_enabled,
-                                egui::Button::new(RichText::new("♥").size(50.0)),
-                            )
+                            .add_enabled(should_enabled, Button::new(RichText::new("♥").size(50.0)))
                             .on_hover_text("Add currently loaded payload to favorites")
                             .clicked()
                         {
@@ -358,14 +357,14 @@ impl PayloadData {
 }
 
 impl eframe::App for MyApp {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
+    fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
+        TopBottomPanel::top("top_panel").show(ctx, |ui| {
             ui.horizontal(|ui| {
                 // Title
                 ui.label(RichText::new("Switcheroo").size(24.0).strong());
 
                 ui.separator();
-                egui::widgets::global_dark_light_mode_switch(ui);
+                widgets::global_dark_light_mode_switch(ui);
 
                 /*
                 ui.separator();
@@ -430,8 +429,8 @@ fn create_error_from_error(ui: &mut Ui, error: Error) {
 }
 
 /// Preview hovering files
-fn preview_files_being_dropped(ctx: &egui::Context) {
-    use egui::*;
+fn preview_files_being_dropped(ctx: &Context) {
+    use eframe::egui::{Align2, Id, LayerId, Order, TextStyle};
 
     if !ctx.input().raw.hovered_files.is_empty() {
         let mut text = "Dropping payload:\n".to_owned();
