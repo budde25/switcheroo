@@ -14,7 +14,6 @@ clap = { version = "3.2.8", features = ["derive"] }
 color-eyre = "0.6.1"
 dirs = "4.0.0"
 eframe = { version = "0.18.0", features = ["dark-light"], optional = true }
-egui = { version = "0.18.1", optional = true }
 egui_extras = { version = "0.18.0", features = ["svg"], optional = true }
 native-dialog = { version = "0.6.3", optional = true }
 tegra-rcm = { version = "0.2.0", path = "crates/tegra-rcm" }
@@ -26,7 +25,7 @@ clap_complete = "3.2.3"
 
 [features]
 default = ["gui"]
-gui = ["dep:egui", "dep:egui_extras", "dep:eframe", "dep:native-dialog"]
+gui = ["dep:egui_extras", "dep:eframe", "dep:native-dialog"]
 
 [workspace]
 members = ["crates/tegra-rcm"]
