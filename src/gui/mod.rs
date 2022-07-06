@@ -433,14 +433,14 @@ fn preview_files_being_dropped(ctx: &Context) {
     use eframe::egui::{Align2, Id, LayerId, Order, TextStyle};
 
     if !ctx.input().raw.hovered_files.is_empty() {
-        let mut text = "Dropping payload:\n".to_owned();
+        let mut text = "Dropping payload:\n\n".to_owned();
         for file in &ctx.input().raw.hovered_files {
             if let Some(path) = &file.path {
-                text += &format!("\n{}", path.display());
+                text += &path.as_os_str().to_string_lossy();
             } else if !file.mime.is_empty() {
-                text += &format!("\n{}", file.mime);
+                text += &file.mime;
             } else {
-                text += "\n???";
+                text += "???";
             }
         }
 
