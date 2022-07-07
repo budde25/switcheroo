@@ -1,6 +1,6 @@
 [package]
 name = "switcheroo"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 authors = ["Ethan Budd <budde25@protonmail.com>"]
 description = "A CLI and GUI for the Nintendo Switch RCM exploit"
