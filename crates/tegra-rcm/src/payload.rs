@@ -1,5 +1,5 @@
 use crate::Error;
-use tracing::{event, Level};
+use tracing::{debug, trace};
 
 /// A constructed payload, this is transferred to the switch in RCM mode to execute bootROM exploit
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -15,7 +15,9 @@ pub const PAYLOAD_MIN_LENGTH: usize = PADDING_SIZE_2;
 /// The max length of the provided payload (exclusive)
 pub const PAYLOAD_MAX_LENGTH: usize = 183640;
 
+/// hardcoded address for the start of the stack spray
 const STACK_SPRAY_START: usize = 0x40014E40;
+/// hardcoded address for the end of the stack spray
 const STACK_SPRAY_END: usize = 0x40017000;
 const PADDING_SIZE_2: usize = STACK_SPRAY_START - PAYLOAD_START_ADDR;
 
@@ -36,14 +38,13 @@ impl Payload {
             return Err(Error::PayloadTooLong(payload.len()));
         }
 
-        event!(
-            Level::DEBUG,
-            "provided payload in size bounds with a size is: {} bytes",
+        debug!(
+            "Provided payload within size bounds with a size is: {} bytes",
             payload.len()
         );
 
         const INTERMEZZO: &[u8; 124] = include_bytes!("intermezzo/intermezzo.bin");
-        event!(Level::TRACE, "Injected intermezzo.bin");
+        trace!("Injected intermezzo.bin");
 
         let mut payload_builder: Vec<u8> = Vec::with_capacity(BUILT_PAYLOAD_MAX_LENGTH);
         // start with the max_len arg
@@ -75,9 +76,8 @@ impl Payload {
         let data = payload_builder.into_boxed_slice();
 
         assert!(data.len() <= BUILT_PAYLOAD_MAX_LENGTH);
-        event!(
-            Level::DEBUG,
-            "Complete payload has been build with a size of: {} bytes",
+        debug!(
+            "A completed payload has been build with a size of: {} bytes",
             length = data.len()
         );
 
