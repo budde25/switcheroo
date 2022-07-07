@@ -10,7 +10,7 @@ orbs:
 jobs:
   linux-arm64:
     machine:
-      image: ubuntu-1804:current
+      image: ubuntu-2004:current
     resource_class: arm.medium
     steps:
       - checkout
