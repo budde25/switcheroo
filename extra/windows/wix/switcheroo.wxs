@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="windows-1252"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
+    <Product Name="Switcheroo" Id="*" UpgradeCode="2ECD1AF9-38A1-49CB-AC95-3D358A6660F7" Language="1033" Codepage="1252" Version="0.2.0" Manufacturer="Switcheroo">
+        <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine"/>
+        <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="A newer version of [ProductName] is already installed."/>
+        <Icon Id="SwitcherooIco" SourceFile=".\extra\windows\switcheroo.ico"/>
+        <WixVariable Id="WixUILicenseRtf" Value=".\extra\windows\wix\license.rtf"/>
+        <Property Id="ARPPRODUCTICON" Value="SwitcherooIco"/>
+        <MediaTemplate EmbedCab="yes"/>
+        <UIRef Id="WixUI_Minimal"/>
+
+        <Feature Id="ProductFeature" Title="ConsoleApp" Level="1">
+            <ComponentRef Id="SwitcherooExe"/>
+            <ComponentRef Id="SwitcherooShortcut"/>
+            <ComponentRef Id="ModifyPathEnv"/>
+        </Feature>
+
+        <!-- Create directories -->
+        <Directory Id="TARGETDIR" Name="SourceDir">
+            <Directory Id="ProgramFiles64Folder">
+                <Directory Id="SwitcherooProgramFiles" Name="Switcheroo"/>
+            </Directory>
+            <Directory Id="ProgramMenuFolder">
+                <Directory Id="SwitcherooProgramMenu" Name="Switcheroo"/>
+            </Directory>
+        </Directory>
+
+        <!-- Application binaries -->
+        <DirectoryRef Id="SwitcherooProgramFiles">
+            <Component Id="SwitcherooExe" Guid="*">
+                <Environment Id="SWITCHEROO_GUI_ONLY" Name="SWITCHEROO_GUI_ONLY" Value="0" Permanent="no" Part="last" Action="set" System="no" />
+                <File Id="SwitcherooExeFile" Source=".\target\release\switcheroo.exe" Name="switcheroo.exe" KeyPath="yes"/>
+            </Component>
+        </DirectoryRef>
+
+        <DirectoryRef Id="SwitcherooProgramMenu">
+            <!-- Application shortcut -->
+            <Component Id="SwitcherooShortcut" Guid="C552C874-3964-4466-A71B-1B4CBF31DF1F">
+                <Shortcut Id="SwitcherooShortcutFile" Name="Switcheroo" Description="A cross-platform, Nintendo Switch RCM exploit GUI and CLI" Target="[SwitcherooProgramFiles]switcheroo.exe" Icon="SwitcherooIco" />
+                <RemoveFolder Id="SwitcherooProgramMenu" On="uninstall"/>
+                <RegistryValue Root="HKCU" Key="Software\Microsoft\Switcheroo" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
+            </Component>
+        </DirectoryRef>
+
+        <DirectoryRef Id="SwitcherooProgramFiles">
+            <!-- Add to PATH -->
+            <Component Id="ModifyPathEnv" Guid="B6313F15-87CD-494C-9F1A-32D3047CB487" KeyPath="yes">
+                <Environment Id="PathEnv" Value="[SwitcherooProgramFiles]" Name="PATH" Permanent="no" Part="first" Action="set" System="yes"/>
+            </Component>
+        </DirectoryRef>
+    </Product>
+</Wix>

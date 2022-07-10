@@ -6,3 +6,5 @@ perf.data*
 appimage-build/
 build-dir/
 repo/
+.vscode/
+.vs/
