@@ -40,6 +40,38 @@ jobs:
           files: |
             switcheroo*.dmg
 
+  windows:
+    runs-on: windows-latest
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Test
+        run: cargo test --release
+      - name: Build
+        run: cargo build --release
+      - name: Upload portable executable
+        run: |
+          cp ./target/release/switcheroo.exe ./Switcheroo-${{ github.ref_name }}-portable.exe
+          ./.github/workflows/upload_asset.sh \
+            ./Switcheroo-${{ github.ref_name }}-portable.exe $GITHUB_TOKEN
+      - name: Install WiX
+        run: nuget install WiX
+      - name: Crate msi installer
+        run: |
+          ./WiX.*/tools/candle.exe -nologo -arch "x64" -ext WixUIExtension -ext WixUtilExtension \
+            -out "./switcheroo.wixobj" "extra/windows/wix/switcheroo.wxs"
+          ./WiX.*/tools/light.exe -nologo -ext WixUIExtension -ext WixUtilExtension \
+            -out "./Switcheroo-${{ github.ref_name }}-installer.msi" -sice:ICE61 -sice:ICE91 \
+            "./switcheroo.wixobj"
+      - name: Upload msi installer
+        run: |
+          ./.github/workflows/upload_asset.sh \
+            ./Switcheroo-${{ github.ref_name }}-installer.msi $GITHUB_TOKEN
+
   linux:
     runs-on: ubuntu-18.04
 
