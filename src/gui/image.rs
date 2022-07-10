@@ -36,3 +36,22 @@ fn load_image(debug_name: &'static str, image_bytes: &'static [u8]) -> JoinHandl
         RetainedImage::from_svg_bytes(debug_name, image_bytes).expect("Image should be valid svg")
     })
 }
+
+pub fn load_icon() -> eframe::IconData {
+    const ICON: &[u8; 15567] = include_bytes!("../../extra/logo/io.ebudd.Switcheroo.png");
+
+    let (icon_rgba, icon_width, icon_height) = {
+        let image = image::load_from_memory(ICON)
+            .expect("Failed to open icon path")
+            .into_rgba8();
+        let (width, height) = image.dimensions();
+        let rgba = image.into_raw();
+        (rgba, width, height)
+    };
+
+    eframe::IconData {
+        rgba: icon_rgba,
+        width: icon_width,
+        height: icon_height,
+    }
+}

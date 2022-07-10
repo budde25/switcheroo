@@ -6,11 +6,11 @@ use std::sync::{Arc, Mutex};
 
 use color_eyre::eyre::Result;
 
+use self::image::{load_icon, Images};
 use super::favorites::Favorites;
 use eframe::egui::{
     style, widgets, Button, CentralPanel, Color32, Context, RichText, TopBottomPanel, Ui,
 };
-use image::Images;
 use native_dialog::FileDialog;
 use tegra_rcm::{Error, Payload, Rcm};
 
@@ -23,7 +23,8 @@ pub fn gui() -> Result<()> {
 
     let options = eframe::NativeOptions {
         drag_and_drop_support: true,
-        icon_data: None,
+        min_window_size: Some((400.0, 300.0).into()),
+        icon_data: Some(load_icon()),
         ..Default::default()
     };
 
