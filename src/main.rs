@@ -151,11 +151,20 @@ fn check_gui_mode() -> Result<()> {
     match env::var_os("SWITCHEROO_GUI_ONLY") {
         None => return Ok(()),
         Some(gui_only) => {
+            // FIXME: only gui mode on windows
+            #[cfg(target_os = "windows")]
+            launch_gui()?;
+
             if gui_only == "0" {
-                set_log_level(3);
-                gui::gui()?;
+                launch_gui()?;
             }
         }
     };
     Ok(())
+}
+
+#[cfg(feature = "gui")]
+fn launch_gui() -> Result<()> {
+    set_log_level(3);
+    gui::gui()
 }
