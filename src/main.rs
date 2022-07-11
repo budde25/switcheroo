@@ -20,7 +20,7 @@ use cli::{Cli, Commands};
 fn main() -> Result<()> {
     color_eyre::install()?;
 
-    // check if we should start the gui
+    // check if we should start the gui, rn we start with env var set, or platform = windows
     #[cfg(feature = "gui")]
     check_gui_mode()?;
 
@@ -148,13 +148,13 @@ fn remove(favorite: String) -> Result<()> {
 
 #[cfg(feature = "gui")]
 fn check_gui_mode() -> Result<()> {
+    // FIXME: only gui mode on windows
+    #[cfg(target_os = "windows")]
+    launch_gui()?;
+
     match env::var_os("SWITCHEROO_GUI_ONLY") {
         None => return Ok(()),
         Some(gui_only) => {
-            // FIXME: only gui mode on windows
-            #[cfg(target_os = "windows")]
-            launch_gui()?;
-
             if gui_only == "0" {
                 launch_gui()?;
             }
