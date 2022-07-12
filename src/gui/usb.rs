@@ -2,6 +2,7 @@ use crate::Error;
 use eframe::egui::Context;
 use std::thread;
 use tegra_rcm::{create_hotplug, Actions, Rcm};
+use tracing::debug;
 
 use super::ThreadSwitchResult;
 
@@ -13,6 +14,7 @@ struct HotplugHandler {
 impl Actions for HotplugHandler {
     fn arrives(&mut self, rcm: Rcm) {
         let lock = self.tswitch.lock();
+        debug!("Switch has been plugged in");
 
         if let Ok(mut inner) = lock {
             *inner = Ok(rcm);
@@ -22,6 +24,7 @@ impl Actions for HotplugHandler {
 
     fn leaves(&mut self) {
         let lock = self.tswitch.lock();
+        debug!("Switch has been unplugged");
 
         if let Ok(mut inner) = lock {
             *inner = Err(Error::SwitchNotFound);
