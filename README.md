@@ -2,8 +2,7 @@
 
 [![License](https://flat.badgen.net/badge/license/GPL-2.0/blue)](LICENSE)
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/budde25/switcheroo/CI?label=CI&style=flat-square)
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/budde25/switcheroo/CD?label=CD%20MacOS%20Linux-amd64&style=flat-square)
-![CircleCI](https://img.shields.io/circleci/build/github/budde25/switcheroo/main?label=CD%20Linux-arm64&style=flat-square)
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/budde25/switcheroo/CD?label=CD&style=flat-square)
 
 A cross platform CLI and GUI for the RCM BootRom exploit (Fusée Gelée exploit for Nintendo Switch)
 
