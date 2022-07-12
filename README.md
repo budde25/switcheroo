@@ -71,6 +71,11 @@ Finally unplug and plug back in the switch.
 Due to a limitation of flatpak not allowing access to udev, the flatpak version only works if the Switch is already in rcm mode and plugged in when it is launched.
 If the application is launched without these conditions being met, it will never show `RCM OK`
 
+### Windows: Wrong driver error
+
+On windows the rcm connection will only work if the Switch is using the libusbK drivers.  
+The easiest way to install them is to plug in the switch in RCM mode and use [zadig](https://zadig.akeo.ie/) to install the correct driver  
+
 ## Similar projects
 
 Here are some other similar projects
