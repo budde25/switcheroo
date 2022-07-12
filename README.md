@@ -5,7 +5,7 @@
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/budde25/switcheroo/CD?label=CD%20MacOS%20Linux-amd64&style=flat-square)
 ![CircleCI](https://img.shields.io/circleci/build/github/budde25/switcheroo/main?label=CD%20Linux-arm64&style=flat-square)
 
-A CLI and GUI for the RCM BootRom exploit (Fusée Gelée exploit for Nintendo Switch)
+A cross platform CLI and GUI for the RCM BootRom exploit (Fusée Gelée exploit for Nintendo Switch)
 
 Only works on unpatched Switches: <https://ismyswitchpatched.com/>
 
@@ -15,7 +15,8 @@ Written in Rust using [clap](https://github.com/clap-rs/clap) for the CLI and [e
 
 * CLI interface
 * GUI interface
-* Works on MacOS and Linux (Windows support is WIP)
+* Works on MacOS, Linux, and Windows
+* A favorites tab for saving payloads
 
 </br>
 <p align="center">
