@@ -18,6 +18,7 @@ egui_extras = { version = "0.18.0", features = ["svg"], optional = true }
 image = "0.24.2"
 native-dialog = { version = "0.6.3", optional = true }
 tegra-rcm = { version = "0.2.0", path = "crates/tegra-rcm" }
+tracing = "0.1.35"
 tracing-subscriber = { version = "0.3.14", features = ["env-filter"] }
 
 [build-dependencies]
