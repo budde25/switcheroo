@@ -46,17 +46,17 @@ fn main() -> Result<()> {
 
 /// sets the log level
 fn set_log_level(verbosity: u8) {
-    let filter = EnvFilter::from_default_env();
+    let filter = EnvFilter::builder();
     let filter = match verbosity {
-        1 => filter.add_directive(LevelFilter::INFO.into()),
-        2 => filter.add_directive(LevelFilter::DEBUG.into()),
-        3 => filter.add_directive(LevelFilter::TRACE.into()),
-        _ => filter.add_directive(LevelFilter::WARN.into()),
+        1 => filter.with_default_directive(LevelFilter::INFO.into()),
+        2 => filter.with_default_directive(LevelFilter::DEBUG.into()),
+        3 => filter.with_default_directive(LevelFilter::TRACE.into()),
+        _ => filter.with_default_directive(LevelFilter::WARN.into()),
     };
 
     tracing_subscriber::registry()
         .with(fmt::layer())
-        .with(filter)
+        .with(filter.from_env_lossy())
         .init();
 }
 
