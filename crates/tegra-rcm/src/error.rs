@@ -77,8 +77,10 @@ impl Display for WindowsDriver {
 
 #[cfg(target_os = "windows")]
 impl From<libusbk::DriverId> for WindowsDriver {
-    fn from(err: libusbk::DriverId) -> Self {
-        match err {
+    fn from(driver: libusbk::DriverId) -> Self {
+        use libusbk::DriverId;
+
+        match driver {
             DriverId::LibUsbK => Self::LibUsbK,
             DriverId::LibUsb0 => Self::LibUsb0,
             DriverId::WinUsb => Self::WinUsb,
@@ -91,7 +93,7 @@ impl From<libusbk::DriverId> for WindowsDriver {
 #[cfg(target_os = "windows")]
 impl From<libusbk::Error> for Error {
     fn from(err: libusbk::Error) -> Self {
-        Self::Usb(err)
+        Self::Usb(err.to_string())
     }
 }
 
@@ -102,12 +104,5 @@ impl From<rusb::Error> for Error {
             rusb::Error::Access => Self::AccessDenied,
             _ => Self::Usb(err.to_string()),
         }
-    }
-}
-
-#[cfg(target_os = "windows")]
-impl From<libusbk::Error> for Error {
-    fn from(err: libusbk::Error) -> Self {
-        Self::Usb(err.to_string())
     }
 }
