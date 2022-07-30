@@ -13,10 +13,8 @@ jobs:
     runs-on: macos-11
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      # selecting a toolchain either by action or manual `rustup` calls should happen
-      # before the plugin, as it uses the current rustc version as its cache key
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -26,14 +24,18 @@ jobs:
 
       - name: Install ARM target
         run: rustup update && rustup target add aarch64-apple-darwin
+
       - name: Test
         run: cargo test --release
+
       - name: Build ARM
         run: cargo build --release --target=aarch64-apple-darwin
+
       - name: Make DMG
         run: |
           make dmg-universal
           mv target/release/osx/Switcheroo.dmg Switcheroo-${{ github.ref_name }}_universal.dmg
+
       - name: Upload msi installer
         run: |
           ./.github/workflows/upload_asset.sh \
@@ -47,11 +49,14 @@ jobs:
         shell: bash
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+
       - name: Test
         run: cargo test --release
+
       - name: Build
         run: cargo build --release
+
       - name: Upload portable executable
         run: |
           cp ./target/release/switcheroo.exe ./Switcheroo-${{ github.ref_name }}-portable_amd64.exe
@@ -59,6 +64,7 @@ jobs:
             ./Switcheroo-${{ github.ref_name }}-portable_amd64.exe $GITHUB_TOKEN
       - name: Install WiX
         run: nuget install WiX
+
       - name: Crate msi installer
         run: |
           ./WiX.*/tools/candle.exe -nologo -arch "x64" -ext WixUIExtension -ext WixUtilExtension \
@@ -66,6 +72,7 @@ jobs:
           ./WiX.*/tools/light.exe -nologo -ext WixUIExtension -ext WixUtilExtension \
             -out "./Switcheroo-${{ github.ref_name }}-installer_amd64.msi" -sice:ICE61 -sice:ICE91 \
             "./switcheroo.wixobj"
+
       - name: Upload msi installer
         run: |
           ./.github/workflows/upload_asset.sh \
@@ -75,7 +82,7 @@ jobs:
     runs-on: ubuntu-18.04
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       # selecting a toolchain either by action or manual `rustup` calls should happen
       # before the plugin, as it uses the current rustc version as its cache key
@@ -85,7 +92,7 @@ jobs:
           toolchain: stable
 
       - uses: Swatinem/rust-cache@v1
-      
+
       - name: Install ARM target
         run: rustup update && rustup target add aarch64-unknown-linux-gnu
 
@@ -95,10 +102,10 @@ jobs:
           sudo apt-get install -y libssl-dev rpm appstream appstream-util binutils-aarch64-linux-gnu
       - name: Install cargo deb
         run: cargo install cargo-deb
-        
+
       - name: Install cross
         run: cargo install cross
-        
+
       - name: Create amd64 deb package
         run: |
           cargo deb --output Switcheroo-${{ github.ref_name }}_amd64.deb
@@ -106,11 +113,11 @@ jobs:
         run: |
           ./.github/workflows/upload_asset.sh \
             ./Switcheroo-${{ github.ref_name }}_amd64.deb $GITHUB_TOKEN
-      
+
       - name: Create arm64 release build
         run: |
           cross build --release --target aarch64-unknown-linux-gnu
-  
+
       - name: Create arm64 deb package
         run: |
           cargo deb --output Switcheroo-${{ github.ref_name }}_arm64.deb --no-build
@@ -118,18 +125,7 @@ jobs:
         run: |
           ./.github/workflows/upload_asset.sh \
             ./Switcheroo-${{ github.ref_name }}_arm64.deb $GITHUB_TOKEN
-          
-      - name: Install cargo rpm
-        run: cargo install cargo-rpm
-      - name: Create rpm package
-        run: |
-          cargo rpm build
-          mv target/release/rpmbuild/RPMS/x86_64/switcheroo*.rpm Switcheroo-${{ github.ref_name }}_amd64.rpm
-      - name: Upload amd64 rpm
-        run: |
-          ./.github/workflows/upload_asset.sh \
-            ./Switcheroo-${{ github.ref_name }}_amd64.rpm $GITHUB_TOKEN
-        
+
       - name: Install AppImage dependencies
         run: |
           wget https://github.com/AppImageCrafters/appimage-builder/releases/download/v1.0.0/appimage-builder-1.0.0-d3ce41f-x86_64.AppImage
@@ -143,10 +139,9 @@ jobs:
           ./create_appimage.sh
           mv Switcheroo*.AppImage Switcheroo-${{ github.ref_name }}_amd64.AppImage
         continue-on-error: true
-        
+
       - name: Upload amd64 AppImage
         run: |
           ./.github/workflows/upload_asset.sh \
             ./Switcheroo-${{ github.ref_name }}_amd64.AppImage $GITHUB_TOKEN
         continue-on-error: true
-        

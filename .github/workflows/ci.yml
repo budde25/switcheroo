@@ -3,28 +3,36 @@ name: CI
 on:
   push:
     paths:
-      - '**.rs'
-      - '**.bin'
-      - '**.toml'
-    branches: [ main ]
+      - "**.rs"
+      - "**.bin"
+      - "**.toml"
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Install dependencies
-      run: | 
-        sudo apt-get install -y libclang-dev libgtk-3-dev libxcb-render0-dev libxcb-shape0-dev \
-        libxcb-xfixes0-dev libspeechd-dev libxkbcommon-dev libssl-dev
-    - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      run: cargo test --verbose
+      - uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get install -y libssl-dev
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+
+      - uses: Swatinem/rust-cache@v1
+
+      - name: Build
+        run: cargo build --verbose
+
+      - name: Run tests
+        run: cargo test --verbose
