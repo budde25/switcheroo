@@ -1,10 +1,11 @@
 use std::thread;
 use std::time::Duration;
 
-use libusbk::{DeviceHandle, DeviceList, DriverId};
+use libusbk::{DeviceHandle, DeviceList};
 
 use super::DeviceRaw;
 use super::{Device, SwitchDeviceRaw};
+use crate::error::WindowsDriver;
 use crate::Result;
 
 /// A connected and init switch device connection
@@ -36,11 +37,10 @@ impl Device for SwitchDevice {
     }
 
     fn validate(&self) -> Result<()> {
-        let driver_id = self.device().driver_id();
-        if driver_id != DriverId::LibUsbK {
-            return Err(crate::Error::WrongDriver(driver_id));
+        match WindowsDriver::from(self.device().driver_id()) {
+            WindowsDriver::LibUsbK => Ok(()),
+            driver => Err(crate::Error::WindowsWrongDriver(driver)),
         }
-        Ok(())
     }
 }
 
@@ -79,8 +79,8 @@ impl DeviceRaw for SwitchDeviceRaw {
             device = Self::open_device_with_vid_pid(self.vid, self.pid);
         }
 
-        if let Err(err) = device {
-            if err == crate::Error::SwitchNotFound {
+        if let Err(ref err) = device {
+            if *err == crate::Error::SwitchNotFound {
                 return Err(crate::Error::SwitchNotFound);
             }
         }

@@ -77,8 +77,8 @@ impl DeviceRaw for SwitchDeviceRaw {
             device = Self::open_device_with_vid_pid(self.vid, self.pid);
         }
 
-        if let Err(err) = device {
-            if err == crate::Error::SwitchNotFound {
+        if let Err(ref err) = device {
+            if *err == crate::Error::SwitchNotFound {
                 return Err(crate::Error::SwitchNotFound);
             }
         }

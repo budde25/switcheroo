@@ -119,7 +119,7 @@ impl MyApp {
                 }
                 Err(e) => {
                     if *e != Error::SwitchNotFound {
-                        self.error = Some(*e)
+                        self.error = Some(e.to_owned())
                     }
                     self.state = State::NotAvailable;
                 }
@@ -145,7 +145,7 @@ impl MyApp {
             ui.group(|ui| {
                 ui.add_space(10.0);
                 if let Some(payload_data) = &self.payload_data {
-                    match payload_data.payload {
+                    match &payload_data.payload {
                         Ok(_) => {
                             ui.horizontal(|ui| {
                                 ui.label(RichText::new("Payload:").size(16.0));
@@ -280,7 +280,7 @@ impl MyApp {
                                     Ok(_) => self.state = State::Done,
                                     Err(e) => self.error = Some(e),
                                 },
-                                Err(e) => self.error = Some(*e),
+                                Err(e) => self.error = Some(e.to_owned()),
                             }
                         }
                     }
@@ -289,8 +289,8 @@ impl MyApp {
 
             self.check_change_state();
 
-            if let Some(e) = self.error {
-                create_error_from_error(ui, e);
+            if let Some(ref e) = self.error {
+                create_error_from_error(ui, e.to_owned());
             }
 
             ui.centered_and_justified(|ui| {

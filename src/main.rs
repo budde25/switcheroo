@@ -97,7 +97,7 @@ fn device() -> Result<()> {
             println!("[✓] Switch is RCM mode and connected");
             return Ok(());
         }
-        Err(e) => e,
+        Err(ref e) => e.to_owned(),
     };
 
     match err {
