@@ -22,7 +22,7 @@ rusb = "0.9.1"
 # Linux specific
 [target.'cfg(target_os = "linux")'.dependencies]
 glob = "0.3.0"
-nix = "0.24.1"
+nix = "0.24.2"
 
 # Windows specific
 [target.'cfg(target_os = "windows")'.dependencies]
@@ -30,7 +30,7 @@ libusbk = { version = "0.1.1", features = [ "vendored" ] }
 winapi = { version = "0.3.9", features = [ "ioapiset", "errhandlingapi" ] }
 
 [dev-dependencies]
-criterion = "0.3.5"
+criterion = "0.3.6"
 
 [[bench]]
 name = "my_benchmark"
