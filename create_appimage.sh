@@ -20,5 +20,5 @@ cp extra/linux/io.ebudd.Switcheroo.desktop target/AppDir/usr/share/applications
 mkdir -p target/AppDir/usr/share/icons/hicolor/512x512/apps
 cp extra/logo/io.ebudd.Switcheroo.png target/AppDir/usr/share/icons/hicolor/512x512/apps
 
-appimage-builder --recipe appimage.yml --appdir target/AppDir --skip-tests --log DEBUG --skip-appimage
-appimagetool --guess target/AppDir Switcheroo.AppImage
+appimage-builder --recipe appimage.yml --appdir target/AppDir --skip-tests --log DEBUG
+# appimagetool --guess target/AppDir Switcheroo.AppImage

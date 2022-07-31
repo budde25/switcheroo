@@ -99,7 +99,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libssl-dev rpm appstream appstream-util binutils-aarch64-linux-gnu
+          sudo apt-get install -y libssl-dev binutils-aarch64-linux-gnu patchelf
       - name: Install cargo deb
         run: cargo install cargo-deb
 
@@ -128,12 +128,7 @@ jobs:
 
       - name: Install AppImage dependencies
         run: |
-          wget https://github.com/AppImageCrafters/appimage-builder/releases/download/v1.0.0/appimage-builder-1.0.0-d3ce41f-x86_64.AppImage
-          chmod +x *.AppImage
-          sudo mv *.AppImage /usr/bin/appimage-builder
-          wget https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-x86_64.AppImage
-          chmod +x *.AppImage
-          sudo mv *.AppImage /usr/bin/appimagetool
+          pip install appimage-builder
       - name: Create AppImage
         run: |
           ./create_appimage.sh
