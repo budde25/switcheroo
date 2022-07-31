@@ -128,7 +128,7 @@ jobs:
 
       - name: Install AppImage dependencies
         run: |
-          pip install appimage-builder
+          python3 -m pip install appimage-builder
       - name: Create AppImage
         run: |
           ./create_appimage.sh
