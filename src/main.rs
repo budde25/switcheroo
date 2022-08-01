@@ -97,7 +97,7 @@ fn device() -> Result<()> {
             println!("[✓] Switch is RCM mode and connected");
             return Ok(());
         }
-        Err(ref e) => e.to_owned(),
+        Err(ref e) => e.clone(),
     };
 
     match err {
@@ -113,7 +113,7 @@ fn device() -> Result<()> {
 
 fn list() -> Result<()> {
     let favorites = Favorites::new()?;
-    let list: Vec<_> = favorites.list()?.filter_map(|x| x.ok()).collect();
+    let list: Vec<_> = favorites.list()?.filter_map(std::result::Result::ok).collect();
 
     if list.is_empty() {
         println!("No favorites");

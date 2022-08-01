@@ -33,7 +33,7 @@ impl Favorites {
         Ok(paths)
     }
 
-    /// Add a payload to the favorites directory, if check_valid is true, we will make sure that the payload parses correctly (but slower)
+    /// Add a payload to the favorites directory, if `check_valid` is true, we will make sure that the payload parses correctly (but slower)
     pub fn add(&self, payload: &Path, check_valid: bool) -> Result<()> {
         if check_valid {
             // ensure we have been passed a valid payload
@@ -51,12 +51,12 @@ impl Favorites {
         Ok(())
     }
 
-    /// Get the DirEntry of a favorite, if None, did not find one
+    /// Get the `DirEntry` of a favorite, if None, did not find one
     pub fn get(&self, favorite: &str) -> Result<Option<DirEntry>> {
         let list = self.list()?;
         Ok(list
             .into_iter()
-            .filter_map(|x| x.ok())
+            .filter_map(std::result::Result::ok)
             .find(|x| x.file_name().to_string_lossy() == favorite))
     }
 

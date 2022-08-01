@@ -119,7 +119,7 @@ impl MyApp {
                 }
                 Err(e) => {
                     if *e != Error::SwitchNotFound {
-                        self.error = Some(e.to_owned())
+                        self.error = Some(e.clone())
                     }
                     self.state = State::NotAvailable;
                 }
@@ -131,7 +131,7 @@ impl MyApp {
         if let Some(favorites) = &self.favorites {
             match favorites.list() {
                 Ok(list) => {
-                    self.favorites_cache = list.filter_map(|e| e.ok()).map(|e| e.path()).collect();
+                    self.favorites_cache = list.filter_map(std::result::Result::ok).map(|e| e.path()).collect();
                 }
                 Err(_) => eprintln!(
                     "Failed to read favorite directory, are we possibly missing permissions?"
@@ -280,7 +280,7 @@ impl MyApp {
                                     Ok(_) => self.state = State::Done,
                                     Err(e) => self.error = Some(e),
                                 },
-                                Err(e) => self.error = Some(e.to_owned()),
+                                Err(e) => self.error = Some(e.clone()),
                             }
                         }
                     }
@@ -290,7 +290,7 @@ impl MyApp {
             self.check_change_state();
 
             if let Some(ref e) = self.error {
-                create_error_from_error(ui, e.to_owned());
+                create_error_from_error(ui, e.clone());
             }
 
             ui.centered_and_justified(|ui| {
