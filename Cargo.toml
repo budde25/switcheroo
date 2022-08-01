@@ -50,6 +50,7 @@ assets = [
     [ "extra/linux/io.ebudd.Switcheroo.desktop", "usr/share/applications/", "644" ],
     # icon
     [ "extra/logo/io.ebudd.Switcheroo.png", "/usr/share/icons/hicolor/512x512/apps/", "644" ],
+    [ "extra/logo/io.ebudd.Switcheroo.png", "/usr/share/pixmaps/", "644" ],
     # meta info
     [ "extra/linux/io.ebudd.Switcheroo.appdata.xml", "/usr/share/metainfo/", "644" ],
     # udev rules
