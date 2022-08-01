@@ -416,7 +416,7 @@ fn create_error_from_error(ui: &mut Ui, error: Error) {
             ui.hyperlink("https://github.com/budde25/switcheroo#linux-permission-denied-error");
         }
         #[cfg(target_os = "windows")]
-        Error::WrongDriver(i) => {
+        Error::WindowsWrongDriver(i) => {
             create_error(
             ui,
             &format!(
