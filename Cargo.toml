@@ -4,10 +4,12 @@ version = "0.2.1"
 edition = "2021"
 authors = [ "Ethan Budd <budde25@protonmail.com>" ]
 description = "A cross platform CLI and GUI for the Nintendo Switch RCM exploit"
-keywords = [ "CLI", "utilities" ]
+keywords = [ "CLI", "utilities", "RCM" ]
 categories = [ "command-line-utilities" ]
 readme = "README.md"
 license = "GPL-2.0-or-later"
+repository = "https://github.com/budde25/switcheroo"
+homepage = "https://github.com/budde25/switcheroo"
 
 [[bin]]
 name = "switcheroo"
