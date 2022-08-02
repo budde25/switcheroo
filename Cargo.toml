@@ -1,5 +1,5 @@
 [package]
-name = "switcheroo"
+name = "switcheroo-nx"
 version = "0.2.1"
 edition = "2021"
 authors = [ "Ethan Budd <budde25@protonmail.com>" ]
@@ -8,6 +8,10 @@ keywords = [ "CLI", "utilities" ]
 categories = [ "command-line-utilities" ]
 readme = "README.md"
 license = "GPL-2.0-or-later"
+
+[[bin]]
+name = "switcheroo"
+path = "src/main.rs"
 
 [dependencies]
 clap = { version = "3.2.13", features = [ "derive" ] }
