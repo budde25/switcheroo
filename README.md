@@ -27,6 +27,13 @@ Written in Rust using [clap](https://github.com/clap-rs/clap) for the CLI and [e
 <img width="" alt="Graphical User Interface Example" src="https://raw.githubusercontent.com/budde25/switcheroo/main/extra/images/gui.png">
 </p>
 
+## Installation
+
+Download and install the latest release on the [releases](https://github.com/budde25/switcheroo/releases) page  
+
+or install with cargo (binary name is switcheroo)  
+`cargo install switcheroo-nx`  
+
 ## Usage
 
 The binary name is `switcheroo`  
