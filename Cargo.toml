@@ -16,7 +16,7 @@ name = "switcheroo"
 path = "src/main.rs"
 
 [dependencies]
-clap = { version = "3.2.13", features = [ "derive" ] }
+clap = { version = "3.2.16", features = [ "derive" ] }
 color-eyre = "0.6.2"
 dirs = "4.0.0"
 eframe = { version = "0.18.0", features = [ "dark-light" ], optional = true }
@@ -24,11 +24,11 @@ egui_extras = { version = "0.18.0", features = [ "svg" ], optional = true }
 image = "0.24.3"
 native-dialog = { version = "0.6.3", optional = true }
 tegra-rcm = { version = "0.3.0", path = "crates/tegra-rcm" }
-tracing = "0.1.35"
+tracing = "0.1.36"
 tracing-subscriber = { version = "0.3.15", features = [ "env-filter" ] }
 
 [build-dependencies]
-clap = { version = "3.2.13", features = [ "derive" ] }
+clap = { version = "3.2.16", features = [ "derive" ] }
 clap_complete = "3.2.3"
 
 [features]
