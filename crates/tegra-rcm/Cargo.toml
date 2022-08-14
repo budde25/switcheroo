@@ -12,8 +12,8 @@ categories = [ "os", "hardware-support" ]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-thiserror = "1.0.31"
-tracing = "0.1.35"
+thiserror = "1.0.32"
+tracing = "0.1.36"
 
 # Linux and Mac specific
 [target.'cfg(any(target_os = "linux", target_os = "macos"))'.dependencies]
@@ -22,11 +22,11 @@ rusb = "0.9.1"
 # Linux specific
 [target.'cfg(target_os = "linux")'.dependencies]
 glob = "0.3.0"
-nix = "0.24.2"
+nix = "0.25.0"
 
 # Windows specific
 [target.'cfg(target_os = "windows")'.dependencies]
-libusbk = { version = "0.1.1", features = [ "vendored" ] }
+libusbk = { version = "0.1.2", features = [ "vendored" ] }
 winapi = { version = "0.3.9", features = [ "ioapiset", "errhandlingapi" ] }
 
 [dev-dependencies]
