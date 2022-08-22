@@ -39,7 +39,7 @@ fn main() -> Result<()> {
         Commands::Add { payload } => add(payload)?,
         Commands::Remove { favorite } => remove(favorite)?,
         #[cfg(feature = "gui")]
-        Commands::Gui {} => gui::gui()?,
+        Commands::Gui {} => gui::gui(),
     }
     Ok(())
 }
@@ -113,7 +113,10 @@ fn device() -> Result<()> {
 
 fn list() -> Result<()> {
     let favorites = Favorites::new()?;
-    let list: Vec<_> = favorites.list()?.filter_map(std::result::Result::ok).collect();
+    let list: Vec<_> = favorites
+        .list()?
+        .filter_map(std::result::Result::ok)
+        .collect();
 
     if list.is_empty() {
         println!("No favorites");
@@ -150,13 +153,13 @@ fn remove(favorite: String) -> Result<()> {
 fn check_gui_mode() -> Result<()> {
     // FIXME: only gui mode on windows
     #[cfg(target_os = "windows")]
-    launch_gui()?;
+    launch_gui();
 
     match env::var_os("SWITCHEROO_GUI_ONLY") {
         None => return Ok(()),
         Some(gui_only) => {
             if gui_only == "0" {
-                launch_gui()?;
+                launch_gui();
             }
         }
     };
@@ -164,7 +167,7 @@ fn check_gui_mode() -> Result<()> {
 }
 
 #[cfg(feature = "gui")]
-fn launch_gui() -> Result<()> {
+fn launch_gui() {
     set_log_level(3);
-    gui::gui()
+    gui::gui();
 }

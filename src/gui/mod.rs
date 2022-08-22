@@ -16,7 +16,7 @@ use tegra_rcm::{Error, Payload, Rcm};
 
 type ThreadSwitchResult = Arc<Mutex<Result<Rcm, Error>>>;
 
-pub fn gui() -> Result<()> {
+pub fn gui() {
     let rcm = Arc::new(Mutex::new(Rcm::new(false)));
 
     let images = Images::default();
@@ -131,7 +131,10 @@ impl MyApp {
         if let Some(favorites) = &self.favorites {
             match favorites.list() {
                 Ok(list) => {
-                    self.favorites_cache = list.filter_map(std::result::Result::ok).map(|e| e.path()).collect();
+                    self.favorites_cache = list
+                        .filter_map(std::result::Result::ok)
+                        .map(|e| e.path())
+                        .collect();
                 }
                 Err(_) => eprintln!(
                     "Failed to read favorite directory, are we possibly missing permissions?"

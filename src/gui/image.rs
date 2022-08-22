@@ -55,3 +55,26 @@ pub fn load_icon() -> eframe::IconData {
         height: icon_height,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use eframe::egui::Image;
+
+    use super::*;
+
+    #[test]
+    fn load_images() {
+        fn load(debug_name: &'static str, image_bytes: &'static [u8]) -> RetainedImage {
+            RetainedImage::from_svg_bytes(debug_name, image_bytes)
+                .expect("Image should be valid svg")
+        }
+
+        let not_found = load("Rcm Not Found", include_bytes!("images/not_found.svg"));
+        let connected = load("Rcm Connected", include_bytes!("images/connected.svg"));
+        let done = load("Rcm Complete", include_bytes!("images/done.svg"));
+
+        assert!(not_found.debug_name() == "Rcm Not Found");
+        assert!(connected.debug_name() == "Rcm Connected");
+        assert!(done.debug_name() == "Rcm Complete");
+    }
+}
