@@ -58,8 +58,6 @@ pub fn load_icon() -> eframe::IconData {
 
 #[cfg(test)]
 mod tests {
-    use eframe::egui::Image;
-
     use super::*;
 
     #[test]
