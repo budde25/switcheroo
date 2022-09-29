@@ -3,7 +3,7 @@
 use std::path::PathBuf;
 use std::{env, fs};
 
-use clap::StructOpt;
+use clap::Parser;
 use color_eyre::eyre::{Context, Result};
 use favorites::Favorites;
 use tegra_rcm::{Error, Payload, Rcm};

@@ -1,4 +1,4 @@
-use clap::IntoApp;
+use clap::CommandFactory;
 use clap_complete::generate_to;
 use clap_complete::Shell::{Bash, Fish, Zsh};
 use std::fs;

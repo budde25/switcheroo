@@ -15,12 +15,12 @@ _switcheroo() {
 
     local context curcontext="$curcontext" state line
     _arguments "${_arguments_options[@]}" \
+'*-v[Verbosity]' \
+'*--verbose[Verbosity]' \
 '-h[Print help information]' \
 '--help[Print help information]' \
 '-V[Print version information]' \
 '--version[Print version information]' \
-'*-v[Verbosity]' \
-'*--verbose[Verbosity]' \
 ":: :_switcheroo_commands" \
 "*::: :->switcheroo" \
 && ret=0
@@ -32,10 +32,10 @@ _switcheroo() {
         case $line[1] in
             (execute)
 _arguments "${_arguments_options[@]}" \
-'*-f[Use a favorite payload]' \
-'*--favorite[Use a favorite payload]' \
-'*-w[Wait for device to be connected]' \
-'*--wait[Wait for device to be connected]' \
+'-f[Use a favorite payload]' \
+'--favorite[Use a favorite payload]' \
+'-w[Wait for device to be connected]' \
+'--wait[Wait for device to be connected]' \
 '-h[Print help information]' \
 '--help[Print help information]' \
 ':payload -- Path to the payload file, or a favorite if flag is passed:' \
@@ -75,8 +75,47 @@ _arguments "${_arguments_options[@]}" \
 ;;
 (help)
 _arguments "${_arguments_options[@]}" \
-'*::subcommand -- The subcommand whose help message to display:' \
+":: :_switcheroo__help_commands" \
+"*::: :->help" \
 && ret=0
+
+    case $state in
+    (help)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:switcheroo-help-command-$line[1]:"
+        case $line[1] in
+            (execute)
+_arguments "${_arguments_options[@]}" \
+&& ret=0
+;;
+(device)
+_arguments "${_arguments_options[@]}" \
+&& ret=0
+;;
+(list)
+_arguments "${_arguments_options[@]}" \
+&& ret=0
+;;
+(add)
+_arguments "${_arguments_options[@]}" \
+&& ret=0
+;;
+(remove)
+_arguments "${_arguments_options[@]}" \
+&& ret=0
+;;
+(gui)
+_arguments "${_arguments_options[@]}" \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" \
+&& ret=0
+;;
+        esac
+    ;;
+esac
 ;;
         esac
     ;;
@@ -101,30 +140,73 @@ _switcheroo__add_commands() {
     local commands; commands=()
     _describe -t commands 'switcheroo add commands' commands "$@"
 }
+(( $+functions[_switcheroo__help__add_commands] )) ||
+_switcheroo__help__add_commands() {
+    local commands; commands=()
+    _describe -t commands 'switcheroo help add commands' commands "$@"
+}
 (( $+functions[_switcheroo__device_commands] )) ||
 _switcheroo__device_commands() {
     local commands; commands=()
     _describe -t commands 'switcheroo device commands' commands "$@"
+}
+(( $+functions[_switcheroo__help__device_commands] )) ||
+_switcheroo__help__device_commands() {
+    local commands; commands=()
+    _describe -t commands 'switcheroo help device commands' commands "$@"
 }
 (( $+functions[_switcheroo__execute_commands] )) ||
 _switcheroo__execute_commands() {
     local commands; commands=()
     _describe -t commands 'switcheroo execute commands' commands "$@"
 }
+(( $+functions[_switcheroo__help__execute_commands] )) ||
+_switcheroo__help__execute_commands() {
+    local commands; commands=()
+    _describe -t commands 'switcheroo help execute commands' commands "$@"
+}
 (( $+functions[_switcheroo__gui_commands] )) ||
 _switcheroo__gui_commands() {
     local commands; commands=()
     _describe -t commands 'switcheroo gui commands' commands "$@"
 }
+(( $+functions[_switcheroo__help__gui_commands] )) ||
+_switcheroo__help__gui_commands() {
+    local commands; commands=()
+    _describe -t commands 'switcheroo help gui commands' commands "$@"
+}
 (( $+functions[_switcheroo__help_commands] )) ||
 _switcheroo__help_commands() {
-    local commands; commands=()
+    local commands; commands=(
+'execute:Executes a provided payload' \
+'device:Checks if a Switch in RCM mode is detected' \
+'list:Lists favorites' \
+'add:Add a favorite' \
+'remove:Remove a favorite' \
+'gui:Opens the Graphical User Interface' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
     _describe -t commands 'switcheroo help commands' commands "$@"
+}
+(( $+functions[_switcheroo__help__help_commands] )) ||
+_switcheroo__help__help_commands() {
+    local commands; commands=()
+    _describe -t commands 'switcheroo help help commands' commands "$@"
+}
+(( $+functions[_switcheroo__help__list_commands] )) ||
+_switcheroo__help__list_commands() {
+    local commands; commands=()
+    _describe -t commands 'switcheroo help list commands' commands "$@"
 }
 (( $+functions[_switcheroo__list_commands] )) ||
 _switcheroo__list_commands() {
     local commands; commands=()
     _describe -t commands 'switcheroo list commands' commands "$@"
+}
+(( $+functions[_switcheroo__help__remove_commands] )) ||
+_switcheroo__help__remove_commands() {
+    local commands; commands=()
+    _describe -t commands 'switcheroo help remove commands' commands "$@"
 }
 (( $+functions[_switcheroo__remove_commands] )) ||
 _switcheroo__remove_commands() {
