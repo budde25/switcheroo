@@ -78,7 +78,7 @@ impl Payload {
         assert!(data.len() <= BUILT_PAYLOAD_MAX_LENGTH);
         debug!(
             "A completed payload has been build with a size of: {} bytes",
-            length = data.len()
+            data.len()
         );
 
         Ok(Self { data })
