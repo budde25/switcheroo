@@ -30,6 +30,7 @@ tracing-subscriber = { version = "0.3.15", features = [ "env-filter" ] }
 [build-dependencies]
 clap = { version = "4.0.7", features = [ "derive" ] }
 clap_complete = "4.0.2"
+clap_mangen = "0.2.2"
 
 [features]
 default = [ "gui" ]
@@ -48,10 +49,6 @@ assets = [
     [ "target/release/switcheroo", "usr/bin/", "755" ],
     [ "LICENSE", "usr/share/doc/switcheroo/", "644" ],
     [ "README.md", "usr/share/doc/switcheroo/README", "644" ],
-    # shell completions
-    [ "extra/completions/switcheroo.bash", "usr/share/bash-completion/completions/switcheroo", "644" ],
-    [ "extra/completions/switcheroo.fish", "usr/share/fish/vendor_completions.d/switcheroo.fish", "644" ],
-    [ "extra/completions/_switcheroo", "usr/share/zsh/vendor-completions/_switcheroo", "644" ],
     # desktop file
     [ "extra/linux/io.ebudd.Switcheroo.desktop", "usr/share/applications/", "644" ],
     # icon
@@ -61,4 +58,11 @@ assets = [
     [ "extra/linux/io.ebudd.Switcheroo.appdata.xml", "/usr/share/metainfo/", "644" ],
     # udev rules
     [ "extra/linux/99-switch.rules", "/lib/udev/rules.d/", "644" ],
+    # TODO: Consider not commiting shell completions/man files, and generating them on demand during CI
+    # shell completions
+    [ "extra/completions/switcheroo.bash", "usr/share/bash-completion/completions/switcheroo", "644" ],
+    [ "extra/completions/switcheroo.fish", "usr/share/fish/vendor_completions.d/switcheroo.fish", "644" ],
+    [ "extra/completions/_switcheroo", "usr/share/zsh/vendor-completions/_switcheroo", "644" ],
+    # man file
+    [ "extra/man/switcheroo.1", "usr/share/man/man1/switcheroo.1", "644" ],
 ]

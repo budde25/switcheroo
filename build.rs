@@ -18,22 +18,28 @@ fn main() -> Result<(), Error> {
     };
 
     app_dir(&outdir)?;
-
-    // we are gonna push to the extra dir
     outdir.push("extra");
-    let mut completions = outdir.clone();
-    completions.push("completions");
+
+    let mut cmd = Cli::command();
+
+    let completions_out = outdir.join("completions");
+    let man_out = outdir.join("man");
 
     let shells = [Bash, Fish, Zsh];
     for shell in shells {
-        let mut cmd = Cli::command();
         let _path = generate_to(
             shell,
-            &mut cmd,     // We need to specify what generator to use
-            "switcheroo", // We need to specify the bin name manually
-            &completions, // We need to specify where to write to
+            &mut cmd,         // We need to specify what generator to use
+            "switcheroo",     // We need to specify the bin name manually
+            &completions_out, // We need to specify where to write to
         )?;
     }
+
+    let man = clap_mangen::Man::new(cmd);
+    let mut buffer: Vec<u8> = Default::default();
+    man.render(&mut buffer)?;
+
+    std::fs::write(man_out.join("switcheroo.1"), buffer)?;
 
     Ok(())
 }
