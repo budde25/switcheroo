@@ -8,30 +8,51 @@ _switcheroo() {
 
     for i in ${COMP_WORDS[@]}
     do
-        case "${i}" in
-            "$1")
+        case "${cmd},${i}" in
+            ",$1")
                 cmd="switcheroo"
                 ;;
-            add)
-                cmd+="__add"
+            switcheroo,add)
+                cmd="switcheroo__add"
                 ;;
-            device)
-                cmd+="__device"
+            switcheroo,device)
+                cmd="switcheroo__device"
                 ;;
-            execute)
-                cmd+="__execute"
+            switcheroo,execute)
+                cmd="switcheroo__execute"
                 ;;
-            gui)
-                cmd+="__gui"
+            switcheroo,gui)
+                cmd="switcheroo__gui"
                 ;;
-            help)
-                cmd+="__help"
+            switcheroo,help)
+                cmd="switcheroo__help"
                 ;;
-            list)
-                cmd+="__list"
+            switcheroo,list)
+                cmd="switcheroo__list"
                 ;;
-            remove)
-                cmd+="__remove"
+            switcheroo,remove)
+                cmd="switcheroo__remove"
+                ;;
+            switcheroo__help,add)
+                cmd="switcheroo__help__add"
+                ;;
+            switcheroo__help,device)
+                cmd="switcheroo__help__device"
+                ;;
+            switcheroo__help,execute)
+                cmd="switcheroo__help__execute"
+                ;;
+            switcheroo__help,gui)
+                cmd="switcheroo__help__gui"
+                ;;
+            switcheroo__help,help)
+                cmd="switcheroo__help__help"
+                ;;
+            switcheroo__help,list)
+                cmd="switcheroo__help__list"
+                ;;
+            switcheroo__help,remove)
+                cmd="switcheroo__help__remove"
                 ;;
             *)
                 ;;
