@@ -11,11 +11,11 @@ pub struct Favorites {
 }
 
 impl Favorites {
-    /// Create a new favorites struct
+    /// Create a new Favorites this points to the OS's <data_dir>/switcheroo/favorites folder and creates it if it does not exist
     pub fn new() -> Result<Self> {
         let data_dir = match dirs::data_dir() {
             Some(dir) => dir,
-            None => bail!("failed to load data_dir"),
+            None => bail!("Failed to load application data_dir"),
         };
 
         let favorites = data_dir.join(data_dir.join("switcheroo/favorites"));
