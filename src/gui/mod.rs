@@ -1,12 +1,13 @@
 mod image;
 mod usb;
 
+use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
 use color_eyre::eyre::Result;
 
-use self::image::{load_icon, Images};
+use self::image::Images;
 use super::favorites::Favorites;
 use eframe::egui::{
     style, widgets, Button, CentralPanel, Color32, Context, RichText, TopBottomPanel, Ui,
@@ -19,12 +20,10 @@ type ThreadSwitchResult = Arc<Mutex<Result<Rcm, Error>>>;
 pub fn gui() {
     let rcm = Arc::new(Mutex::new(Rcm::new(false)));
 
-    let images = Images::default();
-
     let options = eframe::NativeOptions {
         drag_and_drop_support: true,
         min_window_size: Some((400.0, 300.0).into()),
-        icon_data: Some(load_icon()),
+        icon_data: Some(image::load_icon()),
         ..Default::default()
     };
 
@@ -42,10 +41,9 @@ pub fn gui() {
             let mut app = MyApp {
                 switch: rcm,
                 payload_data: None,
-                images,
+                images: Images::default(),
                 state: State::NotAvailable,
                 error: None,
-                //tab: Tab::Main,
                 favorites: Favorites::new().ok(),
                 favorites_cache: vec![],
             };
@@ -58,12 +56,11 @@ pub fn gui() {
 }
 
 struct MyApp {
-    switch: Arc<Mutex<Result<Rcm, Error>>>,
+    switch: ThreadSwitchResult,
     payload_data: Option<PayloadData>,
     images: Images,
     state: State,
     error: Option<Error>,
-    //tab: Tab,
     favorites: Option<Favorites>,
     favorites_cache: Vec<PathBuf>,
 }
@@ -78,27 +75,12 @@ impl MyApp {
         // we can't be excutable in this state
         match self.state {
             State::NotAvailable => return false,
-            State::Available => (),
+            State::Available => (), // keep going
             State::Done => return false,
         };
 
-        // if we have a payload
-        if let Some(payload_data) = &self.payload_data {
-            return payload_data.payload.is_ok();
-        };
-        false
-    }
-
-    // get the payload if its available
-    fn payload(&self) -> Option<&Payload> {
-        if let Some(payload_data) = &self.payload_data {
-            if let Ok(payload) = &payload_data.payload {
-                return Some(payload);
-            } else {
-                return None;
-            };
-        };
-        None
+        // Finally do we even have a payload
+        self.payload_data.is_some()
     }
 
     /// Check if we need to change our current state
@@ -147,26 +129,19 @@ impl MyApp {
         CentralPanel::default().show(ctx, |ui| {
             ui.group(|ui| {
                 ui.add_space(10.0);
-                if let Some(payload_data) = &self.payload_data {
-                    match &payload_data.payload {
-                        Ok(_) => {
-                            ui.horizontal(|ui| {
-                                ui.label(RichText::new("Payload:").size(16.0));
-                                ui.monospace(
-                                    RichText::new(payload_data.file_name())
-                                        .color(Color32::BLUE)
-                                        .size(16.0),
-                                );
-                            });
-                        }
-                        Err(e) => create_error(ui, &e.to_string()),
-                    }
-                } else {
-                    ui.horizontal(|ui| {
-                        ui.label(RichText::new("Payload:").size(16.0));
+
+                ui.horizontal(|ui| {
+                    ui.label(RichText::new("Payload:").size(16.0));
+                    if let Some(payload) = &self.payload_data {
+                        ui.monospace(
+                            RichText::new(payload.file_name())
+                                .color(Color32::LIGHT_BLUE)
+                                .size(16.0),
+                        );
+                    } else {
                         ui.monospace(RichText::new("None").size(16.0));
-                    });
-                }
+                    }
+                });
 
                 // If favorites could be initialized
                 if self.favorites.as_ref().is_some() {
@@ -192,7 +167,10 @@ impl MyApp {
                                     .on_hover_text("Load favorite.")
                                     .clicked()
                                 {
-                                    self.payload_data = PayloadData::from_path(&entry);
+                                    match PayloadData::from_path(&entry) {
+                                        Ok(payload) => self.payload_data = Some(payload),
+                                        Err(e) => eprintln!("{e}"),
+                                    }
                                 }
                                 if ui
                                     .button(RichText::new("Remove"))
@@ -222,7 +200,10 @@ impl MyApp {
                         .clicked()
                     {
                         if let Some(path) = FileDialog::new().show_open_single_file().unwrap() {
-                            self.payload_data = PayloadData::from_path(&path);
+                            match PayloadData::from_path(&path) {
+                                Ok(payload) => self.payload_data = Some(payload),
+                                Err(e) => eprintln!("{e}"),
+                            }
                         }
                     }
 
@@ -274,7 +255,7 @@ impl MyApp {
                         .clicked()
                     {
                         // we are safe to unwrap because we can only get the payload if we are executable
-                        let payload = self.payload().unwrap();
+                        let payload = &self.payload_data.as_ref().unwrap().payload;
                         if let Ok(mut res) = self.switch.try_lock() {
                             // TODO: fix race condition
                             let rcm = &mut *res;
@@ -309,14 +290,6 @@ impl MyApp {
             });
         });
     }
-
-    /*
-    fn payload_manager(&mut self, ctx: &egui::Context) {
-        egui::CentralPanel::default().show(ctx, |ui| {
-            ui.label("Todo");
-        });
-    }
-    */
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -326,37 +299,33 @@ enum State {
     Done,
 }
 
-/*
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Tab {
-    Main,
-    PayloadManager
-}
-*/
-
 #[derive(Debug)]
 struct PayloadData {
-    payload: Result<Payload, Error>,
+    payload: Payload,
     path: PathBuf,
+    file_name: String,
 }
 
 impl PayloadData {
     /// Makes a payload from a given file path
     /// returns None on an error
-    pub fn from_path(path: &Path) -> Option<Self> {
-        let file = std::fs::read(&path);
-        if let Ok(data) = file {
-            let payload_data = PayloadData {
-                path: path.to_owned(),
-                payload: Payload::new(&data),
-            };
-            return Some(payload_data);
-        }
-        None
+    pub fn from_path(path: &Path) -> Result<Self> {
+        let bytes = std::fs::read(&path)?;
+
+        let payload_data = PayloadData {
+            path: path.to_owned(),
+            payload: Payload::new(&bytes)?,
+            file_name: path
+                .file_name()
+                .unwrap_or(OsStr::new("Unknown File"))
+                .to_string_lossy()
+                .to_string(),
+        };
+        return Ok(payload_data);
     }
 
     fn file_name(&self) -> &str {
-        self.path.file_name().unwrap().to_str().unwrap()
+        &self.file_name
     }
 }
 
@@ -369,21 +338,8 @@ impl eframe::App for MyApp {
 
                 ui.separator();
                 widgets::global_dark_light_mode_switch(ui);
-
-                /*
-                ui.separator();
-                ui.selectable_value(&mut self.tab, Tab::Main,"Main");
-                ui.selectable_value(&mut self.tab, Tab::PayloadManager,"Payload Manager");
-                */
             })
         });
-
-        /*
-        match self.tab {
-            Tab::Main => self.main_tab(ctx),
-            Tab::PayloadManager => self.payload_manager(ctx),
-        }
-        */
 
         self.main_tab(ctx);
 
@@ -394,7 +350,10 @@ impl eframe::App for MyApp {
             // unwrap safe cause we are not empty
             let file = ctx.input().raw.dropped_files.last().unwrap().clone();
             if let Some(path) = file.path {
-                self.payload_data = PayloadData::from_path(&path);
+                match PayloadData::from_path(&path) {
+                    Ok(payload) => self.payload_data = Some(payload),
+                    Err(e) => eprintln!("{e}"), // TODO:
+                }
             }
         }
     }
