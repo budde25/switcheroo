@@ -1,24 +1,23 @@
 mod image;
+mod switch;
 mod usb;
 
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex};
 
 use color_eyre::eyre::Result;
 
 use self::image::Images;
+use self::switch::Switch;
 use super::favorites::Favorites;
 use eframe::egui::{
     style, widgets, Button, CentralPanel, Color32, Context, RichText, TopBottomPanel, Ui,
 };
 use native_dialog::FileDialog;
-use tegra_rcm::{Error, Payload, Rcm};
-
-type ThreadSwitchResult = Arc<Mutex<Result<Rcm, Error>>>;
+use tegra_rcm::Payload;
 
 pub fn gui() {
-    let rcm = Arc::new(Mutex::new(Rcm::new(false)));
+    let switch = Switch::new();
 
     let options = eframe::NativeOptions {
         drag_and_drop_support: true,
@@ -35,11 +34,11 @@ pub fn gui() {
             style.visuals = style::Visuals::dark();
             cc.egui_ctx.set_style(style);
 
-            usb::spawn_thread(rcm.clone(), cc.egui_ctx.clone());
+            usb::spawn_thread(switch.clone(), cc.egui_ctx.clone());
 
             // We have to do it like this, we need to update the cache when loading up.
             let mut app = MyApp {
-                switch: rcm,
+                switch,
                 payload_data: None,
                 images: Images::default(),
                 state: State::NotAvailable,
@@ -56,11 +55,11 @@ pub fn gui() {
 }
 
 struct MyApp {
-    switch: ThreadSwitchResult,
+    switch: Switch,
     payload_data: Option<PayloadData>,
     images: Images,
     state: State,
-    error: Option<Error>,
+    error: Option<tegra_rcm::Error>,
     favorites: Option<Favorites>,
     favorites_cache: Vec<PathBuf>,
 }
@@ -83,28 +82,34 @@ impl MyApp {
         self.payload_data.is_some()
     }
 
+    fn execute(&mut self) {
+        let payload = &self.payload_data.as_ref().unwrap().payload;
+        match self.switch.execute(payload) {
+            Ok(_) => self.state = State::Done,
+            Err(e) => self.error = Some(e.into()),
+        }
+    }
+
     /// Check if we need to change our current state
     fn check_change_state(&mut self) {
         if self.state == State::Done {
             return;
         }
 
-        let arc = self.switch.try_lock();
-        if let Ok(lock) = arc {
-            let res = &*lock;
-            match res {
-                Ok(rcm) => {
-                    if let Err(e) = rcm.validate() {
-                        self.error = Some(e)
-                    }
-                    self.state = State::Available;
+        let guard = self.switch.0.lock().expect("Lock should not be poisoned");
+
+        match &*guard {
+            Ok(rcm) => {
+                if let Err(e) = rcm.validate() {
+                    self.error = Some(e.into())
                 }
-                Err(e) => {
-                    if *e != Error::SwitchNotFound {
-                        self.error = Some(e.clone())
-                    }
-                    self.state = State::NotAvailable;
+                self.state = State::Available;
+            }
+            Err(e) => {
+                if e != &tegra_rcm::Error::SwitchNotFound {
+                    self.error = Some(e.clone().into())
                 }
+                self.state = State::NotAvailable;
             }
         }
     }
@@ -254,27 +259,15 @@ impl MyApp {
                         .on_hover_text("Inject loaded payload")
                         .clicked()
                     {
-                        // we are safe to unwrap because we can only get the payload if we are executable
-                        let payload = &self.payload_data.as_ref().unwrap().payload;
-                        if let Ok(mut res) = self.switch.try_lock() {
-                            // TODO: fix race condition
-                            let rcm = &mut *res;
-                            match rcm {
-                                Ok(switch) => match execute(switch, payload) {
-                                    Ok(_) => self.state = State::Done,
-                                    Err(e) => self.error = Some(e),
-                                },
-                                Err(e) => self.error = Some(e.clone()),
-                            }
-                        }
+                        self.execute();
                     }
                 });
             });
 
             self.check_change_state();
 
-            if let Some(ref e) = self.error {
-                create_error_from_error(ui, e.clone());
+            if let Some(e) = &self.error {
+                create_error_from_error(ui, e);
             }
 
             ui.centered_and_justified(|ui| {
@@ -299,7 +292,7 @@ enum State {
     Done,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct PayloadData {
     payload: Payload,
     path: PathBuf,
@@ -367,10 +360,11 @@ fn create_error(ui: &mut Ui, error: &str) {
     });
 }
 
-fn create_error_from_error(ui: &mut Ui, error: Error) {
+fn create_error_from_error(ui: &mut Ui, error: &tegra_rcm::Error) {
+    // if let Some(err) = error.downcast_ref() {
     match error {
-        Error::SwitchNotFound => (),
-        Error::AccessDenied => {
+        tegra_rcm::Error::SwitchNotFound => (),
+        tegra_rcm::Error::AccessDenied => {
             create_error(
                 ui,
                 "USB permission error, see the following to troubleshoot",
@@ -378,7 +372,7 @@ fn create_error_from_error(ui: &mut Ui, error: Error) {
             ui.hyperlink("https://github.com/budde25/switcheroo#linux-permission-denied-error");
         }
         #[cfg(target_os = "windows")]
-        Error::WindowsWrongDriver(i) => {
+        tegra_rcm::Error::WindowsWrongDriver(i) => {
             create_error(
             ui,
             &format!(
@@ -387,8 +381,11 @@ fn create_error_from_error(ui: &mut Ui, error: Error) {
             );
             ui.hyperlink("https://github.com/budde25/switcheroo#windows-wrong-driver-error");
         }
-        _ => create_error(ui, &error.to_string()),
+        e => create_error(ui, &e.to_string()),
     };
+    //} else {
+    create_error(ui, &error.to_string())
+    //}
 }
 
 /// Preview hovering files
@@ -420,15 +417,4 @@ fn preview_files_being_dropped(ctx: &Context) {
             Color32::WHITE,
         );
     }
-}
-
-/// Executes a payload returning any errors
-fn execute(switch: &mut Rcm, payload: &Payload) -> Result<(), Error> {
-    // its ok if it gets init more than once, it skips previous inits
-    switch.init()?;
-
-    // We need to read the device id first
-    let _ = switch.read_device_id()?;
-    switch.execute(payload)?;
-    Ok(())
 }

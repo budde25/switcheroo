@@ -4,16 +4,16 @@ use std::thread;
 use tegra_rcm::{create_hotplug, Actions, Rcm};
 use tracing::debug;
 
-use super::ThreadSwitchResult;
+use super::Switch;
 
 struct HotplugHandler {
-    tswitch: ThreadSwitchResult,
+    switch: Switch,
     ctx: Context,
 }
 
 impl Actions for HotplugHandler {
     fn arrives(&mut self, rcm: Rcm) {
-        let lock = self.tswitch.lock();
+        let lock = self.switch.0.lock();
         debug!("Switch has been plugged in");
 
         if let Ok(mut inner) = lock {
@@ -23,7 +23,7 @@ impl Actions for HotplugHandler {
     }
 
     fn leaves(&mut self) {
-        let lock = self.tswitch.lock();
+        let lock = self.switch.0.lock();
         debug!("Switch has been unplugged");
 
         if let Ok(mut inner) = lock {
@@ -34,6 +34,6 @@ impl Actions for HotplugHandler {
 }
 
 /// Spawn a separate thread too
-pub fn spawn_thread(tswitch: ThreadSwitchResult, ctx: Context) {
-    thread::spawn(move || create_hotplug(Box::new(HotplugHandler { tswitch, ctx })));
+pub fn spawn_thread(switch: Switch, ctx: Context) {
+    thread::spawn(move || create_hotplug(Box::new(HotplugHandler { switch, ctx })));
 }
