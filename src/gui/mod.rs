@@ -1,23 +1,21 @@
 mod image;
+mod payload;
 mod switch;
 mod usb;
 
-use std::ffi::OsStr;
-use std::path::{Path, PathBuf};
-
-use color_eyre::eyre::Result;
+use std::path::PathBuf;
 
 use self::image::Images;
-use self::switch::Switch;
 use super::favorites::Favorites;
 use eframe::egui::{
     style, widgets, Button, CentralPanel, Color32, Context, RichText, TopBottomPanel, Ui,
 };
 use native_dialog::FileDialog;
-use tegra_rcm::Payload;
+use payload::PayloadData;
+use switch::{State, Switch, SwitchData};
 
 pub fn gui() {
-    let switch = Switch::new();
+    let switch_data = SwitchData::new();
 
     let options = eframe::NativeOptions {
         drag_and_drop_support: true,
@@ -34,14 +32,13 @@ pub fn gui() {
             style.visuals = style::Visuals::dark();
             cc.egui_ctx.set_style(style);
 
-            usb::spawn_thread(switch.clone(), cc.egui_ctx.clone());
+            usb::spawn_thread(switch_data.switch(), cc.egui_ctx.clone());
 
             // We have to do it like this, we need to update the cache when loading up.
             let mut app = MyApp {
-                switch,
+                switch_data,
                 payload_data: None,
                 images: Images::default(),
-                state: State::NotAvailable,
                 error: None,
                 favorites: Favorites::new().ok(),
                 favorites_cache: vec![],
@@ -55,10 +52,9 @@ pub fn gui() {
 }
 
 struct MyApp {
-    switch: Switch,
+    switch_data: SwitchData,
     payload_data: Option<PayloadData>,
     images: Images,
-    state: State,
     error: Option<tegra_rcm::Error>,
     favorites: Option<Favorites>,
     favorites_cache: Vec<PathBuf>,
@@ -66,52 +62,18 @@ struct MyApp {
 
 impl MyApp {
     // we can execute if we have a payload and rcm is available
-    fn executable(&self) -> bool {
+    fn is_executable(&self) -> bool {
         if self.error.is_some() {
             return false;
         }
 
         // we can't be excutable in this state
-        match self.state {
-            State::NotAvailable => return false,
-            State::Available => (), // keep going
-            State::Done => return false,
-        };
+        if self.switch_data.state() != State::Available {
+            return false;
+        }
 
         // Finally do we even have a payload
         self.payload_data.is_some()
-    }
-
-    fn execute(&mut self) {
-        let payload = &self.payload_data.as_ref().unwrap().payload;
-        match self.switch.execute(payload) {
-            Ok(_) => self.state = State::Done,
-            Err(e) => self.error = Some(e.into()),
-        }
-    }
-
-    /// Check if we need to change our current state
-    fn check_change_state(&mut self) {
-        if self.state == State::Done {
-            return;
-        }
-
-        let guard = self.switch.0.lock().expect("Lock should not be poisoned");
-
-        match &*guard {
-            Ok(rcm) => {
-                if let Err(e) = rcm.validate() {
-                    self.error = Some(e.into())
-                }
-                self.state = State::Available;
-            }
-            Err(e) => {
-                if e != &tegra_rcm::Error::SwitchNotFound {
-                    self.error = Some(e.clone().into())
-                }
-                self.state = State::NotAvailable;
-            }
-        }
     }
 
     fn update_favorite_cache(&mut self) {
@@ -172,7 +134,7 @@ impl MyApp {
                                     .on_hover_text("Load favorite.")
                                     .clicked()
                                 {
-                                    match PayloadData::from_path(&entry) {
+                                    match PayloadData::new(&entry) {
                                         Ok(payload) => self.payload_data = Some(payload),
                                         Err(e) => eprintln!("{e}"),
                                     }
@@ -205,7 +167,7 @@ impl MyApp {
                         .clicked()
                     {
                         if let Some(path) = FileDialog::new().show_open_single_file().unwrap() {
-                            match PayloadData::from_path(&path) {
+                            match PayloadData::new(&path) {
                                 Ok(payload) => self.payload_data = Some(payload),
                                 Err(e) => eprintln!("{e}"),
                             }
@@ -216,8 +178,7 @@ impl MyApp {
                         let mut should_enabled = self.payload_data.is_some();
 
                         if let Some(payload_data) = &self.payload_data {
-                            let current_loaded_name =
-                                payload_data.path.file_name().unwrap().to_string_lossy();
+                            let current_loaded_name = payload_data.file_name();
 
                             let already_favorited = favorites
                                 .get(&current_loaded_name)
@@ -226,7 +187,7 @@ impl MyApp {
 
                             should_enabled = !already_favorited;
 
-                            if !payload_data.path.exists() {
+                            if !payload_data.path().exists() {
                                 should_enabled = false;
                             }
                         }
@@ -237,41 +198,50 @@ impl MyApp {
                             .clicked()
                         {
                             if let Some(payload_data) = &self.payload_data {
-                                favorites.add(&payload_data.path, true).unwrap();
+                                favorites.add(&payload_data.path(), true).unwrap();
                                 self.update_favorite_cache();
                             }
                         }
                     }
 
-                    if self.state == State::Done {
+                    if self.switch_data.state() == State::Done {
                         if ui
                             .button(RichText::new("↺").size(50.0))
                             .on_hover_text("Reset status")
                             .clicked()
                         {
-                            self.state = State::NotAvailable
+                            self.switch_data.reset_state();
                         }
                     } else if ui
                         .add_enabled(
-                            self.executable(),
+                            self.is_executable(),
                             Button::new(RichText::new("💉").size(50.0)),
                         )
                         .on_hover_text("Inject loaded payload")
                         .clicked()
                     {
-                        self.execute();
+                        let payload = self
+                            .payload_data
+                            .as_ref()
+                            .expect("Is executable so payload must exist")
+                            .payload();
+                        if let Err(e) = self.switch_data.execute(payload) {
+                            self.error = Some(e)
+                        }
                     }
                 });
             });
 
-            self.check_change_state();
+            if let Err(e) = self.switch_data.update_state() {
+                self.error = Some(e);
+            }
 
             if let Some(e) = &self.error {
                 create_error_from_error(ui, e);
             }
 
             ui.centered_and_justified(|ui| {
-                match self.state {
+                match self.switch_data.state() {
                     State::Available => {
                         self.images.connected.show_max_size(ui, ui.available_size())
                     }
@@ -282,43 +252,6 @@ impl MyApp {
                 };
             });
         });
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum State {
-    NotAvailable,
-    Available,
-    Done,
-}
-
-#[derive(Debug, Clone)]
-struct PayloadData {
-    payload: Payload,
-    path: PathBuf,
-    file_name: String,
-}
-
-impl PayloadData {
-    /// Makes a payload from a given file path
-    /// returns None on an error
-    pub fn from_path(path: &Path) -> Result<Self> {
-        let bytes = std::fs::read(&path)?;
-
-        let payload_data = PayloadData {
-            path: path.to_owned(),
-            payload: Payload::new(&bytes)?,
-            file_name: path
-                .file_name()
-                .unwrap_or(OsStr::new("Unknown File"))
-                .to_string_lossy()
-                .to_string(),
-        };
-        return Ok(payload_data);
-    }
-
-    fn file_name(&self) -> &str {
-        &self.file_name
     }
 }
 
@@ -343,7 +276,7 @@ impl eframe::App for MyApp {
             // unwrap safe cause we are not empty
             let file = ctx.input().raw.dropped_files.last().unwrap().clone();
             if let Some(path) = file.path {
-                match PayloadData::from_path(&path) {
+                match PayloadData::new(&path) {
                     Ok(payload) => self.payload_data = Some(payload),
                     Err(e) => eprintln!("{e}"), // TODO:
                 }

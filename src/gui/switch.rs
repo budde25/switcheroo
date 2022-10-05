@@ -31,3 +31,76 @@ impl Switch {
         Ok(())
     }
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum State {
+    NotAvailable,
+    Available,
+    Done,
+}
+
+#[derive(Debug, Clone)]
+pub struct SwitchData {
+    switch: Switch,
+    state: State,
+}
+
+impl SwitchData {
+    /// Create some new Switch Data
+    pub fn new() -> Self {
+        Self {
+            switch: Switch::new(),
+            state: State::NotAvailable,
+        }
+    }
+
+    /// Check if we need to change our current state
+    pub fn update_state(&mut self) -> Result<State, Error> {
+        if self.state == State::Done {
+            return Ok(self.state);
+        }
+
+        let guard = self.switch.0.lock().expect("Lock should not be poisoned");
+
+        match &*guard {
+            Ok(rcm) => {
+                match rcm.validate() {
+                    Ok(_) => self.state = State::Available,
+                    Err(e) => {
+                        self.state = State::NotAvailable;
+                        return Err(e);
+                    }
+                }
+
+                Ok(self.state)
+            }
+            Err(e) => {
+                self.state = State::NotAvailable;
+                if e != &tegra_rcm::Error::SwitchNotFound {
+                    return Err(e.clone());
+                }
+                return Ok(self.state);
+            }
+        }
+    }
+
+    pub fn execute(&mut self, payload: &Payload) -> Result<(), Error> {
+        match self.switch.execute(payload) {
+            Ok(_) => self.state = State::Done,
+            Err(e) => return Err(e.into()),
+        }
+        Ok(())
+    }
+
+    pub fn reset_state(&mut self) {
+        self.state = State::NotAvailable;
+    }
+
+    pub fn state(&self) -> State {
+        self.state
+    }
+
+    pub fn switch(&self) -> Switch {
+        self.switch.clone()
+    }
+}
