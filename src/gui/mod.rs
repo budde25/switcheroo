@@ -1,15 +1,14 @@
+mod favorites;
 mod image;
 mod payload;
 mod switch;
 mod usb;
 
-use std::path::PathBuf;
-
 use self::image::Images;
-use super::favorites::Favorites;
 use eframe::egui::{
     style, widgets, Button, CentralPanel, Color32, Context, RichText, TopBottomPanel, Ui,
 };
+use favorites::FavoritesData;
 use native_dialog::FileDialog;
 use payload::PayloadData;
 use switch::{State, Switch, SwitchData};
@@ -35,16 +34,13 @@ pub fn gui() {
             usb::spawn_thread(switch_data.switch(), cc.egui_ctx.clone());
 
             // We have to do it like this, we need to update the cache when loading up.
-            let mut app = MyApp {
+            let app = MyApp {
                 switch_data,
                 payload_data: None,
                 images: Images::default(),
                 error: None,
-                favorites: Favorites::new().ok(),
-                favorites_cache: vec![],
+                favorites_data: FavoritesData::new(),
             };
-
-            app.update_favorite_cache();
 
             Box::new(app)
         }),
@@ -54,10 +50,9 @@ pub fn gui() {
 struct MyApp {
     switch_data: SwitchData,
     payload_data: Option<PayloadData>,
+    favorites_data: FavoritesData,
     images: Images,
     error: Option<tegra_rcm::Error>,
-    favorites: Option<Favorites>,
-    favorites_cache: Vec<PathBuf>,
 }
 
 impl MyApp {
@@ -76,20 +71,21 @@ impl MyApp {
         self.payload_data.is_some()
     }
 
-    fn update_favorite_cache(&mut self) {
-        if let Some(favorites) = &self.favorites {
-            match favorites.list() {
-                Ok(list) => {
-                    self.favorites_cache = list
-                        .filter_map(std::result::Result::ok)
-                        .map(|e| e.path())
-                        .collect();
-                }
-                Err(_) => eprintln!(
-                    "Failed to read favorite directory, are we possibly missing permissions?"
-                ),
+    fn allow_favoriting(&self) -> bool {
+        let mut should_enabled = self.payload_data.is_some();
+        if let Some(payload_data) = &self.payload_data {
+            let current_loaded_name = payload_data.file_name();
+
+            let already_favorited = self.favorites_data.contains(current_loaded_name);
+
+            should_enabled = !already_favorited;
+
+            if !payload_data.path().exists() {
+                should_enabled = false;
             }
         }
+
+        return should_enabled;
     }
 
     fn main_tab(&mut self, ctx: &Context) {
@@ -110,49 +106,43 @@ impl MyApp {
                     }
                 });
 
-                // If favorites could be initialized
-                if self.favorites.as_ref().is_some() {
-                    ui.add_space(10.0);
-                    ui.separator();
-                    ui.add_space(10.0);
+                // Favorites
+                ui.add_space(10.0);
+                ui.separator();
+                ui.add_space(10.0);
 
-                    let favorites = self.favorites_cache.clone();
-
-                    if favorites.is_empty() {
-                        ui.label(RichText::new(
-                            "You don't seem to have any favorites yet! 😢",
-                        ));
-                    } else {
-                        for entry in favorites {
-                            // We should be safe to unwrap, list should only contain paths to files.
-                            let file_name = entry.file_name().unwrap();
-
-                            ui.horizontal(|ui| {
-                                ui.label(&*file_name.to_string_lossy());
-                                if ui
-                                    .button(RichText::new("Load"))
-                                    .on_hover_text("Load favorite.")
-                                    .clicked()
-                                {
-                                    match PayloadData::new(&entry) {
-                                        Ok(payload) => self.payload_data = Some(payload),
-                                        Err(e) => eprintln!("{e}"),
-                                    }
-                                }
-                                if ui
-                                    .button(RichText::new("Remove"))
-                                    .on_hover_text("Remove from favorites.")
-                                    .clicked()
-                                {
-                                    self.favorites
-                                        .as_ref()
-                                        .unwrap()
-                                        .remove(&file_name.to_string_lossy())
-                                        .unwrap();
-                                    self.update_favorite_cache()
-                                }
-                            });
-                        }
+                if self.favorites_data.favorites().is_empty() {
+                    ui.label(RichText::new(
+                        "You don't seem to have any favorites yet! 😢",
+                    ));
+                } else {
+                    // TODO: find a way cheaper way to iteratre
+                    let favorites = self.favorites_data.favorites().to_owned();
+                    for entry in favorites {
+                        ui.horizontal(|ui| {
+                            ui.label(&entry);
+                            if ui
+                                .button(RichText::new("Load"))
+                                .on_hover_text("Load favorite.")
+                                .clicked()
+                            {
+                                match self.favorites_data.payload(&entry) {
+                                    Ok(payload) => self.payload_data = Some(payload),
+                                    Err(e) => eprintln!("{e}"),
+                                };
+                            }
+                            ui.spacing();
+                            if ui
+                                .button(RichText::new("Remove"))
+                                .on_hover_text("Remove from favorites.")
+                                .clicked()
+                            {
+                                match self.favorites_data.remove(&entry) {
+                                    Ok(_) => (),
+                                    Err(e) => eprintln!("Unable to remove favorite: {e}"),
+                                };
+                            }
+                        });
                     }
                 }
 
@@ -174,33 +164,16 @@ impl MyApp {
                         }
                     }
 
-                    if let Some(favorites) = self.favorites.as_ref() {
-                        let mut should_enabled = self.payload_data.is_some();
-
+                    if ui
+                        .add_enabled(
+                            self.allow_favoriting(),
+                            Button::new(RichText::new("♥").size(50.0)),
+                        )
+                        .on_hover_text("Add currently loaded payload to favorites")
+                        .clicked()
+                    {
                         if let Some(payload_data) = &self.payload_data {
-                            let current_loaded_name = payload_data.file_name();
-
-                            let already_favorited = favorites
-                                .get(&current_loaded_name)
-                                .unwrap_or(None)
-                                .is_some();
-
-                            should_enabled = !already_favorited;
-
-                            if !payload_data.path().exists() {
-                                should_enabled = false;
-                            }
-                        }
-
-                        if ui
-                            .add_enabled(should_enabled, Button::new(RichText::new("♥").size(50.0)))
-                            .on_hover_text("Add currently loaded payload to favorites")
-                            .clicked()
-                        {
-                            if let Some(payload_data) = &self.payload_data {
-                                favorites.add(&payload_data.path(), true).unwrap();
-                                self.update_favorite_cache();
-                            }
+                            self.favorites_data.add(&payload_data).unwrap();
                         }
                     }
 
@@ -223,7 +196,7 @@ impl MyApp {
                         let payload = self
                             .payload_data
                             .as_ref()
-                            .expect("Is executable so payload must exist")
+                            .expect("Is executable, therefore payload must exist")
                             .payload();
                         if let Err(e) = self.switch_data.execute(payload) {
                             self.error = Some(e)
@@ -235,6 +208,9 @@ impl MyApp {
             if let Err(e) = self.switch_data.update_state() {
                 self.error = Some(e);
             }
+
+            // check for changes
+            self.favorites_data.update(false);
 
             if let Some(e) = &self.error {
                 create_error_from_error(ui, e);

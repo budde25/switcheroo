@@ -72,4 +72,9 @@ impl Favorites {
             Ok(false)
         }
     }
+
+    /// The actual favorites directory on the file system
+    pub fn directory(&self) -> &Path {
+        &self.path
+    }
 }
