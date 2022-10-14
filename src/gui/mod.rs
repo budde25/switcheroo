@@ -85,7 +85,7 @@ impl MyApp {
             }
         }
 
-        return should_enabled;
+        should_enabled
     }
 
     fn main_tab(&mut self, ctx: &Context) {
@@ -173,7 +173,7 @@ impl MyApp {
                         .clicked()
                     {
                         if let Some(payload_data) = &self.payload_data {
-                            self.favorites_data.add(&payload_data).unwrap();
+                            self.favorites_data.add(payload_data).unwrap();
                         }
                     }
 

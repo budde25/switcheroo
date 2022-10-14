@@ -79,7 +79,7 @@ impl SwitchData {
                 if e != &tegra_rcm::Error::SwitchNotFound {
                     return Err(e.clone());
                 }
-                return Ok(self.state);
+                Ok(self.state)
             }
         }
     }
@@ -87,7 +87,7 @@ impl SwitchData {
     pub fn execute(&mut self, payload: &Payload) -> Result<(), Error> {
         match self.switch.execute(payload) {
             Ok(_) => self.state = State::Done,
-            Err(e) => return Err(e.into()),
+            Err(e) => return Err(e),
         }
         Ok(())
     }

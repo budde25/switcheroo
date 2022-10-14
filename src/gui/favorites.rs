@@ -82,7 +82,7 @@ impl FavoritesData {
 
     pub fn payload(&self, favorite: &str) -> Result<PayloadData> {
         let path = self.favorites.directory().join(favorite);
-        Ok(PayloadData::new(&path)?)
+        PayloadData::new(&path)
     }
 
     /// Get the favorites (from the cache) does not access the disk
@@ -100,7 +100,7 @@ impl FavoritesData {
 
     /// Add a payload to the favorites (then updates the cache)
     pub fn add(&mut self, payload_data: &PayloadData) -> Result<()> {
-        let res = self.favorites.add(&payload_data.path(), true);
+        let res = self.favorites.add(payload_data.path(), true);
         self.update_cache();
         res
     }
@@ -108,7 +108,6 @@ impl FavoritesData {
     pub fn contains(&self, file_name: &str) -> bool {
         self.cache
             .iter()
-            .find(|x| x.as_str() == file_name)
-            .is_some()
+            .any(|x| x.as_str() == file_name)
     }
 }

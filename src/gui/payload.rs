@@ -26,7 +26,7 @@ impl PayloadData {
                 .to_string_lossy()
                 .to_string(),
         };
-        return Ok(payload_data);
+        Ok(payload_data)
     }
 
     /// Get the file name
