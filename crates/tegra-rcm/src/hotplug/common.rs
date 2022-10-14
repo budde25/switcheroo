@@ -42,7 +42,7 @@ pub fn create_hotplug(data: Box<dyn Actions>) {
             .vendor_id(SWITCH_VID)
             .product_id(SWITCH_PID)
             .enumerate(true)
-            .register(&context, Box::new(HotplugHandler { inner: data }))
+            .register(context, Box::new(HotplugHandler { inner: data }))
             .expect("We where able to successfully wrap the context");
 
         loop {

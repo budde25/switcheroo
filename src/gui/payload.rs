@@ -15,7 +15,7 @@ pub struct PayloadData {
 impl PayloadData {
     /// Makes a payload from a given file path
     pub fn new(path: &Path) -> Result<Self> {
-        let bytes = std::fs::read(&path)?;
+        let bytes = std::fs::read(path)?;
 
         let payload_data = PayloadData {
             path: path.to_owned(),

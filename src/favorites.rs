@@ -37,7 +37,7 @@ impl Favorites {
     pub fn add(&self, payload: &Path, check_valid: bool) -> Result<()> {
         if check_valid {
             // ensure we have been passed a valid payload
-            let payload_bytes = fs::read(&payload)
+            let payload_bytes = fs::read(payload)
                 .wrap_err_with(|| format!("Failed to read payload from: {}", &payload.display()))?;
             let _ = Payload::new(&payload_bytes)?;
         } else if !payload.is_file() {
