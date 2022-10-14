@@ -22,7 +22,7 @@ impl PayloadData {
             payload: Payload::new(&bytes)?,
             file_name: path
                 .file_name()
-                .unwrap_or(OsStr::new("Unknown File"))
+                .unwrap_or_else(|| OsStr::new("Unknown File"))
                 .to_string_lossy()
                 .to_string(),
         };
