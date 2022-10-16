@@ -22,7 +22,7 @@ fn main() -> Result<()> {
 
     // check if we should start the gui, rn we start with env var set, or platform = windows
     #[cfg(feature = "gui")]
-    check_gui_mode()?;
+    launch_gui_only_mode()?;
 
     let args = Cli::parse();
 
@@ -149,8 +149,11 @@ fn remove(favorite: String) -> Result<()> {
     Ok(())
 }
 
+/// Launch the gui if we are in gui only mode
+/// Most commonly by checking the env variable
+/// SWITCHEROO_GUI_ONLY is set to "0"
 #[cfg(feature = "gui")]
-fn check_gui_mode() -> Result<()> {
+fn launch_gui_only_mode() -> Result<()> {
     // FIXME: remove once new version of glutin releases
     #[cfg(all(unix, not(target_os = "macos")))]
     env::set_var("WINIT_UNIX_BACKEND", "x11");
@@ -159,14 +162,15 @@ fn check_gui_mode() -> Result<()> {
     #[cfg(target_os = "windows")]
     launch_gui();
 
-    match env::var_os("SWITCHEROO_GUI_ONLY") {
+    let gui_only = match env::var_os("SWITCHEROO_GUI_ONLY") {
         None => return Ok(()),
-        Some(gui_only) => {
-            if gui_only == "0" {
-                launch_gui();
-            }
-        }
+        Some(gui_only) => gui_only,
     };
+
+    if gui_only == "0" {
+        launch_gui();
+    }
+
     Ok(())
 }
 
