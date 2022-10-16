@@ -151,6 +151,10 @@ fn remove(favorite: String) -> Result<()> {
 
 #[cfg(feature = "gui")]
 fn check_gui_mode() -> Result<()> {
+    // FIXME: remove once new version of glutin releases
+    #[cfg(all(unix, not(target_os = "macos")))]
+    env::set_var("WINIT_UNIX_BACKEND", "x11");
+
     // FIXME: only gui mode on windows
     #[cfg(target_os = "windows")]
     launch_gui();
