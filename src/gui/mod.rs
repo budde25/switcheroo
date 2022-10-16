@@ -62,7 +62,7 @@ impl MyApp {
             return false;
         }
 
-        // we can't be excutable in this state
+        // we can't be executable in this state
         if self.switch_data.state() != State::Available {
             return false;
         }

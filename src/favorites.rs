@@ -62,7 +62,7 @@ impl Favorites {
 
     /// Returns true if it successfully removed the favorite, false otherwise
     pub fn remove(&self, favorite: &str) -> Result<bool> {
-        let favorite = favorite.trim(); // make sure we don't hav whitespace interfere
+        let favorite = favorite.trim(); // make sure we don't have whitespace interfere
         let found = self.get(favorite)?;
 
         if let Some(file) = found {

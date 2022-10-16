@@ -47,7 +47,7 @@ impl FavoritesData {
                 }
             }
             Err(e) => {
-                warn!("File system notifications are not availble. There will be no immediate feedback to favorites directory changes.\n{:?}", e)
+                warn!("File system notifications are not available. There will be no immediate feedback to favorites directory changes.\n{:?}", e)
             }
         }
     }

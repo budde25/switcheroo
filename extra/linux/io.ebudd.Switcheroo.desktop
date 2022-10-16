@@ -7,5 +7,5 @@ Terminal=false
 Categories=Utility;
 
 Name=Switcheroo
-Comment=A GUI for the Switch RCM BootRom expoit
+Comment=A GUI for the Switch RCM BootRom exploit
 StartupWMClass=Switcheroo
