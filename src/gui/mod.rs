@@ -6,7 +6,8 @@ mod usb;
 
 use self::image::Images;
 use eframe::egui::{
-    style, widgets, Button, CentralPanel, Color32, Context, RichText, TopBottomPanel, Ui,
+    style, widgets, Button, CentralPanel, Color32, Context, Layout, RichText, TopBottomPanel, Ui,
+    Window,
 };
 use favorites::FavoritesData;
 use native_dialog::FileDialog;
@@ -212,10 +213,6 @@ impl MyApp {
             // check for changes
             self.favorites_data.update(false);
 
-            if let Some(e) = &self.error {
-                create_error_from_error(ui, e);
-            }
-
             ui.centered_and_justified(|ui| {
                 match self.switch_data.state() {
                     State::Available => {
@@ -245,6 +242,23 @@ impl eframe::App for MyApp {
 
         self.main_tab(ctx);
 
+        if let Some(error) = self.error.clone() {
+            // Show confirmation dialog:
+            Window::new("Something went wrong")
+                .collapsible(false)
+                .resizable(false)
+                .show(ctx, |ui| {
+                    ui.vertical(|ui| {
+                        create_error_from_error(ui, &error);
+                        ui.with_layout(Layout::right_to_left(eframe::emath::Align::TOP), |ui| {
+                            if ui.button("OK").clicked() {
+                                self.error = None;
+                            }
+                        });
+                    });
+                });
+        }
+
         preview_files_being_dropped(ctx);
 
         // Collect dropped files:
@@ -264,8 +278,7 @@ impl eframe::App for MyApp {
 /// Creates a basic error string
 fn create_error(ui: &mut Ui, error: &str) {
     ui.horizontal(|ui| {
-        ui.label(RichText::new("Error:").color(Color32::RED).size(18.0));
-        ui.monospace(RichText::new(error).color(Color32::RED).size(18.0));
+        ui.monospace(RichText::new(error).size(18.0));
     });
 }
 
