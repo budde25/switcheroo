@@ -6,6 +6,7 @@
   <name>Switcheroo</name>
   <project_license>GPL-2.0-or-later</project_license>
   <metadata_license>MIT</metadata_license>
+  <launchable type="desktop-id">io.ebudd.Switcheroo.desktop</launchable>
   <!-- Translators: The application's summary / tagline -->
   <summary>A GUI for the Nintendo Switch RCM exploit</summary>
   <description>
