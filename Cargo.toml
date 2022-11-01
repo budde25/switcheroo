@@ -31,7 +31,7 @@ tracing-subscriber = { version = "0.3.16", features = [ "env-filter" ] }
 [build-dependencies]
 clap = { version = "4.0.18", features = [ "derive" ] }
 clap_complete = "4.0.3"
-clap_mangen = "0.2.3"
+clap_mangen = "0.2.4"
 
 [features]
 default = [ "gui" ]
