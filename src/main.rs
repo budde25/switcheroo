@@ -22,7 +22,7 @@ fn main() -> Result<()> {
 
     // check if we should start the gui, rn we start with env var set, or platform = windows
     #[cfg(feature = "gui")]
-    launch_gui_only_mode()?;
+    launch_gui_only_mode();
 
     let args = Cli::parse();
 
@@ -35,7 +35,7 @@ fn main() -> Result<()> {
             wait,
         } => execute(payload, favorite, wait)?,
         Commands::Device {} => device()?,
-        Commands::List => list()?,
+        Commands::List => _ = list()?,
         Commands::Add { payload } => add(payload)?,
         Commands::Remove { favorite } => remove(favorite)?,
         #[cfg(feature = "gui")]
@@ -111,7 +111,10 @@ fn device() -> Result<()> {
     Ok(())
 }
 
-fn list() -> Result<()> {
+/// Prints the favorites to stdout
+/// Errors on trying to read from the favorites directory
+/// Returns the number of entries
+fn list() -> Result<usize> {
     let favorites = Favorites::new()?;
     let list: Vec<_> = favorites
         .list()?
@@ -120,13 +123,14 @@ fn list() -> Result<()> {
 
     if list.is_empty() {
         println!("No favorites");
-    } else {
-        for entry in list {
-            println!("{}", entry.file_name().to_string_lossy());
-        }
+        return Ok(0);
     }
 
-    Ok(())
+    for entry in &list {
+        println!("{}", entry.file_name().to_string_lossy());
+    }
+
+    Ok(list.len())
 }
 
 fn add(payload: PathBuf) -> Result<()> {
@@ -153,7 +157,7 @@ fn remove(favorite: String) -> Result<()> {
 /// Most commonly by checking the env variable
 /// SWITCHEROO_GUI_ONLY is set to "0"
 #[cfg(feature = "gui")]
-fn launch_gui_only_mode() -> Result<()> {
+fn launch_gui_only_mode() {
     // FIXME: remove once new version of glutin releases
     #[cfg(all(unix, not(target_os = "macos")))]
     env::set_var("WINIT_UNIX_BACKEND", "x11");
@@ -162,16 +166,13 @@ fn launch_gui_only_mode() -> Result<()> {
     #[cfg(target_os = "windows")]
     launch_gui();
 
-    let gui_only = match env::var_os("SWITCHEROO_GUI_ONLY") {
-        None => return Ok(()),
-        Some(gui_only) => gui_only,
+    let Some(gui_only) = env::var_os("SWITCHEROO_GUI_ONLY") else {
+        return;
     };
 
     if gui_only == "0" {
         launch_gui();
     }
-
-    Ok(())
 }
 
 #[cfg(feature = "gui")]
