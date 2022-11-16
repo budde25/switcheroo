@@ -15,8 +15,15 @@ homepage = "https://github.com/budde25/switcheroo"
 name = "switcheroo"
 path = "src/main.rs"
 
+[workspace]
+members = [ "crates/tegra-rcm" ]
+
+[workspace.dependencies]
+clap = { version = "4.0.25", features = [ "derive" ] }
+tracing = "0.1.37"
+
 [dependencies]
-clap = { version = "4.0.23", features = [ "derive" ] }
+clap.workspace = true
 color-eyre = "0.6.2"
 dirs = "4.0.0"
 eframe = { version = "0.19.0", features = [ "dark-light" ], optional = true }
@@ -25,20 +32,17 @@ image = { version = "0.24.5", optional = true }
 native-dialog = { version = "0.6.3", optional = true }
 notify = { version = "5.0.0", optional = true }
 tegra-rcm = { version = "0.3.0", path = "crates/tegra-rcm" }
-tracing = "0.1.37"
+tracing.workspace = true
 tracing-subscriber = { version = "0.3.16", features = [ "env-filter" ] }
 
 [build-dependencies]
-clap = { version = "4.0.23", features = [ "derive" ] }
+clap.workspace = true
 clap_complete = "4.0.5"
 clap_mangen = "0.2.4"
 
 [features]
 default = [ "gui" ]
 gui = [ "dep:egui_extras", "dep:eframe", "dep:native-dialog", "dep:notify", "dep:image" ]
-
-[workspace]
-members = [ "crates/tegra-rcm" ]
 
 [profile.release]
 strip = "symbols"
