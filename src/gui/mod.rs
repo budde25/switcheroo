@@ -10,8 +10,8 @@ use eframe::egui::{
     Window,
 };
 use favorites::FavoritesData;
-use native_dialog::FileDialog;
 use payload::PayloadData;
+use rfd::FileDialog;
 use switch::{State, Switch, SwitchData};
 
 pub fn gui() {
@@ -120,7 +120,7 @@ impl MyApp {
                         .on_hover_text("Load payload from file")
                         .clicked()
                     {
-                        if let Some(path) = FileDialog::new().show_open_single_file().unwrap() {
+                        if let Some(path) = FileDialog::new().pick_file() {
                             match PayloadData::new(&path) {
                                 Ok(payload) => self.payload_data = Some(payload),
                                 Err(e) => eprintln!("{e}"),
