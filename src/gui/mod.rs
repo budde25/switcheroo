@@ -90,6 +90,8 @@ impl MyApp {
     }
 
     fn main_tab(&mut self, ctx: &Context) {
+        self.favorites_data.render(ctx);
+
         CentralPanel::default().show(ctx, |ui| {
             ui.group(|ui| {
                 ui.add_space(10.0);
@@ -108,45 +110,6 @@ impl MyApp {
                 });
 
                 // Favorites
-                ui.add_space(10.0);
-                ui.separator();
-                ui.add_space(10.0);
-
-                if self.favorites_data.favorites().is_empty() {
-                    ui.label(RichText::new(
-                        "You don't seem to have any favorites yet! 😢",
-                    ));
-                } else {
-                    // TODO: find a way cheaper way to iteratre
-                    let favorites = self.favorites_data.favorites().to_owned();
-                    for entry in favorites {
-                        ui.horizontal(|ui| {
-                            ui.label(&entry);
-                            if ui
-                                .button(RichText::new("Load"))
-                                .on_hover_text("Load favorite.")
-                                .clicked()
-                            {
-                                match self.favorites_data.payload(&entry) {
-                                    Ok(payload) => self.payload_data = Some(payload),
-                                    Err(e) => eprintln!("{e}"),
-                                };
-                            }
-                            ui.spacing();
-                            if ui
-                                .button(RichText::new("Remove"))
-                                .on_hover_text("Remove from favorites.")
-                                .clicked()
-                            {
-                                match self.favorites_data.remove(&entry) {
-                                    Ok(_) => (),
-                                    Err(e) => eprintln!("Unable to remove favorite: {e}"),
-                                };
-                            }
-                        });
-                    }
-                }
-
                 ui.add_space(10.0);
                 ui.separator();
                 ui.add_space(10.0);
@@ -189,7 +152,7 @@ impl MyApp {
                     } else if ui
                         .add_enabled(
                             self.is_executable(),
-                            Button::new(RichText::new("💉").size(50.0)),
+                            Button::new(RichText::new("🚀").size(50.0)),
                         )
                         .on_hover_text("Inject loaded payload")
                         .clicked()
@@ -208,6 +171,11 @@ impl MyApp {
 
             if let Err(e) = self.switch_data.update_state() {
                 self.error = Some(e);
+            }
+
+            match self.favorites_data.payload() {
+                Some(p) => self.payload_data = Some(p),
+                None => self.payload_data = None,
             }
 
             // check for changes
