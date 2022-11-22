@@ -2,7 +2,8 @@ use std::sync::atomic::AtomicBool;
 
 use color_eyre::Result;
 use eframe::egui::panel::Side;
-use eframe::egui::{Button, Grid, RichText, SidePanel, TextStyle};
+use eframe::egui::{Button, Grid, Layout, RichText, SidePanel, TextStyle, Ui};
+use eframe::emath::Align;
 use notify::{RecursiveMode, Watcher};
 
 use tracing::{info, warn};
@@ -73,24 +74,21 @@ impl FavoritesData {
 
     /// Grab new favorites from the the disk
     fn update_cache(&mut self) {
-        match self.favorites.list() {
-            Ok(list) => {
-                // shouldn't be that long so a short should not be bad
-                self.cache = list
-                    .filter_map(std::result::Result::ok)
-                    .filter_map(|e| {
-                        e.path()
-                            .file_name()
-                            .and_then(|s| s.to_str())
-                            .map(|f| f.to_owned())
-                    })
-                    .collect();
-                self.cache.sort();
-            }
-            Err(_) => {
-                eprintln!("Failed to read favorite directory, are we missing permissions?")
-            }
-        }
+        let Ok(read_dir) = self.favorites.list() else {
+            eprintln!("Failed to read favorite directory, are we missing permissions?");
+            return;
+        };
+
+        self.cache = read_dir
+            .filter_map(Result::ok)
+            .filter_map(|e| {
+                e.path()
+                    .file_name()
+                    .and_then(|s| s.to_str())
+                    .map(|f| f.to_owned())
+            })
+            .collect();
+        self.cache.sort();
     }
 
     pub fn payload(&self) -> Option<PayloadData> {
@@ -139,45 +137,46 @@ impl FavoritesData {
                 ui.label(RichText::new(
                     "You don't seem to have any favorites yet! 😢",
                 ));
-            } else {
-                Grid::new("favorites").show(ui, |ui| {
-                    let mut update = false;
-                    // TODO: find a way cheaper way to iteratre
-                    for entry in self.favorites().to_owned() {
-                        ui.horizontal(|ui| {
-                            let button = ui.selectable_value(
-                                &mut self.fav,
-                                Selected::Favorited(entry.clone()),
-                                &entry,
-                            );
-                            if button.clicked() {
-                                self.payload = self.make_payload();
-                            }
-                            ui.add_space(20.0);
-                            ui.with_layout(
-                                eframe::egui::Layout::right_to_left(eframe::emath::Align::Center),
-                                |ui| {
-                                    let remove_button = Button::new("🗑");
-                                    let remove_resp = ui
-                                        .add(remove_button)
-                                        .on_hover_text("Remove from favorites");
+                return;
+            }
 
-                                    if remove_resp.clicked() {
-                                        match self.favorites.remove(&entry) {
-                                            Ok(_) => update = true,
-                                            Err(e) => eprintln!("Unable to remove favorite: {e}"),
-                                        };
-                                    }
-                                },
-                            );
-                        });
-                        ui.end_row();
-                    }
-                    if update {
-                        self.update(true);
-                    }
-                });
+            self.render_grid(ui);
+        });
+    }
+
+    fn render_grid(&mut self, ui: &mut Ui) {
+        Grid::new("favorites").show(ui, |ui| {
+            let mut update = false;
+            // TODO: find a way cheaper way to iterate
+            for entry in self.favorites().to_owned() {
+                ui.horizontal(|ui| self.render_entry(entry, ui).then(|| update = true));
+                ui.end_row();
+            }
+            if update {
+                self.update(true);
             }
         });
+    }
+
+    fn render_entry(&mut self, entry: String, ui: &mut Ui) -> bool {
+        let button = ui.selectable_value(&mut self.fav, Selected::Favorited(entry.clone()), &entry);
+        if button.clicked() {
+            self.payload = self.make_payload();
+        }
+        ui.add_space(20.0);
+        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+            let remove_button = Button::new("🗑");
+            let remove_resp = ui.add(remove_button).on_hover_text("Remove from favorites");
+
+            if remove_resp.clicked() {
+                match self.favorites.remove(&entry) {
+                    Ok(_) => return true,
+                    Err(e) => eprintln!("Unable to remove favorite: {e}"),
+                };
+            }
+            return false;
+        });
+
+        return false;
     }
 }
