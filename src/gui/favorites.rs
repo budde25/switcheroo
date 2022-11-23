@@ -128,7 +128,8 @@ impl FavoritesData {
         self.cache.iter().any(|x| x.as_str() == file_name)
     }
 
-    pub fn render(&mut self, ctx: &eframe::egui::Context) {
+    pub fn render(&mut self, ctx: &eframe::egui::Context) -> bool {
+        let mut selected = false;
         SidePanel::new(Side::Left, "Favorites").show(ctx, |ui| {
             ui.label(RichText::new("Favorites").text_style(TextStyle::Heading));
             ui.separator();
@@ -140,27 +141,45 @@ impl FavoritesData {
                 return;
             }
 
-            self.render_grid(ui);
+            if self.render_grid(ui) {
+                selected = true;
+            };
         });
+        return selected;
     }
 
-    fn render_grid(&mut self, ui: &mut Ui) {
+    fn render_grid(&mut self, ui: &mut Ui) -> bool {
+        let mut selected = false;
         Grid::new("favorites").show(ui, |ui| {
             let mut update = false;
             // TODO: find a way cheaper way to iterate
             for entry in self.favorites().to_owned() {
-                ui.horizontal(|ui| self.render_entry(entry, ui).then(|| update = true));
+                ui.horizontal(|ui| {
+                    match self.render_entry(entry, ui) {
+                        (up, sel) => {
+                            if up {
+                                update = true;
+                            }
+                            if sel {
+                                selected = true;
+                            }
+                        }
+                    };
+                });
                 ui.end_row();
             }
             if update {
                 self.update(true);
             }
         });
+        return selected;
     }
 
-    fn render_entry(&mut self, entry: String, ui: &mut Ui) -> bool {
+    fn render_entry(&mut self, entry: String, ui: &mut Ui) -> (bool, bool) {
+        let mut selected = false;
         let button = ui.selectable_value(&mut self.fav, Selected::Favorited(entry.clone()), &entry);
         if button.clicked() {
+            selected = true;
             self.payload = self.make_payload();
         }
         ui.add_space(20.0);
@@ -170,13 +189,13 @@ impl FavoritesData {
 
             if remove_resp.clicked() {
                 match self.favorites.remove(&entry) {
-                    Ok(_) => return true,
+                    Ok(_) => return (true, selected),
                     Err(e) => eprintln!("Unable to remove favorite: {e}"),
                 };
             }
-            return false;
+            return (false, selected);
         });
 
-        return false;
+        return (false, selected);
     }
 }

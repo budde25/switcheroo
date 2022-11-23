@@ -4,6 +4,8 @@ mod payload;
 mod switch;
 mod usb;
 
+use crate::cli;
+
 use self::image::Images;
 use eframe::egui::{
     style, widgets, Button, CentralPanel, Color32, Context, Layout, RichText, TopBottomPanel, Ui,
@@ -90,92 +92,29 @@ impl MyApp {
     }
 
     fn main_tab(&mut self, ctx: &Context) {
-        self.favorites_data.render(ctx);
+        let clicked = self.favorites_data.render(ctx);
 
         CentralPanel::default().show(ctx, |ui| {
             ui.group(|ui| {
-                ui.add_space(10.0);
-
-                ui.horizontal(|ui| {
-                    ui.label(RichText::new("Payload:").size(16.0));
-                    if let Some(payload) = &self.payload_data {
-                        ui.monospace(
-                            RichText::new(payload.file_name())
-                                .color(Color32::LIGHT_BLUE)
-                                .size(16.0),
-                        );
-                    } else {
-                        ui.monospace(RichText::new("None").size(16.0));
-                    }
-                });
-
-                // Favorites
-                ui.add_space(10.0);
+                ui.add_space(5.0);
+                self.payload_window(ui);
+                ui.add_space(5.0);
                 ui.separator();
-                ui.add_space(10.0);
 
-                ui.horizontal(|ui| {
-                    if ui
-                        .button(RichText::new("📂").size(50.0))
-                        .on_hover_text("Load payload from file")
-                        .clicked()
-                    {
-                        if let Some(path) = FileDialog::new().pick_file() {
-                            match PayloadData::new(&path) {
-                                Ok(payload) => self.payload_data = Some(payload),
-                                Err(e) => eprintln!("{e}"),
-                            }
-                        }
-                    }
-
-                    if ui
-                        .add_enabled(
-                            self.allow_favoriting(),
-                            Button::new(RichText::new("♥").size(50.0)),
-                        )
-                        .on_hover_text("Add currently loaded payload to favorites")
-                        .clicked()
-                    {
-                        if let Some(payload_data) = &self.payload_data {
-                            self.favorites_data.add(payload_data).unwrap();
-                        }
-                    }
-
-                    if self.switch_data.state() == State::Done {
-                        if ui
-                            .button(RichText::new("↺").size(50.0))
-                            .on_hover_text("Reset status")
-                            .clicked()
-                        {
-                            self.switch_data.reset_state();
-                        }
-                    } else if ui
-                        .add_enabled(
-                            self.is_executable(),
-                            Button::new(RichText::new("🚀").size(50.0)),
-                        )
-                        .on_hover_text("Inject loaded payload")
-                        .clicked()
-                    {
-                        let payload = self
-                            .payload_data
-                            .as_ref()
-                            .expect("Is executable, therefore payload must exist")
-                            .payload();
-                        if let Err(e) = self.switch_data.execute(payload) {
-                            self.error = Some(e)
-                        }
-                    }
-                });
+                // Buttons
+                ui.horizontal(|ui| self.payload_buttons(ui));
             });
 
             if let Err(e) = self.switch_data.update_state() {
                 self.error = Some(e);
             }
 
-            match self.favorites_data.payload() {
-                Some(p) => self.payload_data = Some(p),
-                None => self.payload_data = None,
+            dbg!(&clicked);
+
+            if let Some(p) = self.favorites_data.payload() {
+                if clicked {
+                    self.payload_data = Some(p)
+                };
             }
 
             // check for changes
@@ -193,6 +132,78 @@ impl MyApp {
                 };
             });
         });
+    }
+
+    fn payload_window(&mut self, ui: &mut Ui) {
+        ui.horizontal(|ui| {
+            ui.label(RichText::new("Payload:").size(16.0));
+            if let Some(payload) = &self.payload_data {
+                ui.monospace(
+                    RichText::new(payload.file_name())
+                        .color(Color32::LIGHT_BLUE)
+                        .size(16.0),
+                );
+            } else {
+                ui.monospace(RichText::new("None").size(16.0));
+            }
+        });
+    }
+
+    fn payload_buttons(&mut self, ui: &mut Ui) {
+        if ui
+            .button(RichText::new("📂").size(50.0))
+            .on_hover_text("Load payload from file")
+            .clicked()
+        {
+            let Some(file) = FileDialog::new().pick_file() else {
+                eprintln!("error");
+                return;
+            };
+
+            match PayloadData::new(&file) {
+                Ok(payload) => self.payload_data = Some(payload),
+                Err(e) => eprintln!("{e}"),
+            }
+        }
+
+        if ui
+            .add_enabled(
+                self.allow_favoriting(),
+                Button::new(RichText::new("♥").size(50.0)),
+            )
+            .on_hover_text("Add currently loaded payload to favorites")
+            .clicked()
+        {
+            if let Some(payload_data) = &self.payload_data {
+                self.favorites_data.add(payload_data).unwrap();
+            }
+        }
+
+        if self.switch_data.state() == State::Done {
+            if ui
+                .button(RichText::new("↺").size(50.0))
+                .on_hover_text("Reset status")
+                .clicked()
+            {
+                self.switch_data.reset_state();
+            }
+        } else if ui
+            .add_enabled(
+                self.is_executable(),
+                Button::new(RichText::new("🚀").size(50.0)),
+            )
+            .on_hover_text("Inject loaded payload")
+            .clicked()
+        {
+            let payload = self
+                .payload_data
+                .as_ref()
+                .expect("Is executable, therefore payload must exist")
+                .payload();
+            if let Err(e) = self.switch_data.execute(payload) {
+                self.error = Some(e)
+            }
+        }
     }
 }
 
