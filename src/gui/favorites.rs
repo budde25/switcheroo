@@ -121,6 +121,7 @@ impl FavoritesData {
     pub fn add(&mut self, payload_data: &PayloadData) -> Result<()> {
         let res = self.favorites.add(payload_data.path(), true);
         self.update_cache();
+        self.fav = Selected::Favorited(payload_data.file_name().to_owned());
         res
     }
 
