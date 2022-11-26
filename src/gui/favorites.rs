@@ -4,6 +4,7 @@ use color_eyre::Result;
 use eframe::egui::panel::Side;
 use eframe::egui::{Button, Grid, Layout, RichText, SidePanel, TextStyle, Ui};
 use eframe::emath::Align;
+use eframe::epaint::Color32;
 use notify::{RecursiveMode, Watcher};
 
 use tracing::{info, warn};
@@ -111,11 +112,16 @@ impl FavoritesData {
 
     /// Removes a payload from the favorites (then updates the cache)
     ///
-    // fn remove(&mut self, file_name: &str) -> Result<bool> {
-    //     let res = self.favorites.remove(file_name);
-    //     self.update_cache();
-    //     res
-    // }
+    fn remove(&mut self, file_name: &str) -> Result<bool> {
+        let res = self.favorites.remove(file_name);
+        self.update_cache();
+        if let Selected::Favorited(name) = &self.fav {
+            if name == file_name {
+                self.fav = Selected::None;
+            }
+        }
+        res
+    }
 
     /// Add a payload to the favorites (then updates the cache)
     pub fn add(&mut self, payload_data: &PayloadData) -> Result<()> {
@@ -189,7 +195,7 @@ impl FavoritesData {
             let remove_resp = ui.add(remove_button).on_hover_text("Remove from favorites");
 
             if remove_resp.clicked() {
-                match self.favorites.remove(&entry) {
+                match self.remove(&entry) {
                     Ok(_) => return (true, selected),
                     Err(e) => eprintln!("Unable to remove favorite: {e}"),
                 };
@@ -198,5 +204,16 @@ impl FavoritesData {
         });
 
         return (false, selected);
+    }
+
+    pub fn render_payload(&mut self, ui: &mut Ui) {
+        ui.horizontal(|ui| {
+            ui.label(RichText::new("Payload:").size(16.0));
+            if let Selected::Favorited(payload) = &self.fav {
+                ui.monospace(RichText::new(payload).color(Color32::LIGHT_BLUE).size(16.0));
+            } else {
+                ui.monospace(RichText::new("None").size(16.0));
+            }
+        });
     }
 }

@@ -4,8 +4,6 @@ mod payload;
 mod switch;
 mod usb;
 
-use crate::cli;
-
 use self::image::Images;
 use eframe::egui::{
     style, widgets, Button, CentralPanel, Color32, Context, Layout, RichText, TopBottomPanel, Ui,
@@ -109,8 +107,6 @@ impl MyApp {
                 self.error = Some(e);
             }
 
-            dbg!(&clicked);
-
             if let Some(p) = self.favorites_data.payload() {
                 if clicked {
                     self.payload_data = Some(p)
@@ -135,18 +131,7 @@ impl MyApp {
     }
 
     fn payload_window(&mut self, ui: &mut Ui) {
-        ui.horizontal(|ui| {
-            ui.label(RichText::new("Payload:").size(16.0));
-            if let Some(payload) = &self.payload_data {
-                ui.monospace(
-                    RichText::new(payload.file_name())
-                        .color(Color32::LIGHT_BLUE)
-                        .size(16.0),
-                );
-            } else {
-                ui.monospace(RichText::new("None").size(16.0));
-            }
-        });
+        self.favorites_data.render_payload(ui)
     }
 
     fn payload_buttons(&mut self, ui: &mut Ui) {
