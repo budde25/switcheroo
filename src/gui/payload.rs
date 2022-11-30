@@ -5,7 +5,9 @@ use color_eyre::Result;
 
 use tegra_rcm::Payload;
 
-#[derive(Debug, Clone)]
+use crate::favorites::{Favorite, Favorites};
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PayloadData {
     payload: Payload,
     path: PathBuf,
@@ -42,5 +44,16 @@ impl PayloadData {
     /// Get the path
     pub fn path(&self) -> &PathBuf {
         &self.path
+    }
+}
+
+impl Favorite {
+    pub fn read_payload_data(&self) -> Result<PayloadData> {
+        let payload = self.read()?;
+        Ok(PayloadData {
+            payload,
+            path: Favorites::directory().to_owned(),
+            file_name: self.name().to_string(),
+        })
     }
 }

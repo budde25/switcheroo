@@ -9,6 +9,7 @@ use eframe::egui::{
     style, widgets, Button, CentralPanel, Color32, Context, Layout, RichText, TopBottomPanel, Ui,
     Window,
 };
+use egui_notify::Toasts;
 use favorites::FavoritesData;
 use payload::PayloadData;
 use rfd::FileDialog;
@@ -41,6 +42,7 @@ pub fn gui() {
                 images: Images::default(),
                 error: None,
                 favorites_data: FavoritesData::new(),
+                toast: Toasts::default(),
             };
 
             Box::new(app)
@@ -54,6 +56,7 @@ struct MyApp {
     favorites_data: FavoritesData,
     images: Images,
     error: Option<tegra_rcm::Error>,
+    toast: Toasts,
 }
 
 impl MyApp {
@@ -90,7 +93,10 @@ impl MyApp {
     }
 
     fn main_tab(&mut self, ctx: &Context) {
-        let clicked = self.favorites_data.render(ctx);
+        let (removed, clicked) = self.favorites_data.render(ctx);
+        if removed {
+            self.payload_data = None;
+        }
 
         CentralPanel::default().show(ctx, |ui| {
             ui.group(|ui| {
@@ -131,7 +137,28 @@ impl MyApp {
     }
 
     fn payload_window(&mut self, ui: &mut Ui) {
-        self.favorites_data.render_payload(ui)
+        self.render_payload(ui)
+    }
+
+    pub fn render_payload(&mut self, ui: &mut Ui) {
+        let mut payload = self.favorites_data.payload();
+        if payload.is_none() {
+            payload = self.payload_data.clone();
+        };
+
+        ui.horizontal(|ui| {
+            ui.label(RichText::new("Payload:").size(16.0));
+
+            if let Some(selected) = payload {
+                ui.monospace(
+                    RichText::new(selected.file_name())
+                        .color(Color32::LIGHT_BLUE)
+                        .size(16.0),
+                );
+            } else {
+                ui.monospace(RichText::new("None").size(16.0));
+            }
+        });
     }
 
     fn payload_buttons(&mut self, ui: &mut Ui) {
@@ -146,7 +173,10 @@ impl MyApp {
             };
 
             match PayloadData::new(&file) {
-                Ok(payload) => self.payload_data = Some(payload),
+                Ok(payload) => {
+                    self.payload_data = Some(payload);
+                    self.favorites_data.set_selected_none();
+                }
                 Err(e) => eprintln!("{e}"),
             }
         }
@@ -194,16 +224,6 @@ impl MyApp {
 
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
-        TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            ui.horizontal(|ui| {
-                // Title
-                ui.label(RichText::new("Switcheroo").size(24.0).strong());
-
-                ui.separator();
-                widgets::global_dark_light_mode_switch(ui);
-            })
-        });
-
         self.main_tab(ctx);
 
         if let Some(error) = self.error.clone() {

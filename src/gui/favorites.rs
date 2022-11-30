@@ -2,30 +2,30 @@ use std::sync::atomic::AtomicBool;
 
 use color_eyre::Result;
 use eframe::egui::panel::Side;
-use eframe::egui::{Button, Grid, Layout, RichText, SidePanel, TextStyle, Ui};
+use eframe::egui::{
+    global_dark_light_mode_switch, Button, Grid, Layout, RichText, SidePanel, TextStyle, Ui,
+};
 use eframe::emath::Align;
 use eframe::epaint::Color32;
 use notify::{RecursiveMode, Watcher};
 
 use tracing::{info, warn};
 
-use crate::favorites::Favorites;
+use crate::favorites::{Favorite, Favorites};
 
 use super::payload::PayloadData;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 enum Selected {
-    Favorited(String),
+    Favorited(Favorite),
     None,
 }
 
 static CHECK_UPDATE: AtomicBool = AtomicBool::new(false);
 
 pub struct FavoritesData {
-    fav: Selected,
-    favorites: Favorites,
-    cache: Vec<String>,
-    payload: Option<PayloadData>,
+    selected: Selected,
+    cache: Favorites,
 }
 
 impl FavoritesData {
@@ -35,10 +35,8 @@ impl FavoritesData {
             .expect("Failed to read favorite directory, are we missing permission?");
 
         let mut fav = Self {
-            fav: Selected::None,
-            favorites,
-            cache: Vec::new(),
-            payload: None,
+            selected: Selected::None,
+            cache: favorites,
         };
         fav.setup_watcher();
         fav.update_cache();
@@ -57,7 +55,7 @@ impl FavoritesData {
 
         match watcher {
             Ok(mut fsw) => {
-                if let Err(e) = fsw.watch(self.favorites.directory(), RecursiveMode::Recursive) {
+                if let Err(e) = fsw.watch(Favorites::directory(), RecursiveMode::Recursive) {
                     warn!("File watch error: {:?}", e);
                 }
             }
@@ -75,97 +73,97 @@ impl FavoritesData {
 
     /// Grab new favorites from the the disk
     fn update_cache(&mut self) {
-        let Ok(read_dir) = self.favorites.list() else {
+        let Ok(favorites) = Favorites::new() else {
             eprintln!("Failed to read favorite directory, are we missing permissions?");
             return;
         };
 
-        self.cache = read_dir
-            .filter_map(Result::ok)
-            .filter_map(|e| {
-                e.path()
-                    .file_name()
-                    .and_then(|s| s.to_str())
-                    .map(|f| f.to_owned())
-            })
-            .collect();
-        self.cache.sort();
+        self.cache = favorites;
+
+        if let Selected::Favorited(favorite) = &self.selected {
+            if !self.contains(favorite.name()) {
+                self.selected = Selected::None;
+            }
+        }
+    }
+
+    pub fn set_selected_none(&mut self) {
+        self.selected = Selected::None;
     }
 
     pub fn payload(&self) -> Option<PayloadData> {
-        self.payload.clone()
+        match &self.selected {
+            Selected::Favorited(favorite) => Some(favorite.read_payload_data().unwrap()), // FIXME: handle error
+            Selected::None => None,
+        }
     }
 
     /// Get the favorites (from the cache) does not access the disk
-    fn favorites(&self) -> &[String] {
-        &self.cache
-    }
-
-    fn make_payload(&self) -> Option<PayloadData> {
-        let Selected::Favorited(favorite) = &self.fav else { return None };
-
-        let path = self.favorites.directory().join(favorite);
-
-        let Ok(payload) = PayloadData::new(&path) else { return None };
-        Some(payload)
+    fn favorites(&self) -> &[Favorite] {
+        self.cache.list()
     }
 
     /// Removes a payload from the favorites (then updates the cache)
-    ///
-    fn remove(&mut self, file_name: &str) -> Result<bool> {
-        let res = self.favorites.remove(file_name);
+    fn remove(&mut self, favorite: &Favorite) -> bool {
+        let res = self.cache.remove(favorite);
         self.update_cache();
-        if let Selected::Favorited(name) = &self.fav {
-            if name == file_name {
-                self.fav = Selected::None;
+        if let Selected::Favorited(fav) = &self.selected {
+            if fav == favorite {
+                self.selected = Selected::None;
             }
         }
-        res
+        match res {
+            Ok(_) => true,
+            Err(_) => false,
+        }
     }
 
     /// Add a payload to the favorites (then updates the cache)
     pub fn add(&mut self, payload_data: &PayloadData) -> Result<()> {
-        let res = self.favorites.add(payload_data.path(), true);
+        self.cache.add(payload_data.path(), true)?;
         self.update_cache();
-        self.fav = Selected::Favorited(payload_data.file_name().to_owned());
-        res
+        self.selected =
+            Selected::Favorited(self.cache.get(payload_data.file_name()).unwrap().to_owned());
+        Ok(())
     }
 
     pub fn contains(&self, file_name: &str) -> bool {
-        self.cache.iter().any(|x| x.as_str() == file_name)
+        self.cache.get(file_name).is_some()
     }
 
-    pub fn render(&mut self, ctx: &eframe::egui::Context) -> bool {
-        let mut selected = false;
+    pub fn render(&mut self, ctx: &eframe::egui::Context) -> (bool, bool) {
+        let (mut removed, mut selected) = (false, false);
         SidePanel::new(Side::Left, "Favorites").show(ctx, |ui| {
-            ui.label(RichText::new("Favorites").text_style(TextStyle::Heading));
+            ui.add_space(5.0);
+            ui.horizontal(|ui| {
+                ui.label(RichText::new("Favorites").text_style(TextStyle::Heading));
+                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    global_dark_light_mode_switch(ui);
+                });
+            });
             ui.separator();
 
             if self.favorites().is_empty() {
-                ui.label(RichText::new(
-                    "You don't seem to have any favorites yet! 😢",
-                ));
+                ui.label(RichText::new("Nothing here..."));
                 return;
             }
 
-            if self.render_grid(ui) {
-                selected = true;
-            };
+            (removed, selected) = self.render_grid(ui);
         });
-        return selected;
+        return (removed, selected);
     }
 
-    fn render_grid(&mut self, ui: &mut Ui) -> bool {
+    fn render_grid(&mut self, ui: &mut Ui) -> (bool, bool) {
         let mut selected = false;
+        let mut removed = false;
         Grid::new("favorites").show(ui, |ui| {
-            let mut update = false;
             // TODO: find a way cheaper way to iterate
             for entry in self.favorites().to_owned() {
                 ui.horizontal(|ui| {
-                    match self.render_entry(entry, ui) {
-                        (up, sel) => {
-                            if up {
-                                update = true;
+                    match self.render_entry(&entry, ui) {
+                        (rem, sel) => {
+                            if rem {
+                                removed = true;
                             }
                             if sel {
                                 selected = true;
@@ -175,19 +173,27 @@ impl FavoritesData {
                 });
                 ui.end_row();
             }
-            if update {
+            if removed {
                 self.update(true);
+                if let Selected::Favorited(favorite) = &self.selected {
+                    if self.contains(favorite.name()) {
+                        removed = false;
+                    }
+                }
             }
         });
-        return selected;
+        return (removed, selected);
     }
 
-    fn render_entry(&mut self, entry: String, ui: &mut Ui) -> (bool, bool) {
+    fn render_entry(&mut self, entry: &Favorite, ui: &mut Ui) -> (bool, bool) {
         let mut selected = false;
-        let button = ui.selectable_value(&mut self.fav, Selected::Favorited(entry.clone()), &entry);
+        let button = ui.selectable_value(
+            &mut self.selected,
+            Selected::Favorited(entry.to_owned()),
+            entry.name(),
+        );
         if button.clicked() {
             selected = true;
-            self.payload = self.make_payload();
         }
         ui.add_space(20.0);
         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
@@ -195,25 +201,12 @@ impl FavoritesData {
             let remove_resp = ui.add(remove_button).on_hover_text("Remove from favorites");
 
             if remove_resp.clicked() {
-                match self.remove(&entry) {
-                    Ok(_) => return (true, selected),
-                    Err(e) => eprintln!("Unable to remove favorite: {e}"),
+                if self.remove(entry) {
+                    return (true, selected);
                 };
             }
             return (false, selected);
-        });
-
-        return (false, selected);
-    }
-
-    pub fn render_payload(&mut self, ui: &mut Ui) {
-        ui.horizontal(|ui| {
-            ui.label(RichText::new("Payload:").size(16.0));
-            if let Selected::Favorited(payload) = &self.fav {
-                ui.monospace(RichText::new(payload).color(Color32::LIGHT_BLUE).size(16.0));
-            } else {
-                ui.monospace(RichText::new("None").size(16.0));
-            }
-        });
+        })
+        .inner
     }
 }

@@ -1,10 +1,10 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::{env, fs};
 
 use clap::Parser;
-use color_eyre::eyre::{Context, Result};
+use color_eyre::eyre::{bail, Context, Result};
 use favorites::Favorites;
 use tegra_rcm::{Error, Payload, Rcm};
 use tracing_subscriber::prelude::*;
@@ -60,22 +60,23 @@ fn set_log_level(verbosity: u8) {
         .init();
 }
 
-fn execute(payload: String, favorite: bool, wait: bool) -> Result<()> {
-    let payload_path = if favorite {
-        let favorites = Favorites::new()?;
-        if let Some(dir) = favorites.get(&payload)? {
-            dir.path()
-        } else {
-            println!("Failed to execute favorite: `{}` not found", &payload); // TODO: should we exit with 1?
-            return Ok(());
-        }
-    } else {
-        PathBuf::from(&payload)
-    };
+fn read(path: &Path) -> Result<Payload> {
+    let payload_bytes = fs::read(path)
+        .wrap_err_with(|| format!("Failed to read payload from: {}", path.display()))?;
+    Ok(Payload::new(&payload_bytes)?)
+}
 
-    let payload_bytes = fs::read(&payload_path)
-        .wrap_err_with(|| format!("Failed to read payload from: {}", &payload))?;
-    let pay = Payload::new(&payload_bytes)?;
+fn execute(payload: String, favorite: bool, wait: bool) -> Result<()> {
+    let pay;
+    if favorite {
+        let favorites = Favorites::new()?;
+        let Some(fav) = favorites.get(&payload) else {
+            bail!("Failed to execute favorite: `{}` not found", &payload); // TODO: should we exit with 1?
+        };
+        pay = fav.read()?;
+    } else {
+        pay = read(&PathBuf::from(payload))?;
+    };
 
     let mut switch = Rcm::new(wait)?;
     switch.init()?;
@@ -116,18 +117,15 @@ fn device() -> Result<()> {
 /// Returns the number of entries
 fn list() -> Result<usize> {
     let favorites = Favorites::new()?;
-    let list: Vec<_> = favorites
-        .list()?
-        .filter_map(std::result::Result::ok)
-        .collect();
+    let list = favorites.list();
 
     if list.is_empty() {
         println!("No favorites");
         return Ok(0);
     }
 
-    for entry in &list {
-        println!("{}", entry.file_name().to_string_lossy());
+    for entry in list {
+        println!("{}", entry.name());
     }
 
     Ok(list.len())
@@ -144,12 +142,15 @@ fn add(payload: PathBuf) -> Result<()> {
 }
 
 fn remove(favorite: String) -> Result<()> {
-    let favorites = Favorites::new()?;
-    match favorites.remove(&favorite)? {
-        true => println!("Successfully removed favorite: `{}`", &favorite),
-        false => println!("Failed to remove favorite: `{}` not found", &favorite), // TODO: should we exit with 1?
-    }
+    let mut favorites = Favorites::new()?;
 
+    let Some(fav) = favorites.get(&favorite) else {
+        bail!("Failed to remove favorite: `{}` not found", &favorite);
+    };
+    let fav = fav.to_owned();
+
+    favorites.remove(&fav)?;
+    println!("Successfully removed favorite: `{}`", &fav.name());
     Ok(())
 }
 
