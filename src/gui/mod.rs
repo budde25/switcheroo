@@ -6,7 +6,7 @@ mod usb;
 
 use self::image::Images;
 use eframe::egui::{
-    style, widgets, Button, CentralPanel, Color32, Context, Layout, RichText, TopBottomPanel, Ui,
+    style, Button, CentralPanel, Color32, Context, Layout, RichText, Ui,
     Window,
 };
 use egui_notify::Toasts;

@@ -26,13 +26,11 @@ impl Favorites {
     /// Create a new Favorites this points to the OS's <data_dir>/switcheroo/favorites folder and creates it if it does not exist
     pub fn new() -> Result<Self> {
         let mut list = Vec::new();
-        for entry in fs::read_dir(Self::directory())? {
-            if let Ok(item) = entry {
-                let file_name = item.file_name();
-                list.push(Favorite::new(
-                    &file_name.to_str().expect("A valid UTF-8 String"),
-                ));
-            }
+        for entry in fs::read_dir(Self::directory())?.flatten() {
+            let file_name = entry.file_name();
+            list.push(Favorite::new(
+                file_name.to_str().expect("A valid UTF-8 String"),
+            ));
         }
         list.sort();
 

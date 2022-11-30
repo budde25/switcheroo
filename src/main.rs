@@ -67,15 +67,14 @@ fn read(path: &Path) -> Result<Payload> {
 }
 
 fn execute(payload: String, favorite: bool, wait: bool) -> Result<()> {
-    let pay;
-    if favorite {
+    let pay = if favorite {
         let favorites = Favorites::new()?;
         let Some(fav) = favorites.get(&payload) else {
             bail!("Failed to execute favorite: `{}` not found", &payload); // TODO: should we exit with 1?
         };
-        pay = fav.read()?;
+        fav.read()?
     } else {
-        pay = read(&PathBuf::from(payload))?;
+        read(&PathBuf::from(payload))?
     };
 
     let mut switch = Rcm::new(wait)?;

@@ -6,7 +6,7 @@ use eframe::egui::{
     global_dark_light_mode_switch, Button, Grid, Layout, RichText, SidePanel, TextStyle, Ui,
 };
 use eframe::emath::Align;
-use eframe::epaint::Color32;
+
 use notify::{RecursiveMode, Watcher};
 
 use tracing::{info, warn};
@@ -112,10 +112,7 @@ impl FavoritesData {
                 self.selected = Selected::None;
             }
         }
-        match res {
-            Ok(_) => true,
-            Err(_) => false,
-        }
+        res.is_ok()
     }
 
     /// Add a payload to the favorites (then updates the cache)
@@ -150,7 +147,7 @@ impl FavoritesData {
 
             (removed, selected) = self.render_grid(ui);
         });
-        return (removed, selected);
+        (removed, selected)
     }
 
     fn render_grid(&mut self, ui: &mut Ui) -> (bool, bool) {
@@ -160,16 +157,13 @@ impl FavoritesData {
             // TODO: find a way cheaper way to iterate
             for entry in self.favorites().to_owned() {
                 ui.horizontal(|ui| {
-                    match self.render_entry(&entry, ui) {
-                        (rem, sel) => {
-                            if rem {
-                                removed = true;
-                            }
-                            if sel {
-                                selected = true;
-                            }
-                        }
-                    };
+                    let (rem, sel) = self.render_entry(&entry, ui);
+                    if rem {
+                        removed = true;
+                    }
+                    if sel {
+                        selected = true;
+                    }
                 });
                 ui.end_row();
             }
@@ -182,7 +176,7 @@ impl FavoritesData {
                 }
             }
         });
-        return (removed, selected);
+        (removed, selected)
     }
 
     fn render_entry(&mut self, entry: &Favorite, ui: &mut Ui) -> (bool, bool) {
@@ -195,17 +189,15 @@ impl FavoritesData {
         if button.clicked() {
             selected = true;
         }
-        ui.add_space(20.0);
+        ui.add_space(36.0);
         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
             let remove_button = Button::new("🗑");
             let remove_resp = ui.add(remove_button).on_hover_text("Remove from favorites");
 
-            if remove_resp.clicked() {
-                if self.remove(entry) {
-                    return (true, selected);
-                };
+            if remove_resp.clicked() && self.remove(entry) {
+                return (true, selected);
             }
-            return (false, selected);
+            (false, selected)
         })
         .inner
     }
