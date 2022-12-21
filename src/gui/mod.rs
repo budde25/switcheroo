@@ -4,11 +4,10 @@ mod payload;
 mod switch;
 mod usb;
 
+use std::rc::Rc;
+
 use self::image::Images;
-use eframe::egui::{
-    style, Button, CentralPanel, Color32, Context, Layout, RichText, Ui,
-    Window,
-};
+use eframe::egui::{style, Button, CentralPanel, Color32, Context, Layout, RichText, Ui, Window};
 use egui_notify::Toasts;
 use favorites::FavoritesData;
 use payload::PayloadData;
@@ -52,7 +51,7 @@ pub fn gui() {
 
 struct MyApp {
     switch_data: SwitchData,
-    payload_data: Option<PayloadData>,
+    payload_data: Option<Rc<PayloadData>>,
     favorites_data: FavoritesData,
     images: Images,
     error: Option<tegra_rcm::Error>,
@@ -174,7 +173,7 @@ impl MyApp {
 
             match PayloadData::new(&file) {
                 Ok(payload) => {
-                    self.payload_data = Some(payload);
+                    self.payload_data = Some(Rc::new(payload));
                     self.favorites_data.set_selected_none();
                 }
                 Err(e) => eprintln!("{e}"),
@@ -251,7 +250,7 @@ impl eframe::App for MyApp {
             let file = ctx.input().raw.dropped_files.last().unwrap().clone();
             if let Some(path) = file.path {
                 match PayloadData::new(&path) {
-                    Ok(payload) => self.payload_data = Some(payload),
+                    Ok(payload) => self.payload_data = Some(Rc::new(payload)),
                     Err(e) => eprintln!("{e}"), // TODO:
                 }
             }

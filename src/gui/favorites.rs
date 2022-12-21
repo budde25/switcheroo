@@ -1,3 +1,4 @@
+use std::rc::Rc;
 use std::sync::atomic::AtomicBool;
 
 use color_eyre::Result;
@@ -23,8 +24,10 @@ enum Selected {
 
 static CHECK_UPDATE: AtomicBool = AtomicBool::new(false);
 
+#[derive(Debug)]
 pub struct FavoritesData {
     selected: Selected,
+    payload_data: Option<Rc<PayloadData>>,
     cache: Favorites,
 }
 
@@ -37,6 +40,7 @@ impl FavoritesData {
         let mut fav = Self {
             selected: Selected::None,
             cache: favorites,
+            payload_data: None,
         };
         fav.setup_watcher();
         fav.update_cache();
@@ -82,20 +86,18 @@ impl FavoritesData {
 
         if let Selected::Favorited(favorite) = &self.selected {
             if !self.contains(favorite.name()) {
-                self.selected = Selected::None;
+                self.set_selected_none();
             }
         }
     }
 
     pub fn set_selected_none(&mut self) {
         self.selected = Selected::None;
+        self.payload_data = None;
     }
 
-    pub fn payload(&self) -> Option<PayloadData> {
-        match &self.selected {
-            Selected::Favorited(favorite) => Some(favorite.read_payload_data().unwrap()), // FIXME: handle error
-            Selected::None => None,
-        }
+    pub fn payload(&self) -> Option<Rc<PayloadData>> {
+        self.payload_data.clone()
     }
 
     /// Get the favorites (from the cache) does not access the disk
@@ -108,8 +110,8 @@ impl FavoritesData {
         let res = self.cache.remove(favorite);
         self.update_cache();
         if let Selected::Favorited(fav) = &self.selected {
-            if fav == favorite {
-                self.selected = Selected::None;
+            if fav.name() == favorite.name() {
+                self.set_selected_none();
             }
         }
         res.is_ok()
@@ -187,6 +189,13 @@ impl FavoritesData {
             entry.name(),
         );
         if button.clicked() {
+            match &self.selected {
+                Selected::Favorited(favorite) => {
+                    self.payload_data = Some(Rc::new(favorite.read_payload_data().unwrap()))
+                } // FIXME: handle error
+                Selected::None => self.payload_data = None,
+            }
+
             selected = true;
         }
         ui.add_space(36.0);
