@@ -166,7 +166,7 @@ impl MyApp {
             .on_hover_text("Load payload from file")
             .clicked()
         {
-            let Some(file) = FileDialog::new().pick_file() else {
+            let Some(file) = FileDialog::new().add_filter("binary", &["bin"]).pick_file() else {
                 eprintln!("error");
                 return;
             };
