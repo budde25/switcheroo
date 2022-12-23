@@ -29,7 +29,7 @@ dirs = "4.0.0"
 eframe = { version = "0.20.1", features = [ "dark-light" ], optional = true }
 egui_extras = { version = "0.20.0", features = [ "svg" ], optional = true }
 image = { version = "0.24.5", optional = true }
-rfd = { version = "0.10.0", optional = true }
+rfd = { version = "0.10.0", optional = true, default-features = false, features = [ "xdg-portal" ] }
 notify = { version = "5.0.0", optional = true }
 tegra-rcm = { version = "0.3.0", path = "crates/tegra-rcm" }
 tracing.workspace = true
