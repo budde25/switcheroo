@@ -7,7 +7,9 @@ mod usb;
 use std::rc::Rc;
 
 use self::image::Images;
-use eframe::egui::{style, Button, CentralPanel, Color32, Context, RichText, Ui};
+use eframe::egui::{
+    style, Button, CentralPanel, Color32, Context, Direction, Layout, RichText, Ui,
+};
 use egui_notify::Toasts;
 use favorites::FavoritesData;
 use payload::PayloadData;
@@ -15,8 +17,6 @@ use rfd::FileDialog;
 use switch::{State, SwitchData, SwitchDevice};
 
 pub fn gui() {
-    let switch_data = SwitchData::new().unwrap();
-
     let options = eframe::NativeOptions {
         drag_and_drop_support: true,
         min_window_size: Some((400.0, 300.0).into()),
@@ -32,6 +32,13 @@ pub fn gui() {
             style.visuals = style::Visuals::dark();
             cc.egui_ctx.set_style(style);
 
+            let Ok(switch_data) = SwitchData::new() else {
+                let app = InitError {
+                    error: gen_error(&tegra_rcm::SwitchError::LinuxEnv).unwrap(),
+                };
+                return Box::new(app);
+            };
+
             usb::spawn_thread(switch_data.switch(), cc.egui_ctx.clone());
 
             // We have to do it like this, we need to update the cache when loading up.
@@ -46,6 +53,23 @@ pub fn gui() {
             Box::new(app)
         }),
     );
+}
+
+struct InitError {
+    error: String,
+}
+
+impl eframe::App for InitError {
+    fn update(&mut self, ctx: &eframe::egui::Context, _frame: &mut eframe::Frame) {
+        CentralPanel::default().show(ctx, |ui| {
+            ui.vertical_centered(|ui| {
+                ui.with_layout(Layout::centered_and_justified(Direction::TopDown), |ui| {
+                    ui.heading(&self.error);
+                    ui.label("Unrecoverable error, please correct this error and relaunch the app");
+                })
+            });
+        });
+    }
 }
 
 struct MyApp {
