@@ -108,15 +108,15 @@ impl Payload {
 #[non_exhaustive]
 pub enum PayloadError {
     /// Reading payload failed, std::io::Error
-    #[error("Failed to read payload from file")]
+    #[error("Payload failed to read from file")]
     Io(String),
 
     /// Payload is less than the minimum length
-    #[error("Invalid payload size: `{0}` (expected >= {})", PAYLOAD_MIN_LENGTH)]
+    #[error("Payload invalid size: `{0}` (expected >= {})", PAYLOAD_MIN_LENGTH)]
     PayloadTooShort(usize),
 
     /// Payload is greater than the maximum length
-    #[error("Invalid payload size: `{0}` (expected < {})", PAYLOAD_MAX_LENGTH)]
+    #[error("Payload invalid size: `{0}` (expected < {})", PAYLOAD_MAX_LENGTH)]
     PayloadTooLong(usize),
 }
 

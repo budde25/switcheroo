@@ -7,7 +7,7 @@ mod usb;
 use std::rc::Rc;
 
 use self::image::Images;
-use eframe::egui::{style, Button, CentralPanel, Color32, Context, Layout, RichText, Ui, Window};
+use eframe::egui::{style, Button, CentralPanel, Color32, Context, RichText, Ui};
 use egui_notify::Toasts;
 use favorites::FavoritesData;
 use payload::PayloadData;
@@ -39,7 +39,6 @@ pub fn gui() {
                 switch_data,
                 payload_data: None,
                 images: Images::default(),
-                error: None,
                 favorites_data: FavoritesData::new(),
                 toast: Toasts::default(),
             };
@@ -54,17 +53,12 @@ struct MyApp {
     payload_data: Option<Rc<PayloadData>>,
     favorites_data: FavoritesData,
     images: Images,
-    error: Option<tegra_rcm::SwitchError>,
     toast: Toasts,
 }
 
 impl MyApp {
     // we can execute if we have a payload and rcm is available
     fn is_executable(&self) -> bool {
-        if self.error.is_some() {
-            return false;
-        }
-
         // we can't be executable in this state
         if self.switch_data.state() != State::Available {
             return false;
@@ -214,7 +208,9 @@ impl MyApp {
                 .expect("Is executable, therefore payload must exist")
                 .payload();
             if let Err(e) = self.switch_data.execute(payload) {
-                self.error = Some(e)
+                if let Some(err) = gen_error(&e) {
+                    self.toast.error(err);
+                }
             }
         }
     }
@@ -222,12 +218,6 @@ impl MyApp {
 
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
-        if let Some(error) = &self.error {
-            if let Some(err) = gen_error(&error) {
-                self.toast.error(err);
-            }
-        }
-
         self.toast.show(ctx);
         self.main_tab(ctx);
         preview_files_being_dropped(ctx);
