@@ -6,7 +6,7 @@ use std::{env, fs};
 use clap::Parser;
 use color_eyre::eyre::{bail, Context, Result};
 use favorites::Favorites;
-use tegra_rcm::{Error, Payload, Rcm};
+use tegra_rcm::{Payload, Switch};
 use tracing_subscriber::prelude::*;
 use tracing_subscriber::{filter::LevelFilter, fmt, EnvFilter};
 
@@ -77,37 +77,32 @@ fn execute(payload: String, favorite: bool, wait: bool) -> Result<()> {
         read(&PathBuf::from(payload))?
     };
 
-    let mut switch = Rcm::new(wait)?;
-    switch.init()?;
-    println!("Smashing the stack!");
-
-    // We need to read the device id first
-    let _ = switch.read_device_id()?;
-    switch.execute(&pay)?;
+    let mut switch = Switch::new();
+    while wait && switch.is_some() {
+        switch = Switch::new();
+    }
+    if let Some(switch) = switch {
+        switch?.execute(&pay)?;
+    } else {
+        bail!("Switch not found")
+    }
 
     println!("Done!");
     Ok(())
 }
 
 fn device() -> Result<()> {
-    let switch = Rcm::new(false);
+    let switch = Switch::new();
 
-    let err = match switch {
-        Ok(_) => {
-            println!("[✓] Switch is RCM mode and connected");
+    match switch {
+        Some(e) => e?,
+        None => {
+            println!("[x] Switch in RCM mode not found");
             return Ok(());
         }
-        Err(ref e) => e.clone(),
     };
 
-    match err {
-        Error::SwitchNotFound => println!("[x] Switch in RCM mode not found"),
-        Error::AccessDenied => {
-            switch.wrap_err_with(|| "USB permission error\nSee \"https://github.com/budde25/switcheroo#linux-permission-denied-error\" to troubleshoot".to_string())?;
-        }
-        _ => return Err(err.into()),
-    };
-
+    println!("[✓] Switch is RCM mode and connected");
     Ok(())
 }
 

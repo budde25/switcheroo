@@ -2,13 +2,13 @@ use rusb::{has_hotplug, Device, DeviceHandle, GlobalContext, Hotplug, HotplugBui
 
 use super::Actions;
 use crate::device::{SwitchDevice, SWITCH_PID, SWITCH_VID};
-use crate::Rcm;
+use crate::Switch;
 
-impl Rcm {
+impl Switch {
     /// Create a new Rcm object from an existing DeviceHandle
     /// Should not have its interface claimed yet
     fn with_device_handle(device: DeviceHandle<GlobalContext>) -> Self {
-        Self::with_device(SwitchDevice::with_device_handle(device))
+        Self::with_device(SwitchDevice::with_device_handle(device)).unwrap()
     }
 }
 
@@ -22,7 +22,7 @@ impl Hotplug<GlobalContext> for HotplugHandler {
     fn device_arrived(&mut self, device: Device<GlobalContext>) {
         // if this is not Ok, it probably got unplugged really fast
         if let Ok(dev) = device.open() {
-            let rcm = Rcm::with_device_handle(dev);
+            let rcm = Switch::with_device_handle(dev);
             self.inner.arrives(rcm);
         }
     }

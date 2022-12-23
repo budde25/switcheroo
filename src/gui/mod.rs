@@ -12,10 +12,10 @@ use egui_notify::Toasts;
 use favorites::FavoritesData;
 use payload::PayloadData;
 use rfd::FileDialog;
-use switch::{State, Switch, SwitchData};
+use switch::{State, SwitchData, SwitchDevice};
 
 pub fn gui() {
-    let switch_data = SwitchData::new();
+    let switch_data = SwitchData::new().unwrap();
 
     let options = eframe::NativeOptions {
         drag_and_drop_support: true,
@@ -54,7 +54,7 @@ struct MyApp {
     payload_data: Option<Rc<PayloadData>>,
     favorites_data: FavoritesData,
     images: Images,
-    error: Option<tegra_rcm::Error>,
+    error: Option<tegra_rcm::SwitchError>,
     toast: Toasts,
 }
 
@@ -108,9 +108,7 @@ impl MyApp {
                 ui.horizontal(|ui| self.payload_buttons(ui));
             });
 
-            if let Err(e) = self.switch_data.update_state() {
-                self.error = Some(e);
-            }
+            self.switch_data.update_state();
 
             if let Some(p) = self.favorites_data.payload() {
                 if clicked {
@@ -166,17 +164,18 @@ impl MyApp {
             .on_hover_text("Load payload from file")
             .clicked()
         {
-            let Some(file) = FileDialog::new().add_filter("binary", &["bin"]).pick_file() else {
-                eprintln!("error");
-                return;
-            };
-
-            match PayloadData::new(&file) {
-                Ok(payload) => {
-                    self.payload_data = Some(Rc::new(payload));
-                    self.favorites_data.set_selected_none();
+            if let Some(file) = FileDialog::new().add_filter("binary", &["bin"]).pick_file() {
+                match PayloadData::new(&file) {
+                    Ok(payload) => {
+                        self.payload_data = Some(Rc::new(payload));
+                        self.favorites_data.set_selected_none();
+                    }
+                    Err(e) => {
+                        self.toast.error(e.to_string());
+                    }
                 }
-                Err(e) => eprintln!("{e}"),
+            } else {
+                eprintln!("File Dialog Error");
             }
         }
 
@@ -223,25 +222,14 @@ impl MyApp {
 
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
-        self.main_tab(ctx);
-
-        if let Some(error) = self.error.clone() {
-            // Show confirmation dialog:
-            Window::new("Something went wrong")
-                .collapsible(false)
-                .resizable(false)
-                .show(ctx, |ui| {
-                    ui.vertical(|ui| {
-                        create_error_from_error(ui, &error);
-                        ui.with_layout(Layout::right_to_left(eframe::emath::Align::TOP), |ui| {
-                            if ui.button("OK").clicked() {
-                                self.error = None;
-                            }
-                        });
-                    });
-                });
+        if let Some(error) = &self.error {
+            if let Some(err) = gen_error(&error) {
+                self.toast.error(err);
+            }
         }
 
+        self.toast.show(ctx);
+        self.main_tab(ctx);
         preview_files_being_dropped(ctx);
 
         // Collect dropped files:
@@ -251,46 +239,32 @@ impl eframe::App for MyApp {
             if let Some(path) = file.path {
                 match PayloadData::new(&path) {
                     Ok(payload) => self.payload_data = Some(Rc::new(payload)),
-                    Err(e) => eprintln!("{e}"), // TODO:
+                    Err(e) => {
+                        self.toast.error(e.to_string());
+                    }
                 }
             }
         }
     }
 }
 
-/// Creates a basic error string
-fn create_error(ui: &mut Ui, error: &str) {
-    ui.horizontal(|ui| {
-        ui.monospace(RichText::new(error).size(18.0));
-    });
-}
-
-fn create_error_from_error(ui: &mut Ui, error: &tegra_rcm::Error) {
-    // if let Some(err) = error.downcast_ref() {
+fn gen_error(error: &tegra_rcm::SwitchError) -> Option<String> {
     match error {
-        tegra_rcm::Error::SwitchNotFound => (),
-        tegra_rcm::Error::AccessDenied => {
-            create_error(
-                ui,
-                "USB permission error, see the following to troubleshoot",
-            );
-            ui.hyperlink("https://github.com/budde25/switcheroo#linux-permission-denied-error");
+        tegra_rcm::SwitchError::SwitchNotFound => None,
+        tegra_rcm::SwitchError::AccessDenied => {
+            let link = "https://github.com/budde25/switcheroo#linux-permission-denied-error";
+            Some(format!(
+                "USB permission error, see the following to troubleshoot\n{link}"
+            ))
         }
-        #[cfg(target_os = "windows")]
-        tegra_rcm::Error::WindowsWrongDriver(i) => {
-            create_error(
-            ui,
-            &format!(
-                "Wrong USB driver installed, expected libusbK but found `{}`, see the following to troubleshoot",
-                i),
-            );
-            ui.hyperlink("https://github.com/budde25/switcheroo#windows-wrong-driver-error");
+        tegra_rcm::SwitchError::WindowsWrongDriver(i) => {
+            let link = "https://github.com/budde25/switcheroo#windows-wrong-driver-error";
+            Some(format!(
+                "Wrong USB driver installed, expected libusbK but found `{i}`, see the following to troubleshoot\n{link}"
+            ))
         }
-        e => create_error(ui, &e.to_string()),
-    };
-    //} else {
-    create_error(ui, &error.to_string())
-    //}
+        e => Some(e.to_string()),
+    }
 }
 
 /// Preview hovering files

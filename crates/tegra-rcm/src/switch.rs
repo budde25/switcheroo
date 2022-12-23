@@ -9,10 +9,11 @@ use crate::vulnerability::Vulnerability;
 use crate::Payload;
 
 /// The current state of the Buffer
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 enum BufferState {
-    High,
+    #[default]
     Low,
+    High,
 }
 
 impl BufferState {
@@ -38,57 +39,58 @@ impl BufferState {
 /// An RCM connection object
 /// This is the main interface to communicate with the switch
 #[derive(Debug)]
-pub struct Rcm {
+pub struct Switch {
     switch: SwitchDevice,
     current_buffer: BufferState,
     total_written: usize,
 }
 
-impl Rcm {
+impl Switch {
     /// Create a new Rcm object from an existing SwitchDevice
     /// Should not have its interface claimed yet
-    pub(crate) fn with_device(device: SwitchDevice) -> Self {
-        Self {
-            switch: device,
-            current_buffer: BufferState::Low,
-            total_written: 0,
-        }
-    }
-
-    /// Finds and connects to a device in RCM mode
-    /// This will error out if no device is connected unless wait: true is passed
-    /// If wait: true is passed this will block until it detects an rcm device
-    pub fn new(wait: bool) -> Result<Self> {
-        let switch = SwitchDeviceRaw::default().find_device(wait)?;
+    pub(crate) fn with_device(device: SwitchDevice) -> Result<Self> {
+        device.validate()?;
 
         Ok(Self {
-            switch,
+            switch: device,
             current_buffer: BufferState::Low,
             total_written: 0,
         })
     }
 
+    /// Finds and connects to a device in RCM mode
+    /// This will error out if no device is connected unless wait: true is passed
+    /// If wait: true is passed this will block until it detects a switch device in RCM mode
+    pub fn new() -> Option<Result<Self>> {
+        let switch = match SwitchDeviceRaw::default().find_device()? {
+            Ok(s) => s,
+            Err(e) => return Some(Err(e)),
+        };
+
+        Some(Ok(Self {
+            switch,
+            current_buffer: BufferState::Low,
+            total_written: 0,
+        }))
+    }
+
     /// Used to initialize the RCM device connection, this should only be done once
     /// and should be done before interacting in any way
-    pub fn init(&mut self) -> Result<()> {
+    fn init(&mut self) -> Result<()> {
         self.switch.init()?;
         Ok(())
     }
 
-    /// Performs basic checks to ensure that the switch is ok to use
-    /// On windows this checks if the correct driver is installed
-    pub fn validate(&self) -> Result<()> {
-        self.switch.validate()
-    }
-
     /// This will execute the payload on the connected device
-    /// NOTE: Must first read the device id, or else this will fail
-    pub fn execute(&mut self, payload: &Payload) -> Result<()> {
+    /// This consumes the device
+    pub fn execute(mut self, payload: &Payload) -> Result<()> {
+        self.init()?;
+        let _ = self.read_device_id();
+
         self.write(payload.data())?;
         self.switch_to_highbuf()?;
 
         // smashing the stack
-
         self.trigger_controlled_memcopy()
     }
 
@@ -168,7 +170,7 @@ impl Rcm {
 
     /// Reads the device ID
     /// Note: The is a necessary step before executing
-    pub fn read_device_id(&mut self) -> Result<Box<[u8; 16]>> {
+    fn read_device_id(&mut self) -> Result<Box<[u8; 16]>> {
         let mut buf = Box::new([b'\0'; 16]);
         self.read(buf.deref_mut())?;
         Ok(buf)

@@ -1,12 +1,12 @@
 use crate::Result;
 
-#[cfg(not(target_os = "windows"))]
-mod common;
+#[cfg(any(target_os = "macos", target_os = "linux"))]
+mod unix;
 #[cfg(target_os = "windows")]
 mod windows;
 
-#[cfg(not(target_os = "windows"))]
-pub use common::SwitchDevice;
+#[cfg(any(target_os = "macos", target_os = "linux"))]
+pub use unix::SwitchDevice;
 #[cfg(target_os = "windows")]
 pub use windows::SwitchDevice;
 
@@ -21,7 +21,7 @@ pub(crate) trait Device {
 }
 
 pub(crate) trait DeviceRaw {
-    fn find_device(self, wait: bool) -> Result<SwitchDevice>;
+    fn find_device(self) -> Option<Result<SwitchDevice>>;
 }
 
 /// A switch device that has not been init yet

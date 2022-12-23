@@ -72,21 +72,19 @@ impl SwitchDeviceRaw {
 
 impl DeviceRaw for SwitchDeviceRaw {
     /// Tries to connect to the device and open and interface
-    fn find_device(self, wait: bool) -> Result<SwitchDevice> {
-        let mut device = Self::open_device_with_vid_pid(self.vid, self.pid);
-        while wait && device.is_err() {
-            thread::sleep(Duration::from_secs(1));
-            device = Self::open_device_with_vid_pid(self.vid, self.pid);
-        }
+    fn find_device(self) -> Option<Result<SwitchDevice>> {
+        let device = Self::open_device_with_vid_pid(self.vid, self.pid);
 
-        if let Err(ref err) = device {
-            if *err == crate::Error::SwitchNotFound {
-                return Err(crate::Error::SwitchNotFound);
+        let device = match device {
+            Ok(dev) => dev,
+            Err(e) => {
+                if e == SwitchError::SwitchNotFound {
+                    return None;
+                }
+                return Some(Err(e));
             }
-        }
+        };
 
-        let device = device?;
-
-        Ok(SwitchDevice::with_device_handle(device))
+        Some(Ok(SwitchDevice::with_device_handle(device)))
     }
 }

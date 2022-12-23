@@ -99,7 +99,7 @@ impl Favorite {
     }
 
     pub fn read(&self) -> Result<Payload> {
-        let payload_bytes = fs::read(&self.path())
+        let payload_bytes = fs::read(self.path())
             .wrap_err_with(|| format!("Failed to read payload from: {}", &self.path().display()))?;
         Ok(Payload::new(&payload_bytes)?)
     }

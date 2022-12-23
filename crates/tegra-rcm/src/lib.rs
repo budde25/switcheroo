@@ -1,4 +1,5 @@
 //! A library to help exploit the bootROM exploit for the Tegra X1's RCM mode
+//! Current support OS's are Linux, MacOS, and Windows
 
 #![deny(
     missing_docs,
@@ -11,12 +12,13 @@ mod device;
 mod error;
 mod hotplug;
 mod payload;
-mod rcm;
+mod switch;
 mod vulnerability;
 
 use device::SwitchDevice;
+use error::Result;
 
-pub use error::{Error, Result};
+pub use error::SwitchError;
 pub use hotplug::{create_hotplug, Actions};
-pub use payload::Payload;
-pub use rcm::Rcm;
+pub use payload::{Payload, PayloadError};
+pub use switch::Switch;
