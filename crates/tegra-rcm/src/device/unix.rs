@@ -2,10 +2,10 @@ use super::SwitchDeviceRaw;
 use super::{Device, DeviceRaw};
 
 use rusb::{DeviceHandle, GlobalContext};
-use std::thread;
 use std::time::Duration;
 
-use crate::Result;
+use crate::vulnerability::Vulnerability;
+use crate::{Result, SwitchError};
 
 /// A connected and init switch device connection
 #[derive(Debug)]
@@ -21,7 +21,7 @@ impl Device for SwitchDevice {
             self.device.claim_interface(0)?;
             self.claimed = true;
         }
-        self.validate()
+        self.validate_environment()
     }
 
     /// Read from the device into the buffer
@@ -34,10 +34,6 @@ impl Device for SwitchDevice {
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
         let amount = self.device.write_bulk(0x01, buf, Duration::from_secs(1))?;
         Ok(amount)
-    }
-
-    fn validate(&self) -> Result<()> {
-        Ok(())
     }
 }
 
@@ -64,27 +60,25 @@ impl SwitchDeviceRaw {
                 return Ok(dev);
             }
         }
-        Err(crate::Error::SwitchNotFound)
+        Err(crate::SwitchError::SwitchNotFound)
     }
 }
 
 impl DeviceRaw for SwitchDeviceRaw {
     /// Tries to connect to the device and open and interface
-    fn find_device(self, wait: bool) -> Result<SwitchDevice> {
-        let mut device = Self::open_device_with_vid_pid(self.vid, self.pid);
-        while wait && device.is_err() {
-            thread::sleep(Duration::from_secs(1));
-            device = Self::open_device_with_vid_pid(self.vid, self.pid);
-        }
+    fn find_device(self) -> Option<Result<SwitchDevice>> {
+        let device = Self::open_device_with_vid_pid(self.vid, self.pid);
 
-        if let Err(ref err) = device {
-            if *err == crate::Error::SwitchNotFound {
-                return Err(crate::Error::SwitchNotFound);
+        let device = match device {
+            Ok(dev) => dev,
+            Err(e) => {
+                if e == SwitchError::SwitchNotFound {
+                    return None;
+                }
+                return Some(Err(e));
             }
-        }
+        };
 
-        let device = device?;
-
-        Ok(SwitchDevice::with_device_handle(device))
+        Some(Ok(SwitchDevice::with_device_handle(device)))
     }
 }

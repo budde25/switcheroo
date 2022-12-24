@@ -1,27 +1,17 @@
 use std::fmt::Display;
 
-use crate::payload::{PAYLOAD_MAX_LENGTH, PAYLOAD_MIN_LENGTH};
-
 use thiserror::Error;
 
 /// A result of a function that may return a `Error`.
-pub type Result<T> = std::result::Result<T, Error>;
+pub(crate) type Result<T> = std::result::Result<T, SwitchError>;
 
-/// Contains all of the Errors that can be returned by this crate
+/// An error interating with the Switch in RCM mode
 #[derive(Error, Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
-pub enum Error {
-    /// Payload is less than the minimum length
-    #[error("Invalid payload size: `{0}` (expected >= {})", PAYLOAD_MIN_LENGTH)]
-    PayloadTooShort(usize),
-
-    /// Payload is greater than the maximum length
-    #[error("Invalid payload size: `{0}` (expected < {})", PAYLOAD_MAX_LENGTH)]
-    PayloadTooLong(usize),
-
+pub enum SwitchError {
     /// We expected to get a timeout after smashing the stack but we did not
     #[error("Expected timeout error after smashing the stack")]
-    RcmExpectedError,
+    ExpectedError,
 
     /// We cannot find a switch in RCM mode connected
     #[error("Nintendo Switch in RCM mode not found")]
@@ -32,9 +22,12 @@ pub enum Error {
     UsbBadInterface(u8),
 
     /// A linux environment error such as not having the correct usb driver support
-    #[error("Linux environment error")]
+    #[error(
+        "Linux environment error, typically this means the system lacks a supported USB driver"
+    )]
     LinuxEnv,
 
+    /// USB permission error
     /// See <https://github.com/budde25/switcheroo#linux-permission-denied-error>
     #[error("Access denied (insufficient permissions)")]
     AccessDenied,
@@ -44,6 +37,7 @@ pub enum Error {
     PlatformNotSupported,
 
     /// A Windows error that the switch RCM has the wrong driver, please install libusbK
+    /// See <https://github.com/budde25/switcheroo#windows-wrong-driver-error>
     #[error("Wrong RCM USB driver installed (installed: `{0}` but must be libusbK)")]
     WindowsWrongDriver(WindowsDriver),
 
@@ -91,14 +85,14 @@ impl From<libusbk::DriverId> for WindowsDriver {
 }
 
 #[cfg(target_os = "windows")]
-impl From<libusbk::Error> for Error {
+impl From<libusbk::Error> for SwitchError {
     fn from(err: libusbk::Error) -> Self {
         Self::Usb(err.to_string())
     }
 }
 
-#[cfg(not(target_os = "windows"))]
-impl From<rusb::Error> for Error {
+#[cfg(any(target_os = "macos", target_os = "linux"))]
+impl From<rusb::Error> for SwitchError {
     fn from(err: rusb::Error) -> Self {
         match err {
             rusb::Error::Access => Self::AccessDenied,

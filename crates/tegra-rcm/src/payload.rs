@@ -1,4 +1,8 @@
-use crate::Error;
+use std::fs::File;
+use std::io::{BufReader, Read};
+use std::path::Path;
+
+use thiserror::Error;
 use tracing::{debug, trace};
 
 /// A constructed payload, this is transferred to the switch in RCM mode to execute bootROM exploit
@@ -11,9 +15,9 @@ pub struct Payload {
 const BUILT_PAYLOAD_MAX_LENGTH: usize = 0x30298;
 // TODO: find out if this is true
 /// The min length of the provided payload (inclusive)
-pub const PAYLOAD_MIN_LENGTH: usize = PADDING_SIZE_2;
+const PAYLOAD_MIN_LENGTH: usize = PADDING_SIZE_2;
 /// The max length of the provided payload (exclusive)
-pub const PAYLOAD_MAX_LENGTH: usize = 183640;
+const PAYLOAD_MAX_LENGTH: usize = 183640;
 
 /// hardcoded address for the start of the stack spray
 const STACK_SPRAY_START: usize = 0x40014E40;
@@ -29,13 +33,13 @@ const REPEAT_COUNT: usize = (STACK_SPRAY_END - STACK_SPRAY_START) / 4;
 impl Payload {
     /// Construct a new payload
     /// length should be >= 16384 and < 183640
-    pub fn new(payload: &[u8]) -> Result<Self, Error> {
+    pub fn new(payload: &[u8]) -> Result<Self, PayloadError> {
         if payload.len() < PAYLOAD_MIN_LENGTH {
-            return Err(Error::PayloadTooShort(payload.len()));
+            return Err(PayloadError::PayloadTooShort(payload.len()));
         }
 
         if payload.len() >= PAYLOAD_MAX_LENGTH {
-            return Err(Error::PayloadTooLong(payload.len()));
+            return Err(PayloadError::PayloadTooLong(payload.len()));
         }
 
         debug!(
@@ -84,9 +88,41 @@ impl Payload {
         Ok(Self { data })
     }
 
+    /// Read a payload from a file
+    pub fn read(path: &Path) -> Result<Self, PayloadError> {
+        let file = File::open(path)?;
+        let mut buffer = Vec::with_capacity(PAYLOAD_MIN_LENGTH * 2);
+        let mut buf_reader = BufReader::new(file);
+        buf_reader.read_to_end(&mut buffer)?;
+        Self::new(&buffer)
+    }
+
     /// Get the data for the payload
     pub fn data(&self) -> &[u8] {
         &self.data
+    }
+}
+
+/// An error while trying to create a payload
+#[derive(Debug, PartialEq, Eq, Error, Clone)]
+#[non_exhaustive]
+pub enum PayloadError {
+    /// Reading payload failed, std::io::Error
+    #[error("Payload failed to read from file")]
+    Io(String),
+
+    /// Payload is less than the minimum length
+    #[error("Payload invalid size: `{0}` (expected >= {})", PAYLOAD_MIN_LENGTH)]
+    PayloadTooShort(usize),
+
+    /// Payload is greater than the maximum length
+    #[error("Payload invalid size: `{0}` (expected < {})", PAYLOAD_MAX_LENGTH)]
+    PayloadTooLong(usize),
+}
+
+impl From<std::io::Error> for PayloadError {
+    fn from(value: std::io::Error) -> Self {
+        Self::Io(value.to_string())
     }
 }
 

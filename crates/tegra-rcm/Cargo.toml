@@ -12,7 +12,7 @@ categories = [ "os", "hardware-support" ]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-thiserror = "1.0.37"
+thiserror = "1.0.38"
 tracing.workspace = true
 
 # Linux and Mac specific
@@ -22,7 +22,7 @@ rusb = "0.9.1"
 # Linux specific
 [target.'cfg(target_os = "linux")'.dependencies]
 glob = "0.3.0"
-nix = "0.25.0"
+nix = "0.26.1"
 
 # Windows specific
 [target.'cfg(target_os = "windows")'.dependencies]

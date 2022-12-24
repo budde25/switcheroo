@@ -41,7 +41,7 @@ jobs:
           ./.github/workflows/upload_asset.sh \
             ./Switcheroo-${{ github.ref_name }}_universal.dmg $GITHUB_TOKEN
 
-  windows:
+  windows-gui:
     runs-on: windows-latest
 
     defaults:
@@ -56,6 +56,43 @@ jobs:
 
       - name: Build
         run: cargo build --release
+
+      - name: Upload portable executable
+        run: |
+          cp ./target/release/switcheroo.exe ./Switcheroo-${{ github.ref_name }}-gui-portable_amd64.exe
+          ./.github/workflows/upload_asset.sh \
+            ./Switcheroo-${{ github.ref_name }}-gui-portable_amd64.exe $GITHUB_TOKEN
+      - name: Install WiX
+        run: nuget install WiX
+
+      - name: Crate msi installer
+        run: |
+          ./WiX.*/tools/candle.exe -nologo -arch "x64" -ext WixUIExtension -ext WixUtilExtension \
+            -out "./switcheroo.wixobj" "extra/windows/wix/switcheroo.wxs"
+          ./WiX.*/tools/light.exe -nologo -ext WixUIExtension -ext WixUtilExtension \
+            -out "./Switcheroo-${{ github.ref_name }}-gui-installer_amd64.msi" -sice:ICE61 -sice:ICE91 \
+            "./switcheroo.wixobj"
+
+      - name: Upload msi installer
+        run: |
+          ./.github/workflows/upload_asset.sh \
+            ./Switcheroo-${{ github.ref_name }}-gui-installer_amd64.msi $GITHUB_TOKEN
+
+  windows-cli:
+    runs-on: windows-latest
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Test
+        run: cargo test --release --no-default-features
+
+      - name: Build
+        run: cargo build --release --no-default-features
 
       - name: Upload portable executable
         run: |
@@ -99,7 +136,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libssl-dev binutils-aarch64-linux-gnu patchelf
+          sudo apt-get install -y libssl-dev binutils-aarch64-linux-gnu patchelf libfontconfig-dev
       - name: Install cargo deb
         run: cargo install cargo-deb
 

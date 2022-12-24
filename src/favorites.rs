@@ -1,80 +1,110 @@
 use color_eyre::eyre::{bail, Result, WrapErr};
-use std::fs::ReadDir;
-use std::fs::{self, DirEntry};
+use once_cell::sync::Lazy;
+use std::fs;
 use std::path::{Path, PathBuf};
 use tegra_rcm::Payload;
+
+static FAVORITES_PATH: Lazy<PathBuf> = Lazy::new(|| {
+    let mut favorites_dir = dirs::data_dir().expect("System data directory exists");
+    favorites_dir.push("switcheroo");
+    favorites_dir.push("favorites");
+
+    if !favorites_dir.is_dir() {
+        fs::create_dir_all(&favorites_dir)
+            .expect("Permission to create switcheroo favorites directory");
+    }
+    favorites_dir
+});
 
 /// Favorite payloads
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Favorites {
-    path: PathBuf,
+    list: Vec<Favorite>,
 }
 
 impl Favorites {
     /// Create a new Favorites this points to the OS's <data_dir>/switcheroo/favorites folder and creates it if it does not exist
     pub fn new() -> Result<Self> {
-        let data_dir = match dirs::data_dir() {
-            Some(dir) => dir,
-            None => bail!("Failed to load application data_dir"),
-        };
-
-        let favorites = data_dir.join(data_dir.join("switcheroo/favorites"));
-
-        if !favorites.is_dir() {
-            fs::create_dir_all(&favorites)?;
+        let mut list = Vec::new();
+        for entry in fs::read_dir(Self::directory())?.flatten() {
+            let file_name = entry.file_name();
+            list.push(Favorite::new(
+                file_name.to_str().expect("A valid UTF-8 String"),
+            ));
         }
+        list.sort();
 
-        Ok(Self { path: favorites })
+        Ok(Self { list })
     }
 
     /// Get an iterator of the files in the directory
-    pub fn list(&self) -> Result<ReadDir> {
-        let paths = fs::read_dir(&self.path)?;
-        Ok(paths)
+    pub fn list(&self) -> &[Favorite] {
+        &self.list
     }
 
     /// Add a payload to the favorites directory, if `check_valid` is true, we will make sure that the payload parses correctly (but slower)
-    pub fn add(&self, payload: &Path, check_valid: bool) -> Result<()> {
+    pub fn add(&self, payload_path: &Path, check_valid: bool) -> Result<()> {
         if check_valid {
             // ensure we have been passed a valid payload
-            let payload_bytes = fs::read(payload)
-                .wrap_err_with(|| format!("Failed to read payload from: {}", &payload.display()))?;
+            let payload_bytes = fs::read(payload_path).wrap_err_with(|| {
+                format!("Failed to read payload from: {}", &payload_path.display())
+            })?;
             let _ = Payload::new(&payload_bytes)?;
-        } else if !payload.is_file() {
-            bail!("Path provided is not a file: {}", payload.display())
         }
 
-        // unwrap is safe as we checked above
-        let file_name = payload.file_name().unwrap().to_string_lossy().to_string();
-        fs::copy(payload, self.path.join(file_name))?;
+        let Some(payload) = payload_path.file_name() else {
+            bail!("Path provided is not a file: {}", payload_path.display())
+        };
 
+        let Some(file_name) = payload.to_str() else {
+            bail!("Payload is not a valid UTF-8 string")
+        };
+
+        fs::copy(payload_path, Self::directory().join(file_name))?;
         Ok(())
     }
 
-    /// Get the `DirEntry` of a favorite, if None, did not find one
-    pub fn get(&self, favorite: &str) -> Result<Option<DirEntry>> {
-        let list = self.list()?;
-        Ok(list
-            .into_iter()
-            .filter_map(std::result::Result::ok)
-            .find(|x| x.file_name().to_string_lossy() == favorite))
+    /// Get a Favorite, if None, did not find one
+    pub fn get(&self, favorite: &str) -> Option<&Favorite> {
+        self.list.iter().find(|x| x.name() == favorite.trim())
     }
 
     /// Returns true if it successfully removed the favorite, false otherwise
-    pub fn remove(&self, favorite: &str) -> Result<bool> {
-        let favorite = favorite.trim(); // make sure we don't have whitespace interfere
-        let found = self.get(favorite)?;
-
-        if let Some(file) = found {
-            fs::remove_file(file.path())?;
-            Ok(true)
-        } else {
-            Ok(false)
-        }
+    pub fn remove(&mut self, favorite: &Favorite) -> Result<()> {
+        fs::remove_file(favorite.path())?;
+        self.list.retain(|x| x != favorite);
+        Ok(())
     }
 
     /// The actual favorites directory on the file system
-    pub fn directory(&self) -> &Path {
-        &self.path
+    pub fn directory() -> &'static Path {
+        &FAVORITES_PATH
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Favorite {
+    name: String,
+}
+
+impl Favorite {
+    fn new(name: &str) -> Self {
+        Self {
+            name: name.trim().to_owned(),
+        }
+    }
+
+    pub fn name(&self) -> &str {
+        self.name.as_ref()
+    }
+
+    pub fn read(&self) -> Result<Payload> {
+        let payload_bytes = fs::read(self.path())
+            .wrap_err_with(|| format!("Failed to read payload from: {}", &self.path().display()))?;
+        Ok(Payload::new(&payload_bytes)?)
+    }
+
+    fn path(&self) -> PathBuf {
+        Favorites::directory().to_owned().join(&self.name)
     }
 }

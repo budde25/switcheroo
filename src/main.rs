@@ -1,12 +1,12 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
-use std::path::PathBuf;
-use std::{env, fs};
+use std::fs;
+use std::path::{Path, PathBuf};
 
 use clap::Parser;
-use color_eyre::eyre::{Context, Result};
+use color_eyre::eyre::{bail, Context, Result};
 use favorites::Favorites;
-use tegra_rcm::{Error, Payload, Rcm};
+use tegra_rcm::{Payload, Switch};
 use tracing_subscriber::prelude::*;
 use tracing_subscriber::{filter::LevelFilter, fmt, EnvFilter};
 
@@ -60,54 +60,49 @@ fn set_log_level(verbosity: u8) {
         .init();
 }
 
+fn read(path: &Path) -> Result<Payload> {
+    let payload_bytes = fs::read(path)
+        .wrap_err_with(|| format!("Failed to read payload from: {}", path.display()))?;
+    Ok(Payload::new(&payload_bytes)?)
+}
+
 fn execute(payload: String, favorite: bool, wait: bool) -> Result<()> {
-    let payload_path = if favorite {
+    let pay = if favorite {
         let favorites = Favorites::new()?;
-        if let Some(dir) = favorites.get(&payload)? {
-            dir.path()
-        } else {
-            println!("Failed to execute favorite: `{}` not found", &payload); // TODO: should we exit with 1?
-            return Ok(());
-        }
+        let Some(fav) = favorites.get(&payload) else {
+            bail!("Failed to execute favorite: `{}` not found", &payload); // TODO: should we exit with 1?
+        };
+        fav.read()?
     } else {
-        PathBuf::from(&payload)
+        read(&PathBuf::from(payload))?
     };
 
-    let payload_bytes = fs::read(&payload_path)
-        .wrap_err_with(|| format!("Failed to read payload from: {}", &payload))?;
-    let pay = Payload::new(&payload_bytes)?;
-
-    let mut switch = Rcm::new(wait)?;
-    switch.init()?;
-    println!("Smashing the stack!");
-
-    // We need to read the device id first
-    let _ = switch.read_device_id()?;
-    switch.execute(&pay)?;
+    let mut switch = Switch::new();
+    while wait && switch.is_some() {
+        switch = Switch::new();
+    }
+    if let Some(switch) = switch {
+        switch?.execute(&pay)?;
+    } else {
+        bail!("Switch not found")
+    }
 
     println!("Done!");
     Ok(())
 }
 
 fn device() -> Result<()> {
-    let switch = Rcm::new(false);
+    let switch = Switch::new();
 
-    let err = match switch {
-        Ok(_) => {
-            println!("[✓] Switch is RCM mode and connected");
+    match switch {
+        Some(e) => e?,
+        None => {
+            println!("[x] Switch in RCM mode not found");
             return Ok(());
         }
-        Err(ref e) => e.clone(),
     };
 
-    match err {
-        Error::SwitchNotFound => println!("[x] Switch in RCM mode not found"),
-        Error::AccessDenied => {
-            switch.wrap_err_with(|| "USB permission error\nSee \"https://github.com/budde25/switcheroo#linux-permission-denied-error\" to troubleshoot".to_string())?;
-        }
-        _ => return Err(err.into()),
-    };
-
+    println!("[✓] Switch is RCM mode and connected");
     Ok(())
 }
 
@@ -116,18 +111,15 @@ fn device() -> Result<()> {
 /// Returns the number of entries
 fn list() -> Result<usize> {
     let favorites = Favorites::new()?;
-    let list: Vec<_> = favorites
-        .list()?
-        .filter_map(std::result::Result::ok)
-        .collect();
+    let list = favorites.list();
 
     if list.is_empty() {
         println!("No favorites");
         return Ok(0);
     }
 
-    for entry in &list {
-        println!("{}", entry.file_name().to_string_lossy());
+    for entry in list {
+        println!("{}", entry.name());
     }
 
     Ok(list.len())
@@ -144,12 +136,15 @@ fn add(payload: PathBuf) -> Result<()> {
 }
 
 fn remove(favorite: String) -> Result<()> {
-    let favorites = Favorites::new()?;
-    match favorites.remove(&favorite)? {
-        true => println!("Successfully removed favorite: `{}`", &favorite),
-        false => println!("Failed to remove favorite: `{}` not found", &favorite), // TODO: should we exit with 1?
-    }
+    let mut favorites = Favorites::new()?;
 
+    let Some(fav) = favorites.get(&favorite) else {
+        bail!("Failed to remove favorite: `{}` not found", &favorite);
+    };
+    let fav = fav.to_owned();
+
+    favorites.remove(&fav)?;
+    println!("Successfully removed favorite: `{}`", &fav.name());
     Ok(())
 }
 
@@ -158,15 +153,11 @@ fn remove(favorite: String) -> Result<()> {
 /// SWITCHEROO_GUI_ONLY is set to "0"
 #[cfg(feature = "gui")]
 fn launch_gui_only_mode() {
-    // FIXME: remove once new version of glutin releases
-    #[cfg(all(unix, not(target_os = "macos")))]
-    env::set_var("WINIT_UNIX_BACKEND", "x11");
-
     // FIXME: only gui mode on windows
     #[cfg(target_os = "windows")]
     launch_gui();
 
-    let Some(gui_only) = env::var_os("SWITCHEROO_GUI_ONLY") else {
+    let Some(gui_only) = std::env::var_os("SWITCHEROO_GUI_ONLY") else {
         return;
     };
 

@@ -48,6 +48,6 @@ fn main() -> Result<(), Error> {
 fn app_dir(path: &Path) -> Result<(), Error> {
     let target = path.join("target");
     let bin = target.join("AppDir").join("usr").join("bin");
-    fs::create_dir_all(&bin)?;
+    fs::create_dir_all(bin)?;
     Ok(())
 }

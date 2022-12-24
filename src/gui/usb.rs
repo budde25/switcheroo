@@ -1,23 +1,22 @@
-use crate::Error;
 use eframe::egui::Context;
 use std::thread;
-use tegra_rcm::{create_hotplug, Actions, Rcm};
+use tegra_rcm::{create_hotplug, Actions, Switch};
 use tracing::debug;
 
-use super::Switch;
+use super::SwitchDevice;
 
 struct HotplugHandler {
-    switch: Switch,
+    switch: SwitchDevice,
     ctx: Context,
 }
 
 impl Actions for HotplugHandler {
-    fn arrives(&mut self, rcm: Rcm) {
+    fn arrives(&mut self, rcm: Switch) {
         let lock = self.switch.0.lock();
         debug!("Switch has been plugged in");
 
         if let Ok(mut inner) = lock {
-            *inner = Ok(rcm);
+            *inner = Some(rcm);
             self.ctx.request_repaint();
         }
     }
@@ -27,13 +26,13 @@ impl Actions for HotplugHandler {
         debug!("Switch has been unplugged");
 
         if let Ok(mut inner) = lock {
-            *inner = Err(Error::SwitchNotFound);
+            *inner = None;
             self.ctx.request_repaint();
         }
     }
 }
 
 /// Spawn a separate thread too
-pub fn spawn_thread(switch: Switch, ctx: Context) {
+pub fn spawn_thread(switch: SwitchDevice, ctx: Context) {
     thread::spawn(move || create_hotplug(Box::new(HotplugHandler { switch, ctx })));
 }
