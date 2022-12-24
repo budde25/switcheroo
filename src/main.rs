@@ -1,7 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
+use std::fs;
 use std::path::{Path, PathBuf};
-use std::{env, fs};
 
 use clap::Parser;
 use color_eyre::eyre::{bail, Context, Result};
@@ -153,15 +153,11 @@ fn remove(favorite: String) -> Result<()> {
 /// SWITCHEROO_GUI_ONLY is set to "0"
 #[cfg(feature = "gui")]
 fn launch_gui_only_mode() {
-    // FIXME: remove once new version of glutin releases
-    #[cfg(all(unix, not(target_os = "macos")))]
-    env::set_var("WINIT_UNIX_BACKEND", "x11");
-
     // FIXME: only gui mode on windows
     #[cfg(target_os = "windows")]
     launch_gui();
 
-    let Some(gui_only) = env::var_os("SWITCHEROO_GUI_ONLY") else {
+    let Some(gui_only) = std::env::var_os("SWITCHEROO_GUI_ONLY") else {
         return;
     };
 
