@@ -157,6 +157,8 @@ impl FavoritesData {
         let mut removed = false;
         Grid::new("favorites").show(ui, |ui| {
             // TODO: find a way cheaper way to iterate
+            // TODO: Remove once false positive is resolved
+            #[allow(clippy::unnecessary_to_owned)]
             for entry in self.favorites().to_owned() {
                 ui.horizontal(|ui| {
                     let (rem, sel) = self.render_entry(&entry, ui);
