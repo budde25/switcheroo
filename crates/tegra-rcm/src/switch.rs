@@ -49,7 +49,7 @@ impl Switch {
     /// Create a new Rcm object from an existing SwitchDevice
     /// Should not have its interface claimed yet
     pub(crate) fn with_device(device: SwitchDevice) -> Result<Self> {
-        device.validate()?;
+        device.validate_environment()?;
 
         Ok(Self {
             switch: device,

@@ -4,6 +4,7 @@ use super::{Device, DeviceRaw};
 use rusb::{DeviceHandle, GlobalContext};
 use std::time::Duration;
 
+use crate::vulnerability::Vulnerability;
 use crate::{Result, SwitchError};
 
 /// A connected and init switch device connection
@@ -20,7 +21,7 @@ impl Device for SwitchDevice {
             self.device.claim_interface(0)?;
             self.claimed = true;
         }
-        self.validate()
+        self.validate_environment()
     }
 
     /// Read from the device into the buffer
@@ -33,10 +34,6 @@ impl Device for SwitchDevice {
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
         let amount = self.device.write_bulk(0x01, buf, Duration::from_secs(1))?;
         Ok(amount)
-    }
-
-    fn validate(&self) -> Result<()> {
-        Ok(())
     }
 }
 

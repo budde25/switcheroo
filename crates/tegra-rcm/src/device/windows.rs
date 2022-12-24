@@ -6,6 +6,7 @@ use libusbk::{DeviceHandle, DeviceList};
 use super::DeviceRaw;
 use super::{Device, SwitchDeviceRaw};
 use crate::error::WindowsDriver;
+use crate::vulnerability::Vulnerability;
 use crate::Result;
 
 /// A connected and init switch device connection
@@ -21,7 +22,7 @@ impl Device for SwitchDevice {
         if !self.claimed {
             self.claimed = true;
         }
-        self.validate()
+        self.validate_environment()
     }
 
     /// Read from the device into the buffer
@@ -34,13 +35,6 @@ impl Device for SwitchDevice {
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
         let amount = self.device.write_pipe(0x01, buf)?;
         Ok(amount as usize)
-    }
-
-    fn validate(&self) -> Result<()> {
-        match WindowsDriver::from(self.device().driver_id()) {
-            WindowsDriver::LibUsbK => Ok(()),
-            driver => Err(crate::Error::WindowsWrongDriver(driver)),
-        }
     }
 }
 
