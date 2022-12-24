@@ -22,7 +22,9 @@ pub enum SwitchError {
     UsbBadInterface(u8),
 
     /// A linux environment error such as not having the correct usb driver support
-    #[error("Linux environment error, typically this means the system lacks a supported USB driver")]
+    #[error(
+        "Linux environment error, typically this means the system lacks a supported USB driver"
+    )]
     LinuxEnv,
 
     /// USB permission error
