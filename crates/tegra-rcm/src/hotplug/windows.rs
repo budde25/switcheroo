@@ -1,10 +1,10 @@
 use libusbk::{has_hotplug, Device, DeviceHandle, Hotplug, HotplugBuilder};
 
 use crate::device::{SwitchDevice, SWITCH_PID, SWITCH_VID};
-use crate::{Actions, Rcm};
+use crate::{Actions, Switch};
 
-impl Rcm {
-    /// Create a new Rcm object from an existing DeviceHandle
+impl Switch {
+    /// Create a new Switch object from an existing DeviceHandle
     /// Should not have its interface claimed yet
     fn with_device_handle(device: DeviceHandle) -> Self {
         Self::with_device(SwitchDevice::with_device_handle(device))
@@ -21,7 +21,7 @@ impl Hotplug for HotplugHandler {
     fn device_arrived(&mut self, device: Device) {
         // if this is not Ok, it probably got unplugged really fast
         if let Ok(dev) = device.open() {
-            let rcm = Rcm::with_device_handle(dev);
+            let rcm = Switch::with_device_handle(dev);
             self.inner.arrives(rcm);
         }
     }

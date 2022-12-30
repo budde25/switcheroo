@@ -5,9 +5,9 @@ use libusbk::{DeviceHandle, DeviceList};
 
 use super::DeviceRaw;
 use super::{Device, SwitchDeviceRaw};
-use crate::error::WindowsDriver;
 use crate::vulnerability::Vulnerability;
 use crate::Result;
+use crate::SwitchError::WindowsDriver;
 
 /// A connected and init switch device connection
 #[derive(Debug)]
