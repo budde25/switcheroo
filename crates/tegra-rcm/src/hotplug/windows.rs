@@ -7,7 +7,7 @@ impl Switch {
     /// Create a new Switch object from an existing DeviceHandle
     /// Should not have its interface claimed yet
     fn with_device_handle(device: DeviceHandle) -> Self {
-        Self::with_device(SwitchDevice::with_device_handle(device))
+        Self::with_device(SwitchDevice::with_device_handle(device)).unwrap()
     }
 }
 

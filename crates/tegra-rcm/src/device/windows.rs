@@ -1,13 +1,9 @@
-use std::thread;
-use std::time::Duration;
-
 use libusbk::{DeviceHandle, DeviceList};
 
 use super::DeviceRaw;
 use super::{Device, SwitchDeviceRaw};
 use crate::vulnerability::Vulnerability;
-use crate::Result;
-use crate::SwitchError::WindowsDriver;
+use crate::{Result, SwitchError};
 
 /// A connected and init switch device connection
 #[derive(Debug)]
@@ -60,7 +56,7 @@ impl SwitchDeviceRaw {
             return Ok(handle);
         }
 
-        Err(crate::Error::SwitchNotFound)
+        Err(SwitchError::SwitchNotFound)
     }
 }
 
