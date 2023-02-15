@@ -21,8 +21,8 @@ rusb = "0.9.1"
 
 # Linux specific
 [target.'cfg(target_os = "linux")'.dependencies]
-glob = "0.3.0"
-nix = "0.26.1"
+glob = "0.3.1"
+nix = "0.26.2"
 
 # Windows specific
 [target.'cfg(target_os = "windows")'.dependencies]
