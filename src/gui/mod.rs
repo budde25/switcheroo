@@ -52,7 +52,8 @@ pub fn gui() {
 
             Box::new(app)
         }),
-    );
+    )
+    .expect("Window is able to run");
 }
 
 struct InitError {
@@ -247,18 +248,18 @@ impl eframe::App for MyApp {
         preview_files_being_dropped(ctx);
 
         // Collect dropped files:
-        if !ctx.input().raw.dropped_files.is_empty() {
-            // unwrap safe cause we are not empty
-            let file = ctx.input().raw.dropped_files.last().unwrap().clone();
-            if let Some(path) = file.path {
-                match PayloadData::new(&path) {
-                    Ok(payload) => self.payload_data = Some(Rc::new(payload)),
-                    Err(e) => {
-                        self.toast.error(e.to_string());
+        ctx.input(|i| {
+            if let Some(last) = i.raw.dropped_files.last() {
+                if let Some(path) = &last.path {
+                    match PayloadData::new(&path) {
+                        Ok(payload) => self.payload_data = Some(Rc::new(payload)),
+                        Err(e) => {
+                            self.toast.error(e.to_string());
+                        }
                     }
                 }
             }
-        }
+        });
     }
 }
 
@@ -281,26 +282,30 @@ fn gen_error(error: &tegra_rcm::SwitchError) -> Option<String> {
     }
 }
 
-/// Preview hovering files
-fn preview_files_being_dropped(ctx: &Context) {
+/// Preview hovering files:
+fn preview_files_being_dropped(ctx: &eframe::egui::Context) {
     use eframe::egui::{Align2, Id, LayerId, Order, TextStyle};
+    use std::fmt::Write as _;
 
-    if !ctx.input().raw.hovered_files.is_empty() {
-        let mut text = "Dropping payload:\n\n".to_owned();
-        for file in &ctx.input().raw.hovered_files {
-            if let Some(path) = &file.path {
-                text += &path.as_os_str().to_string_lossy();
-            } else if !file.mime.is_empty() {
-                text += &file.mime;
-            } else {
-                text += "???";
+    if !ctx.input(|i| i.raw.hovered_files.is_empty()) {
+        let text = ctx.input(|i| {
+            let mut text = "Dropping files:\n".to_owned();
+            for file in &i.raw.hovered_files {
+                if let Some(path) = &file.path {
+                    write!(text, "\n{}", path.display()).ok();
+                } else if !file.mime.is_empty() {
+                    write!(text, "\n{}", file.mime).ok();
+                } else {
+                    text += "\n???";
+                }
             }
-        }
+            text
+        });
 
         let painter =
             ctx.layer_painter(LayerId::new(Order::Foreground, Id::new("file_drop_target")));
 
-        let screen_rect = ctx.input().screen_rect();
+        let screen_rect = ctx.screen_rect();
         painter.rect_filled(screen_rect, 0.0, Color32::from_black_alpha(192));
         painter.text(
             screen_rect.center(),

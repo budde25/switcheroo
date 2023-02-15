@@ -17,10 +17,10 @@ _switcheroo() {
     _arguments "${_arguments_options[@]}" \
 '*-v[Verbosity]' \
 '*--verbose[Verbosity]' \
-'-h[Print help information]' \
-'--help[Print help information]' \
-'-V[Print version information]' \
-'--version[Print version information]' \
+'-h[Print help]' \
+'--help[Print help]' \
+'-V[Print version]' \
+'--version[Print version]' \
 ":: :_switcheroo_commands" \
 "*::: :->switcheroo" \
 && ret=0
@@ -36,41 +36,41 @@ _arguments "${_arguments_options[@]}" \
 '--favorite[Use a favorite payload]' \
 '-w[Wait for device to be connected]' \
 '--wait[Wait for device to be connected]' \
-'-h[Print help information]' \
-'--help[Print help information]' \
+'-h[Print help]' \
+'--help[Print help]' \
 ':payload -- Path to the payload file, or a favorite if flag is passed:' \
 && ret=0
 ;;
 (device)
 _arguments "${_arguments_options[@]}" \
-'-h[Print help information]' \
-'--help[Print help information]' \
+'-h[Print help]' \
+'--help[Print help]' \
 && ret=0
 ;;
 (list)
 _arguments "${_arguments_options[@]}" \
-'-h[Print help information]' \
-'--help[Print help information]' \
+'-h[Print help]' \
+'--help[Print help]' \
 && ret=0
 ;;
 (add)
 _arguments "${_arguments_options[@]}" \
-'-h[Print help information]' \
-'--help[Print help information]' \
+'-h[Print help]' \
+'--help[Print help]' \
 ':payload -- Path to the payload file:_files' \
 && ret=0
 ;;
 (remove)
 _arguments "${_arguments_options[@]}" \
-'-h[Print help information]' \
-'--help[Print help information]' \
+'-h[Print help]' \
+'--help[Print help]' \
 ':favorite:' \
 && ret=0
 ;;
 (gui)
 _arguments "${_arguments_options[@]}" \
-'-h[Print help information]' \
-'--help[Print help information]' \
+'-h[Print help]' \
+'--help[Print help]' \
 && ret=0
 ;;
 (help)
