@@ -251,7 +251,7 @@ impl eframe::App for MyApp {
         ctx.input(|i| {
             if let Some(last) = i.raw.dropped_files.last() {
                 if let Some(path) = &last.path {
-                    match PayloadData::new(&path) {
+                    match PayloadData::new(path) {
                         Ok(payload) => self.payload_data = Some(Rc::new(payload)),
                         Err(e) => {
                             self.toast.error(e.to_string());
