@@ -32,7 +32,7 @@ pub struct FavoritesData {
 }
 
 impl FavoritesData {
-    /// Create a new FavoritesData which is a wrapper around the favorites and a cache
+    /// Create a new `FavoritesData` which is a wrapper around the favorites and a cache
     pub fn new() -> Self {
         let favorites = Favorites::new()
             .expect("Failed to read favorite directory, are we missing permission?");
@@ -122,7 +122,7 @@ impl FavoritesData {
         self.cache.add(payload_data.path(), true)?;
         self.update_cache();
         self.selected =
-            Selected::Favorited(self.cache.get(payload_data.file_name()).unwrap().to_owned());
+            Selected::Favorited(self.cache.get(payload_data.file_name()).unwrap().clone());
         Ok(())
     }
 
@@ -187,7 +187,7 @@ impl FavoritesData {
         let mut selected = false;
         let button = ui.selectable_value(
             &mut self.selected,
-            Selected::Favorited(entry.to_owned()),
+            Selected::Favorited(entry.clone()),
             entry.name(),
         );
         if button.clicked() {

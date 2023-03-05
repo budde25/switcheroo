@@ -141,7 +141,7 @@ fn remove(favorite: String) -> Result<()> {
     let Some(fav) = favorites.get(&favorite) else {
         bail!("Failed to remove favorite: `{}` not found", &favorite);
     };
-    let fav = fav.to_owned();
+    let fav = fav.clone();
 
     favorites.remove(&fav)?;
     println!("Successfully removed favorite: `{}`", &fav.name());
