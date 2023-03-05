@@ -1,7 +1,7 @@
 [package]
 keywords = [ "exploit", "cross-platform" ]
 name = "tegra-rcm"
-version = "0.4.0"
+version = "0.5.0"
 edition = "2021"
 license = "GPL-2.0-or-later"
 authors = [ "Ethan Budd <budde25@protonmail.com>" ]
