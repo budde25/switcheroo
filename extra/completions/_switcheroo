@@ -214,4 +214,8 @@ _switcheroo__remove_commands() {
     _describe -t commands 'switcheroo remove commands' commands "$@"
 }
 
-_switcheroo "$@"
+if [ "$funcstack[1]" = "_switcheroo" ]; then
+    _switcheroo "$@"
+else
+    compdef _switcheroo switcheroo
+fi
