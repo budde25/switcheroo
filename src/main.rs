@@ -1,5 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
+use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -36,8 +37,8 @@ fn main() -> Result<()> {
         } => execute(payload, favorite, wait)?,
         Commands::Device {} => device()?,
         Commands::List => _ = list()?,
-        Commands::Add { payload } => add(payload)?,
-        Commands::Remove { favorite } => remove(favorite)?,
+        Commands::Add { payload } => add(&payload)?,
+        Commands::Remove { favorite } => remove(&favorite)?,
         #[cfg(feature = "gui")]
         Commands::Gui {} => gui::gui(),
     }
@@ -92,17 +93,15 @@ fn execute(payload: String, favorite: bool, wait: bool) -> Result<()> {
 }
 
 fn device() -> Result<()> {
-    let switch = Switch::new();
-
-    match switch {
-        Some(e) => e?,
-        None => {
-            println!("[x] Switch in RCM mode not found");
-            return Ok(());
-        }
+    let Some(switch) = Switch::new() else {
+        println!("[x] Switch in RCM mode not found");
+        return Ok(());
     };
 
+    let _ = switch?; // propagate errors
+
     println!("[✓] Switch is RCM mode and connected");
+
     Ok(())
 }
 
@@ -125,9 +124,9 @@ fn list() -> Result<usize> {
     Ok(list.len())
 }
 
-fn add(payload: PathBuf) -> Result<()> {
+fn add(payload: &Path) -> Result<()> {
     let favorites = Favorites::new()?;
-    favorites.add(&payload, true)?;
+    favorites.add(payload, true)?;
     println!(
         "Successfully added favorite: `{}`",
         &payload.file_name().unwrap().to_string_lossy()
@@ -135,10 +134,10 @@ fn add(payload: PathBuf) -> Result<()> {
     Ok(())
 }
 
-fn remove(favorite: String) -> Result<()> {
+fn remove(favorite: &str) -> Result<()> {
     let mut favorites = Favorites::new()?;
 
-    let Some(fav) = favorites.get(&favorite) else {
+    let Some(fav) = favorites.get(favorite) else {
         bail!("Failed to remove favorite: `{}` not found", &favorite);
     };
     let fav = fav.clone();
@@ -153,11 +152,7 @@ fn remove(favorite: String) -> Result<()> {
 /// SWITCHEROO_GUI_ONLY is set to "0"
 #[cfg(feature = "gui")]
 fn launch_gui_only_mode() {
-    // FIXME: only gui mode on windows
-    #[cfg(target_os = "windows")]
-    launch_gui();
-
-    let Some(gui_only) = std::env::var_os("SWITCHEROO_GUI_ONLY") else {
+    let Some(gui_only) = env::var_os("SWITCHEROO_GUI_ONLY") else {
         return;
     };
 

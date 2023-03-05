@@ -17,16 +17,16 @@ const BUILT_PAYLOAD_MAX_LENGTH: usize = 0x30298;
 /// The min length of the provided payload (inclusive)
 const PAYLOAD_MIN_LENGTH: usize = PADDING_SIZE_2;
 /// The max length of the provided payload (exclusive)
-const PAYLOAD_MAX_LENGTH: usize = 183640;
+const PAYLOAD_MAX_LENGTH: usize = 183_640;
 
 /// hardcoded address for the start of the stack spray
-const STACK_SPRAY_START: usize = 0x40014E40;
+const STACK_SPRAY_START: usize = 0x4001_4E40;
 /// hardcoded address for the end of the stack spray
-const STACK_SPRAY_END: usize = 0x40017000;
+const STACK_SPRAY_END: usize = 0x4001_7000;
 const PADDING_SIZE_2: usize = STACK_SPRAY_START - PAYLOAD_START_ADDR;
 
-const PAYLOAD_START_ADDR: usize = 0x40010E40;
-const RCM_PAYLOAD_ADDR: usize = 0x40010000;
+const PAYLOAD_START_ADDR: usize = 0x4001_0E40;
+const RCM_PAYLOAD_ADDR: usize = 0x4001_0000;
 
 const REPEAT_COUNT: usize = (STACK_SPRAY_END - STACK_SPRAY_START) / 4;
 
@@ -67,7 +67,7 @@ impl Payload {
         payload_builder.extend(split.0);
         // start stack spray
         for _ in 0..REPEAT_COUNT {
-            payload_builder.extend((RCM_PAYLOAD_ADDR as u32).to_le_bytes())
+            payload_builder.extend((RCM_PAYLOAD_ADDR as u32).to_le_bytes());
         }
         payload_builder.extend(split.1);
 
@@ -75,11 +75,11 @@ impl Payload {
         let padding_size = 0x1000 - (payload_builder.len() % 0x1000);
         payload_builder.resize(payload_builder.len() + padding_size, b'\0');
 
-        assert_eq!(payload_builder.len() % 0x1000, 0);
+        debug_assert_eq!(payload_builder.len() % 0x1000, 0);
 
         let data = payload_builder.into_boxed_slice();
 
-        assert!(data.len() <= BUILT_PAYLOAD_MAX_LENGTH);
+        debug_assert!(data.len() <= BUILT_PAYLOAD_MAX_LENGTH);
         debug!(
             "A completed payload has been build with a size of: {} bytes",
             data.len()

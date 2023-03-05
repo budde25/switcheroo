@@ -64,7 +64,7 @@ impl FavoritesData {
                 }
             }
             Err(e) => {
-                warn!("File system notifications are not available. There will be no immediate feedback to favorites directory changes.\n{:?}", e)
+                warn!("File system notifications are not available. There will be no immediate feedback to favorites directory changes.\n{:?}", e);
             }
         }
     }
@@ -193,7 +193,7 @@ impl FavoritesData {
         if button.clicked() {
             match &self.selected {
                 Selected::Favorited(favorite) => {
-                    self.payload_data = Some(Rc::new(favorite.read_payload_data().unwrap()))
+                    self.payload_data = Some(Rc::new(favorite.read_payload_data().unwrap()));
                 } // FIXME: handle error
                 Selected::None => self.payload_data = None,
             }

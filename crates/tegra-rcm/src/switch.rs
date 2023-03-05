@@ -26,10 +26,10 @@ impl BufferState {
     }
 
     /// Gets the address of the buffer
-    fn address(&self) -> usize {
-        const COPY_BUFFER_ADDRESSES_LOW: usize = 0x40005000;
-        const COPY_BUFFER_ADDRESSES_HIGH: usize = 0x40009000;
-        match *self {
+    fn address(self) -> usize {
+        const COPY_BUFFER_ADDRESSES_LOW: usize = 0x4000_5000;
+        const COPY_BUFFER_ADDRESSES_HIGH: usize = 0x4000_9000;
+        match self {
             BufferState::Low => COPY_BUFFER_ADDRESSES_LOW,
             BufferState::High => COPY_BUFFER_ADDRESSES_HIGH,
         }
@@ -136,12 +136,12 @@ impl Switch {
     }
 
     fn trigger_controlled_memcopy(&self) -> Result<()> {
+        const STACK_END: usize = 0x40010000;
         debug!(
             "Wrote a total of {} bytes to the switch, performing the controlled memcopy",
             self.total_written
         );
 
-        const STACK_END: usize = 0x40010000;
         let length = STACK_END - self.current_buff_addr();
         self.trigger_controlled_memcopy_length(length)?;
         Ok(())

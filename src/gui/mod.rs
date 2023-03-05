@@ -131,7 +131,7 @@ impl MyApp {
 
             if let Some(p) = self.favorites_data.payload() {
                 if clicked {
-                    self.payload_data = Some(p)
+                    self.payload_data = Some(p);
                 };
             }
 
@@ -153,7 +153,7 @@ impl MyApp {
     }
 
     fn payload_window(&mut self, ui: &mut Ui) {
-        self.render_payload(ui)
+        self.render_payload(ui);
     }
 
     pub fn render_payload(&mut self, ui: &mut Ui) {

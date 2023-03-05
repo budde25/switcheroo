@@ -36,7 +36,7 @@ fn main() -> Result<(), Error> {
     }
 
     let man = clap_mangen::Man::new(cmd);
-    let mut buffer: Vec<u8> = Default::default();
+    let mut buffer: Vec<u8> = Vec::default();
     man.render(&mut buffer)?;
 
     std::fs::write(man_out.join("switcheroo.1"), buffer)?;

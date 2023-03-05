@@ -5,7 +5,7 @@ use thiserror::Error;
 /// A result of a function that may return a `Error`.
 pub(crate) type Result<T> = std::result::Result<T, SwitchError>;
 
-/// An error interating with the Switch in RCM mode
+/// An error interacting with the Switch in RCM mode
 #[derive(Error, Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum SwitchError {
