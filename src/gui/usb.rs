@@ -1,7 +1,7 @@
 use eframe::egui::Context;
+use log::debug;
 use std::thread;
 use tegra_rcm::{create_hotplug, Actions, Switch};
-use tracing::debug;
 
 use super::SwitchDevice;
 

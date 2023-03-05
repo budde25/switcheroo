@@ -13,7 +13,7 @@ categories = [ "os", "hardware-support" ]
 
 [dependencies]
 thiserror = "1.0.38"
-tracing.workspace = true
+log.workspace = true
 
 # Linux and Mac specific
 [target.'cfg(any(target_os = "linux", target_os = "macos"))'.dependencies]

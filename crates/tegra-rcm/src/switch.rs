@@ -1,6 +1,6 @@
 use std::ops::DerefMut;
 
-use tracing::debug;
+use log::debug;
 
 use crate::Result;
 

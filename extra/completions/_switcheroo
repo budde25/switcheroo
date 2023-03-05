@@ -15,8 +15,10 @@ _switcheroo() {
 
     local context curcontext="$curcontext" state line
     _arguments "${_arguments_options[@]}" \
-'*-v[Verbosity]' \
-'*--verbose[Verbosity]' \
+'*-v[More output per occurrence]' \
+'*--verbose[More output per occurrence]' \
+'(-v --verbose)*-q[Less output per occurrence]' \
+'(-v --verbose)*--quiet[Less output per occurrence]' \
 '-h[Print help]' \
 '--help[Print help]' \
 '-V[Print version]' \
@@ -36,6 +38,10 @@ _arguments "${_arguments_options[@]}" \
 '--favorite[Use a favorite payload]' \
 '-w[Wait for device to be connected]' \
 '--wait[Wait for device to be connected]' \
+'*-v[More output per occurrence]' \
+'*--verbose[More output per occurrence]' \
+'(-v --verbose)*-q[Less output per occurrence]' \
+'(-v --verbose)*--quiet[Less output per occurrence]' \
 '-h[Print help]' \
 '--help[Print help]' \
 ':payload -- Path to the payload file, or a favorite if flag is passed:' \
@@ -43,18 +49,30 @@ _arguments "${_arguments_options[@]}" \
 ;;
 (device)
 _arguments "${_arguments_options[@]}" \
+'*-v[More output per occurrence]' \
+'*--verbose[More output per occurrence]' \
+'(-v --verbose)*-q[Less output per occurrence]' \
+'(-v --verbose)*--quiet[Less output per occurrence]' \
 '-h[Print help]' \
 '--help[Print help]' \
 && ret=0
 ;;
 (list)
 _arguments "${_arguments_options[@]}" \
+'*-v[More output per occurrence]' \
+'*--verbose[More output per occurrence]' \
+'(-v --verbose)*-q[Less output per occurrence]' \
+'(-v --verbose)*--quiet[Less output per occurrence]' \
 '-h[Print help]' \
 '--help[Print help]' \
 && ret=0
 ;;
 (add)
 _arguments "${_arguments_options[@]}" \
+'*-v[More output per occurrence]' \
+'*--verbose[More output per occurrence]' \
+'(-v --verbose)*-q[Less output per occurrence]' \
+'(-v --verbose)*--quiet[Less output per occurrence]' \
 '-h[Print help]' \
 '--help[Print help]' \
 ':payload -- Path to the payload file:_files' \
@@ -62,6 +80,10 @@ _arguments "${_arguments_options[@]}" \
 ;;
 (remove)
 _arguments "${_arguments_options[@]}" \
+'*-v[More output per occurrence]' \
+'*--verbose[More output per occurrence]' \
+'(-v --verbose)*-q[Less output per occurrence]' \
+'(-v --verbose)*--quiet[Less output per occurrence]' \
 '-h[Print help]' \
 '--help[Print help]' \
 ':favorite:' \
@@ -69,6 +91,10 @@ _arguments "${_arguments_options[@]}" \
 ;;
 (gui)
 _arguments "${_arguments_options[@]}" \
+'*-v[More output per occurrence]' \
+'*--verbose[More output per occurrence]' \
+'(-v --verbose)*-q[Less output per occurrence]' \
+'(-v --verbose)*--quiet[Less output per occurrence]' \
 '-h[Print help]' \
 '--help[Print help]' \
 && ret=0

@@ -7,10 +7,9 @@ use eframe::egui::{
     global_dark_light_mode_switch, Button, Grid, Layout, RichText, SidePanel, TextStyle, Ui,
 };
 use eframe::emath::Align;
-
 use notify::{RecursiveMode, Watcher};
 
-use tracing::{info, warn};
+use log::{info, warn};
 
 use crate::favorites::{Favorite, Favorites};
 

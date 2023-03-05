@@ -8,8 +8,6 @@ use clap::Parser;
 use color_eyre::eyre::{bail, Context, Result};
 use favorites::Favorites;
 use tegra_rcm::{Payload, Switch};
-use tracing_subscriber::prelude::*;
-use tracing_subscriber::{filter::LevelFilter, fmt, EnvFilter};
 
 mod cli;
 mod favorites;
@@ -27,7 +25,9 @@ fn main() -> Result<()> {
 
     let args = Cli::parse();
 
-    set_log_level(args.verbose);
+    tracing_subscriber::fmt()
+        .with_max_level(convert_filter(args.verbose.log_level_filter()))
+        .init();
 
     match args.command {
         Commands::Execute {
@@ -45,20 +45,15 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-/// sets the log level
-fn set_log_level(verbosity: u8) {
-    let filter = EnvFilter::builder();
-    let filter = match verbosity {
-        1 => filter.with_default_directive(LevelFilter::INFO.into()),
-        2 => filter.with_default_directive(LevelFilter::DEBUG.into()),
-        3 => filter.with_default_directive(LevelFilter::TRACE.into()),
-        _ => filter.with_default_directive(LevelFilter::WARN.into()),
-    };
-
-    tracing_subscriber::registry()
-        .with(fmt::layer())
-        .with(filter.from_env_lossy())
-        .init();
+fn convert_filter(filter: log::LevelFilter) -> tracing_subscriber::filter::LevelFilter {
+    match filter {
+        log::LevelFilter::Off => tracing_subscriber::filter::LevelFilter::OFF,
+        log::LevelFilter::Error => tracing_subscriber::filter::LevelFilter::ERROR,
+        log::LevelFilter::Warn => tracing_subscriber::filter::LevelFilter::WARN,
+        log::LevelFilter::Info => tracing_subscriber::filter::LevelFilter::INFO,
+        log::LevelFilter::Debug => tracing_subscriber::filter::LevelFilter::DEBUG,
+        log::LevelFilter::Trace => tracing_subscriber::filter::LevelFilter::TRACE,
+    }
 }
 
 fn read(path: &Path) -> Result<Payload> {
@@ -163,6 +158,5 @@ fn launch_gui_only_mode() {
 
 #[cfg(feature = "gui")]
 fn launch_gui() {
-    set_log_level(3);
     gui::gui();
 }

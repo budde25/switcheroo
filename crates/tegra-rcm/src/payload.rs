@@ -2,8 +2,8 @@ use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::Path;
 
+use log::{debug, trace};
 use thiserror::Error;
-use tracing::{debug, trace};
 
 /// A constructed payload, this is transferred to the switch in RCM mode to execute bootROM exploit
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

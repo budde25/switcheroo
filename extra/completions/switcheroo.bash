@@ -61,7 +61,7 @@ _switcheroo() {
 
     case "${cmd}" in
         switcheroo)
-            opts="-v -h -V --verbose --help --version execute device list add remove gui help"
+            opts="-v -q -h -V --verbose --quiet --help --version execute device list add remove gui help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -75,7 +75,7 @@ _switcheroo() {
             return 0
             ;;
         switcheroo__add)
-            opts="-h --help <PAYLOAD>"
+            opts="-v -q -h --verbose --quiet --help <PAYLOAD>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -89,7 +89,7 @@ _switcheroo() {
             return 0
             ;;
         switcheroo__device)
-            opts="-h --help"
+            opts="-v -q -h --verbose --quiet --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -103,7 +103,7 @@ _switcheroo() {
             return 0
             ;;
         switcheroo__execute)
-            opts="-f -w -h --favorite --wait --help <PAYLOAD>"
+            opts="-f -w -v -q -h --favorite --wait --verbose --quiet --help <PAYLOAD>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -117,7 +117,7 @@ _switcheroo() {
             return 0
             ;;
         switcheroo__gui)
-            opts="-h --help"
+            opts="-v -q -h --verbose --quiet --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -243,7 +243,7 @@ _switcheroo() {
             return 0
             ;;
         switcheroo__list)
-            opts="-h --help"
+            opts="-v -q -h --verbose --quiet --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -257,7 +257,7 @@ _switcheroo() {
             return 0
             ;;
         switcheroo__remove)
-            opts="-h --help <FAVORITE>"
+            opts="-v -q -h --verbose --quiet --help <FAVORITE>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0

@@ -8,9 +8,8 @@ pub struct Cli {
     #[clap(subcommand)]
     pub command: Commands,
 
-    /// Verbosity
-    #[arg(short, long, action = clap::ArgAction::Count)]
-    pub verbose: u8,
+    #[clap(flatten)]
+    pub verbose: clap_verbosity_flag::Verbosity,
 }
 
 #[derive(Subcommand)]
