@@ -20,7 +20,7 @@ pub fn gui() {
     let options = eframe::NativeOptions {
         drag_and_drop_support: true,
         min_window_size: Some((500.0, 300.0).into()),
-        icon_data: Some(image::load_icon()),
+        icon_data: Some(Images::load_icon()),
         ..Default::default()
     };
 
@@ -45,7 +45,7 @@ pub fn gui() {
             let app = MyApp {
                 switch_data,
                 payload_data: None,
-                images: Images::default(),
+                images: Images::load(),
                 favorites_data: FavoritesData::new(),
                 toast: Toasts::default(),
             };
