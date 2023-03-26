@@ -9,10 +9,8 @@ static FAVORITES_PATH: Lazy<PathBuf> = Lazy::new(|| {
     favorites_dir.push("switcheroo");
     favorites_dir.push("favorites");
 
-    if !favorites_dir.is_dir() {
-        fs::create_dir_all(&favorites_dir)
-            .expect("Permission to create switcheroo favorites directory");
-    }
+    fs::create_dir_all(&favorites_dir)
+        .expect("Permission to create switcheroo favorites directory");
     favorites_dir
 });
 
