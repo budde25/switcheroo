@@ -1,6 +1,4 @@
-use std::fs::File;
-use std::io::{BufReader, Read};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use log::{debug, trace};
 use thiserror::Error;
@@ -89,12 +87,11 @@ impl Payload {
     }
 
     /// Read a payload from a file
-    pub fn read(path: &Path) -> Result<Self, PayloadError> {
-        let file = File::open(path)?;
-        let mut buffer = Vec::with_capacity(PAYLOAD_MIN_LENGTH * 2);
-        let mut buf_reader = BufReader::new(file);
-        buf_reader.read_to_end(&mut buffer)?;
-        Self::new(&buffer)
+    pub fn read<P: AsRef<Path>>(path: &P) -> Result<Self, PayloadError> {
+        let Ok(bytes) = std::fs::read(path) else {
+            return Err(PayloadError::Io(path.as_ref().into()));
+        };
+        Self::new(&bytes)
     }
 
     /// Get the data for the payload
@@ -108,8 +105,8 @@ impl Payload {
 #[non_exhaustive]
 pub enum PayloadError {
     /// Reading payload failed, std::io::Error
-    #[error("Payload failed to read from file")]
-    Io(String),
+    #[error("Payload failed to read from file: {0}")]
+    Io(PathBuf),
 
     /// Payload is less than the minimum length
     #[error("Payload invalid size: `{0}` (expected >= {})", PAYLOAD_MIN_LENGTH)]
@@ -118,12 +115,6 @@ pub enum PayloadError {
     /// Payload is greater than the maximum length
     #[error("Payload invalid size: `{0}` (expected < {})", PAYLOAD_MAX_LENGTH)]
     PayloadTooLong(usize),
-}
-
-impl From<std::io::Error> for PayloadError {
-    fn from(value: std::io::Error) -> Self {
-        Self::Io(value.to_string())
-    }
 }
 
 #[cfg(test)]

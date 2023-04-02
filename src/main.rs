@@ -1,10 +1,9 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
-use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use clap::Parser;
-use color_eyre::eyre::{bail, Context, Result};
+use color_eyre::eyre::{bail, Result};
 use favorites::Favorites;
 use tegra_rcm::{Payload, Switch};
 
@@ -55,21 +54,15 @@ fn convert_filter(filter: log::LevelFilter) -> tracing_subscriber::filter::Level
     }
 }
 
-fn read(path: &Path) -> Result<Payload> {
-    let payload_bytes = fs::read(path)
-        .wrap_err_with(|| format!("Failed to read payload from: {}", path.display()))?;
-    Ok(Payload::new(&payload_bytes)?)
-}
-
-fn execute(payload: String, favorite: bool, wait: bool) -> Result<()> {
-    let pay = if favorite {
+fn execute(path: String, favorite: bool, wait: bool) -> Result<()> {
+    let payload = if favorite {
         let favorites = Favorites::new()?;
-        let Some(fav) = favorites.get(&payload) else {
-            bail!("Failed to execute favorite: `{}` not found", &payload); // TODO: should we exit with 1?
+        let Some(fav) = favorites.get(&path) else {
+            bail!("Failed to execute favorite: `{}` not found", &path);
         };
         fav.read()?
     } else {
-        read(&PathBuf::from(payload))?
+        Payload::read(&path)?
     };
 
     let mut switch = Switch::new();
@@ -77,7 +70,7 @@ fn execute(payload: String, favorite: bool, wait: bool) -> Result<()> {
         switch = Switch::new();
     }
     if let Some(switch) = switch {
-        switch?.execute(&pay)?;
+        switch?.execute(&payload)?;
     } else {
         bail!("Switch not found")
     }

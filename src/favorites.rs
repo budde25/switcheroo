@@ -35,7 +35,7 @@ impl Favorites {
         Ok(Self { list })
     }
 
-    /// Get an iterator of the files in the directory
+    /// Get a slice of the favorites in the directory
     pub fn list(&self) -> &[Favorite] {
         &self.list
     }
