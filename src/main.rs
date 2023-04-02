@@ -1,6 +1,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
-use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -147,7 +146,7 @@ fn remove(favorite: &str) -> Result<()> {
 /// SWITCHEROO_GUI_ONLY is set to "0"
 #[cfg(feature = "gui")]
 fn launch_gui_only_mode() {
-    let Some(gui_only) = env::var_os("SWITCHEROO_GUI_ONLY") else {
+    let Some(gui_only) = std::env::var_os("SWITCHEROO_GUI_ONLY") else {
         return;
     };
 
