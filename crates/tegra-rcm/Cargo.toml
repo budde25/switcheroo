@@ -1,19 +1,20 @@
 [package]
-keywords = [ "exploit", "cross-platform" ]
+keywords = ["exploit", "cross-platform"]
 name = "tegra-rcm"
 version = "0.5.0"
 edition = "2021"
 license = "GPL-2.0-or-later"
-authors = [ "Ethan Budd <budde25@protonmail.com>" ]
+authors = ["Ethan Budd <budde25@protonmail.com>"]
 description = "A library to help exploit the bootROM exploit for the Tegra X1's RCM mode"
 repository = "https://github.com/budde25/switcheroo"
 readme = "README.md"
-categories = [ "os", "hardware-support" ]
+categories = ["os", "hardware-support"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+cfg-if = "1.0.0"
+log = { workspace = true }
 thiserror = "1.0.40"
-log.workspace = true
 
 # Linux and Mac specific
 [target.'cfg(any(target_os = "linux", target_os = "macos"))'.dependencies]
@@ -26,11 +27,11 @@ nix = "0.26.2"
 
 # Windows specific
 [target.'cfg(target_os = "windows")'.dependencies]
-libusbk = { version = "0.1.2", features = [ "vendored" ] }
-winapi = { version = "0.3.9", features = [ "ioapiset", "errhandlingapi" ] }
+libusbk = { version = "0.1.2", features = ["vendored"] }
+winapi = { version = "0.3.9", features = ["ioapiset", "errhandlingapi"] }
 
 [dev-dependencies]
-criterion = "0.5.0"
+criterion = "0.5.1"
 
 [[bench]]
 name = "my_benchmark"

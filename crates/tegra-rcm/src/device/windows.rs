@@ -1,7 +1,6 @@
 use libusbk::{DeviceHandle, DeviceList};
 
-use super::DeviceRaw;
-use super::{Device, SwitchDeviceRaw};
+use super::{Device, SWITCH_PID, SWITCH_VID};
 use crate::vulnerability::Vulnerability;
 use crate::{Result, SwitchError};
 
@@ -9,16 +8,24 @@ use crate::{Result, SwitchError};
 #[derive(Debug)]
 pub struct SwitchDevice {
     device: DeviceHandle,
-    claimed: bool,
 }
 
 impl Device for SwitchDevice {
+    fn find_device() -> Result<Option<Self>> {
+        let devices = DeviceList::new()?;
+        let device = devices.find_with_vid_and_pid(SWITCH_PID as i32, SWITCH_VID as i32);
+        if let Ok(dev) = device {
+            let handle = dev.open()?;
+            return Ok(Some(SwitchDevice::with_device_handle(device)));
+        }
+
+        Ok(None)
+    }
+
     /// Init the device
     fn init(&mut self) -> Result<()> {
-        if !self.claimed {
-            self.claimed = true;
-        }
-        self.validate_environment()
+        // stub
+        Ok(())
     }
 
     /// Read from the device into the buffer
@@ -36,45 +43,10 @@ impl Device for SwitchDevice {
 
 impl SwitchDevice {
     pub fn with_device_handle(device: DeviceHandle) -> Self {
-        Self {
-            device,
-            claimed: false,
-        }
+        Self { device }
     }
 
     pub fn device(&self) -> &DeviceHandle {
         &self.device
-    }
-}
-
-impl SwitchDeviceRaw {
-    fn open_device_with_vid_pid(vid: u16, pid: u16) -> Result<DeviceHandle> {
-        let devices = DeviceList::new()?;
-        let device = devices.find_with_vid_and_pid(vid as i32, pid as i32);
-        if let Ok(dev) = device {
-            let handle = dev.open()?;
-            return Ok(handle);
-        }
-
-        Err(SwitchError::SwitchNotFound)
-    }
-}
-
-impl DeviceRaw for SwitchDeviceRaw {
-    /// Tries to connect to the device and open and interface
-    fn find_device(self) -> Option<Result<SwitchDevice>> {
-        let device = Self::open_device_with_vid_pid(self.vid, self.pid);
-
-        let device = match device {
-            Ok(dev) => dev,
-            Err(e) => {
-                if e == SwitchError::SwitchNotFound {
-                    return None;
-                }
-                return Some(Err(e));
-            }
-        };
-
-        Some(Ok(SwitchDevice::with_device_handle(device)))
     }
 }
