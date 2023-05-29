@@ -1,16 +1,30 @@
-use libusbk::{has_hotplug, Device, DeviceHandle, Hotplug, HotplugBuilder};
+use libusbk::{has_hotplug, Device, Hotplug, HotplugBuilder};
+use log::error;
 
 use crate::device::{SwitchDevice, SWITCH_PID, SWITCH_VID};
 use crate::{Actions, Switch};
+
+use super::{HotplugError, HotplugHandler};
 
 impl Hotplug for HotplugHandler {
     /// Gets called whenever a new usb device arrives
     fn device_arrived(&mut self, device: Device) {
         // if this is not Ok, it probably got unplugged really fast
         if let Ok(dev) = device.open() {
-            let switch_device = SwitchDevice::with_device_handle(dev);
-            Switch::with_device(switch_device).unwrap();
-            self.inner.arrives(rcm);
+            let device = SwitchDevice::with_device_handle(dev);
+            // propogate error
+            let switch = match Switch::with_device(device) {
+                Ok(switch) => switch,
+                Err(e) => {
+                    error!("Failed to initialize switch: {e}");
+                    return;
+                }
+            };
+
+            // if this is not Some, it probably got unplugged really fast
+            if let Some(switch) = switch {
+                self.inner.arrives(switch);
+            }
         }
     }
 

@@ -1,8 +1,7 @@
 use libusbk::{DeviceHandle, DeviceList};
 
 use super::{Device, SWITCH_PID, SWITCH_VID};
-use crate::vulnerability::Vulnerability;
-use crate::{Result, SwitchError};
+use crate::Result;
 
 /// A connected and init switch device connection
 #[derive(Debug)]
@@ -11,14 +10,16 @@ pub struct SwitchDevice {
 }
 
 impl Device for SwitchDevice {
+    /// Tries to connect to the device and open and interface
     fn find_device() -> Result<Option<Self>> {
         let devices = DeviceList::new()?;
         let device = devices.find_with_vid_and_pid(SWITCH_PID as i32, SWITCH_VID as i32);
-        if let Ok(dev) = device {
-            let handle = dev.open()?;
-            return Ok(Some(SwitchDevice::with_device_handle(device)));
+        if let Ok(device) = device {
+            let handle = device.open()?;
+            return Ok(Some(Self::with_device_handle(handle)));
         }
 
+        // We did not find the device
         Ok(None)
     }
 
