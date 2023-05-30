@@ -9,8 +9,8 @@ impl SwitchDevice {
     /// Create a new switch device
     /// This is proteced by a mutex and arc so it is thread safe
     pub fn new() -> Result<Self, SwitchError> {
-        match Switch::new() {
-            Some(s) => Ok(Self(Arc::new(Mutex::new(Some(s?))))),
+        match Switch::new()? {
+            Some(s) => Ok(Self(Arc::new(Mutex::new(Some(s))))),
             None => Ok(Self(Arc::new(Mutex::new(None)))),
         }
     }

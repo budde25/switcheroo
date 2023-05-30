@@ -1,3 +1,5 @@
+//! Tegra RCM library
+//!
 //! A library to help exploit the bootROM exploit for the Tegra X1's RCM mode
 //! Current support OS's are Linux, MacOS, and Windows
 
@@ -8,6 +10,7 @@
     trivial_numeric_casts
 )]
 
+mod buffer;
 mod device;
 mod error;
 mod hotplug;

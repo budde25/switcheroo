@@ -65,12 +65,12 @@ fn execute(path: String, favorite: bool, wait: bool) -> Result<()> {
         Payload::read(&path)?
     };
 
-    let mut switch = Switch::new();
+    let mut switch = Switch::new()?;
     while wait && switch.is_some() {
-        switch = Switch::new();
+        switch = Switch::new()?;
     }
     if let Some(switch) = switch {
-        switch?.execute(&payload)?;
+        switch.execute(&payload)?;
     } else {
         bail!("Switch not found")
     }
@@ -80,12 +80,11 @@ fn execute(path: String, favorite: bool, wait: bool) -> Result<()> {
 }
 
 fn device() -> Result<()> {
-    let Some(switch) = Switch::new() else {
+    let switch = Switch::new()?;
+    if switch.is_none() {
         println!("[x] Switch in RCM mode not found");
         return Ok(());
     };
-
-    let _ = switch?; // propagate errors
 
     println!("[✓] Switch is RCM mode and connected");
 

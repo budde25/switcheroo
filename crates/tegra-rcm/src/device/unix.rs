@@ -1,27 +1,35 @@
-use super::SwitchDeviceRaw;
-use super::{Device, DeviceRaw};
+use super::{Device, SWITCH_PID, SWITCH_VID};
 
 use rusb::{DeviceHandle, GlobalContext};
 use std::time::Duration;
 
-use crate::vulnerability::Vulnerability;
-use crate::{Result, SwitchError};
+use crate::Result;
 
 /// A connected and init switch device connection
 #[derive(Debug)]
 pub struct SwitchDevice {
     device: DeviceHandle<GlobalContext>,
-    claimed: bool,
 }
 
 impl Device for SwitchDevice {
+    /// Tries to connect to the device and open and interface
+    fn find_device() -> Result<Option<Self>> {
+        for device in rusb::devices()?.iter() {
+            let device_desc = device.device_descriptor()?;
+
+            if device_desc.vendor_id() == SWITCH_VID && device_desc.product_id() == SWITCH_PID {
+                let dev = device.open()?;
+                return Ok(Some(Self::with_device_handle(dev)));
+            }
+        }
+        // We did not find the device
+        Ok(None)
+    }
+
     /// Init the device
     fn init(&mut self) -> Result<()> {
-        if !self.claimed {
-            self.device.claim_interface(0)?;
-            self.claimed = true;
-        }
-        self.validate_environment()
+        self.device.claim_interface(0)?;
+        Ok(())
     }
 
     /// Read from the device into the buffer
@@ -39,46 +47,10 @@ impl Device for SwitchDevice {
 
 impl SwitchDevice {
     pub fn with_device_handle(device: DeviceHandle<GlobalContext>) -> Self {
-        Self {
-            device,
-            claimed: false,
-        }
+        Self { device }
     }
 
     pub fn device(&self) -> &DeviceHandle<GlobalContext> {
         &self.device
-    }
-}
-
-impl SwitchDeviceRaw {
-    fn open_device_with_vid_pid(vid: u16, pid: u16) -> Result<DeviceHandle<GlobalContext>> {
-        for device in rusb::devices().unwrap().iter() {
-            let device_desc = device.device_descriptor().unwrap();
-
-            if device_desc.vendor_id() == vid && device_desc.product_id() == pid {
-                let dev = device.open()?;
-                return Ok(dev);
-            }
-        }
-        Err(crate::SwitchError::SwitchNotFound)
-    }
-}
-
-impl DeviceRaw for SwitchDeviceRaw {
-    /// Tries to connect to the device and open and interface
-    fn find_device(self) -> Option<Result<SwitchDevice>> {
-        let device = Self::open_device_with_vid_pid(self.vid, self.pid);
-
-        let device = match device {
-            Ok(dev) => dev,
-            Err(e) => {
-                if e == SwitchError::SwitchNotFound {
-                    return None;
-                }
-                return Some(Err(e));
-            }
-        };
-
-        Some(Ok(SwitchDevice::with_device_handle(device)))
     }
 }
