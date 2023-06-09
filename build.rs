@@ -3,7 +3,7 @@ use clap_complete::generate_to;
 use clap_complete::Shell::{Bash, Fish, Zsh};
 use std::fs;
 use std::io::Error;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::{env, process};
 
 include!("src/cli.rs");

@@ -1,6 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
-use std::path::Path;
+use camino::{Utf8Path, Utf8PathBuf};
 
 use clap::Parser;
 use color_eyre::eyre::{bail, Result};
@@ -33,7 +33,7 @@ fn main() -> Result<()> {
             favorite,
             wait,
         } => execute(payload, favorite, wait)?,
-        Commands::Device {} => device()?,
+        Commands::Device { wait } => device(wait)?,
         Commands::List => _ = list()?,
         Commands::Add { payload } => add(&payload)?,
         Commands::Remove { favorite } => remove(&favorite)?,
@@ -54,11 +54,11 @@ fn convert_filter(filter: log::LevelFilter) -> tracing_subscriber::filter::Level
     }
 }
 
-fn execute(path: String, favorite: bool, wait: bool) -> Result<()> {
-    let payload = if favorite {
+fn execute(path: Utf8PathBuf, favorite: Option<String>, wait: bool) -> Result<()> {
+    let payload = if let Some(favorite) = favorite {
         let favorites = Favorites::new()?;
-        let Some(fav) = favorites.get(&path) else {
-            bail!("Failed to execute favorite: `{}` not found", &path);
+        let Some(fav) = favorites.get(&favorite) else {
+            bail!("Failed to execute favorite: `{}` not found", &favorite);
         };
         fav.read()?
     } else {
@@ -79,7 +79,7 @@ fn execute(path: String, favorite: bool, wait: bool) -> Result<()> {
     Ok(())
 }
 
-fn device() -> Result<()> {
+fn device(wait: bool) -> Result<()> {
     let switch = Switch::new()?;
     if switch.is_none() {
         println!("[x] Switch in RCM mode not found");
@@ -110,12 +110,12 @@ fn list() -> Result<usize> {
     Ok(list.len())
 }
 
-fn add(payload: &Path) -> Result<()> {
+fn add(payload: &Utf8Path) -> Result<()> {
     let favorites = Favorites::new()?;
-    favorites.add(payload, true)?;
+    favorites.add(payload.as_std_path(), true)?;
     println!(
         "Successfully added favorite: `{}`",
-        &payload.file_name().unwrap().to_string_lossy()
+        &payload.file_name().unwrap()
     );
     Ok(())
 }

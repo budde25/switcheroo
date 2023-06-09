@@ -89,7 +89,7 @@ _switcheroo() {
             return 0
             ;;
         switcheroo__device)
-            opts="-v -q -h --verbose --quiet --help"
+            opts="-w -v -q -h --wait --verbose --quiet --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -103,12 +103,20 @@ _switcheroo() {
             return 0
             ;;
         switcheroo__execute)
-            opts="-f -w -v -q -h --favorite --wait --verbose --quiet --help <PAYLOAD>"
+            opts="-f -w -v -q -h --favorite --wait --verbose --quiet --help [PAYLOAD]"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
             fi
             case "${prev}" in
+                --favorite)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                -f)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
                 *)
                     COMPREPLY=()
                     ;;

@@ -34,8 +34,8 @@ _switcheroo() {
         case $line[1] in
             (execute)
 _arguments "${_arguments_options[@]}" \
-'-f[Use a favorite payload]' \
-'--favorite[Use a favorite payload]' \
+'-f+[Use a favorite payload instead]:FAVORITE: ' \
+'--favorite=[Use a favorite payload instead]:FAVORITE: ' \
 '-w[Wait for device to be connected]' \
 '--wait[Wait for device to be connected]' \
 '*-v[More output per occurrence]' \
@@ -44,11 +44,13 @@ _arguments "${_arguments_options[@]}" \
 '(-v --verbose)*--quiet[Less output per occurrence]' \
 '-h[Print help]' \
 '--help[Print help]' \
-':payload -- Path to the payload file, or a favorite if flag is passed:' \
+'::payload -- Path to the payload file:_files' \
 && ret=0
 ;;
 (device)
 _arguments "${_arguments_options[@]}" \
+'-w[Wait for device to be connected]' \
+'--wait[Wait for device to be connected]' \
 '*-v[More output per occurrence]' \
 '*--verbose[More output per occurrence]' \
 '(-v --verbose)*-q[Less output per occurrence]' \
@@ -75,7 +77,7 @@ _arguments "${_arguments_options[@]}" \
 '(-v --verbose)*--quiet[Less output per occurrence]' \
 '-h[Print help]' \
 '--help[Print help]' \
-':payload -- Path to the payload file:_files' \
+':payload -- Path to the binary file:_files' \
 && ret=0
 ;;
 (remove)
@@ -151,12 +153,12 @@ esac
 (( $+functions[_switcheroo_commands] )) ||
 _switcheroo_commands() {
     local commands; commands=(
-'execute:Executes a provided payload' \
-'device:Checks if a Switch in RCM mode is detected' \
-'list:Lists favorites' \
-'add:Add a favorite' \
-'remove:Remove a favorite' \
-'gui:Opens the Graphical User Interface' \
+'execute:Executes a payload on a connected Switch' \
+'device:Checks if a Switch is connected and booted to RCM mode' \
+'list:Lists favorite binaries' \
+'add:Add a favorite binary' \
+'remove:Remove a favorite binary' \
+'gui:Opens the graphical user interface' \
 'help:Print this message or the help of the given subcommand(s)' \
     )
     _describe -t commands 'switcheroo commands' commands "$@"
@@ -204,12 +206,12 @@ _switcheroo__help__gui_commands() {
 (( $+functions[_switcheroo__help_commands] )) ||
 _switcheroo__help_commands() {
     local commands; commands=(
-'execute:Executes a provided payload' \
-'device:Checks if a Switch in RCM mode is detected' \
-'list:Lists favorites' \
-'add:Add a favorite' \
-'remove:Remove a favorite' \
-'gui:Opens the Graphical User Interface' \
+'execute:Executes a payload on a connected Switch' \
+'device:Checks if a Switch is connected and booted to RCM mode' \
+'list:Lists favorite binaries' \
+'add:Add a favorite binary' \
+'remove:Remove a favorite binary' \
+'gui:Opens the graphical user interface' \
 'help:Print this message or the help of the given subcommand(s)' \
     )
     _describe -t commands 'switcheroo help commands' commands "$@"
