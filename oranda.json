@@ -1,0 +1,28 @@
+{
+    "project": {
+        "name": "Switcheroo"
+    },
+    "build": {
+        "path_prefix": "switcheroo",
+        "additional_pages": {
+            "troubleshooting": "./troubleshooting.md"
+        }
+    },
+    "styles": {
+        "theme": "dark",
+        "favicon": "extra/logo/favicon.ico"
+    },
+    "components": {
+        "artifacts": {
+            "cargo_dist": true,
+            "package_managers": {
+                "preferred": {
+                    "cargo": "cargo install switcheroo-nx --locked --profile=dist"
+                },
+                "additional": {
+                    "binstall": "cargo binstall switcheroo-nx"
+                }
+            }
+        }
+    }
+}
