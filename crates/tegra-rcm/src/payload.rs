@@ -51,7 +51,7 @@ impl Payload {
         const INTERMEZZO: &[u8; 124] = include_bytes!("intermezzo/intermezzo.bin");
         trace!("Injected intermezzo.bin");
 
-        let mut payload_builder: Vec<u8> = Vec::with_capacity(BUILT_PAYLOAD_MAX_LENGTH);
+        let mut payload_builder = Vec::with_capacity(BUILT_PAYLOAD_MAX_LENGTH);
         // start with the max_len arg
         payload_builder.extend((BUILT_PAYLOAD_MAX_LENGTH as u32).to_le_bytes());
         // pad with data to get to the start of IRAM
