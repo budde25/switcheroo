@@ -1,6 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
 use camino::{Utf8Path, Utf8PathBuf};
+use std::time::Duration;
 
 use clap::Parser;
 use color_eyre::eyre::{bail, Result};
@@ -11,8 +12,13 @@ mod cli;
 mod favorites;
 #[cfg(feature = "gui")]
 mod gui;
+mod switch;
+mod usb;
 
 use cli::{Cli, Commands};
+use usb::spawn_thread;
+
+use crate::switch::SwitchDevice;
 
 fn main() -> Result<()> {
     color_eyre::install()?;
@@ -65,30 +71,63 @@ fn execute(path: Utf8PathBuf, favorite: Option<String>, wait: bool) -> Result<()
         Payload::read(&path)?
     };
 
-    let mut switch = Switch::new()?;
-    while wait && switch.is_some() {
-        switch = Switch::new()?;
-    }
-    if let Some(switch) = switch {
+    if !wait {
+        let switch = Switch::new()?;
+        let Some(switch) = switch else {
+            println!("[x] Switch in RCM mode not found");
+            return Ok(());
+        };
         switch.execute(&payload)?;
-    } else {
-        bail!("Switch not found")
-    }
+        println!("Done!");
 
-    println!("Done!");
-    Ok(())
+        Ok(())
+    } else {
+        let switch = SwitchDevice::new()?;
+        spawn_thread(
+            switch.clone(),
+            Box::new(move || {
+                if let Some(s) = switch.0.lock().unwrap().take() {
+                    s.execute(&payload)
+                        .expect("Excute should have been successful");
+                    println!("Done!");
+                    std::process::exit(0)
+                }
+            }),
+        );
+
+        loop {
+            std::thread::sleep(Duration::from_secs(1));
+        }
+    }
 }
 
 fn device(wait: bool) -> Result<()> {
-    let switch = Switch::new()?;
-    if switch.is_none() {
-        println!("[x] Switch in RCM mode not found");
-        return Ok(());
-    };
+    if !wait {
+        let switch = Switch::new()?;
+        if switch.is_none() {
+            println!("[x] Switch in RCM mode not found");
+            return Ok(());
+        };
 
-    println!("[✓] Switch is RCM mode and connected");
+        println!("[✓] Switch is RCM mode and connected");
 
-    Ok(())
+        Ok(())
+    } else {
+        let switch = SwitchDevice::new()?;
+        spawn_thread(
+            switch.clone(),
+            Box::new(move || {
+                if switch.0.lock().unwrap().is_some() {
+                    println!("[✓] Switch is RCM mode and connected");
+                    std::process::exit(0)
+                }
+            }),
+        );
+
+        loop {
+            std::thread::sleep(Duration::from_secs(1));
+        }
+    }
 }
 
 /// Prints the favorites to stdout
