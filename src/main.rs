@@ -1,6 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
 use camino::{Utf8Path, Utf8PathBuf};
+use indicatif::{ProgressBar, ProgressStyle};
 use std::time::Duration;
 
 use clap::Parser;
@@ -83,13 +84,14 @@ fn execute(path: Utf8PathBuf, favorite: Option<String>, wait: bool) -> Result<()
         Ok(())
     } else {
         let switch = SwitchDevice::new()?;
+        let spinner = spinner();
         spawn_thread(
             switch.clone(),
             Box::new(move || {
                 if let Some(s) = switch.0.lock().unwrap().take() {
                     s.execute(&payload)
                         .expect("Excute should have been successful");
-                    println!("Done!");
+                    spinner.finish_with_message("Payload excuted!");
                     std::process::exit(0)
                 }
             }),
@@ -114,10 +116,12 @@ fn device(wait: bool) -> Result<()> {
         Ok(())
     } else {
         let switch = SwitchDevice::new()?;
+        let spinner = spinner();
         spawn_thread(
             switch.clone(),
             Box::new(move || {
                 if switch.0.lock().unwrap().is_some() {
+                    spinner.finish_and_clear();
                     println!("[✓] Switch is RCM mode and connected");
                     std::process::exit(0)
                 }
@@ -189,4 +193,26 @@ fn launch_gui_only_mode() {
 #[cfg(feature = "gui")]
 fn launch_gui() {
     gui::gui();
+}
+
+pub fn spinner() -> ProgressBar {
+    let pb = ProgressBar::new_spinner();
+    pb.enable_steady_tick(Duration::from_millis(120));
+    pb.set_style(
+        ProgressStyle::with_template("{spinner:.blue} {msg}")
+            .unwrap()
+            // For more spinners check out the cli-spinners project:
+            // https://github.com/sindresorhus/cli-spinners/blob/master/spinners.json
+            .tick_strings(&[
+                "▹▹▹▹▹",
+                "▸▹▹▹▹",
+                "▹▸▹▹▹",
+                "▹▹▸▹▹",
+                "▹▹▹▸▹",
+                "▹▹▹▹▸",
+                "▪▪▪▪▪",
+            ]),
+    );
+    pb.set_message("Waiting for Switch in RCM mode...");
+    pb
 }
