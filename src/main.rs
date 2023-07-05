@@ -1,6 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
-use camino::{Utf8Path, Utf8PathBuf};
+use camino::Utf8Path;
 use console::{style, Emoji};
 use indicatif::{ProgressBar, ProgressStyle};
 use std::time::Duration;
@@ -44,7 +44,7 @@ fn main() -> Result<()> {
             payload,
             favorite,
             wait,
-        } => execute(payload, favorite, wait)?,
+        } => execute(&payload, favorite.as_deref(), wait)?,
         Commands::Device { wait } => device(wait)?,
         Commands::List => _ = list(),
         Commands::Add { payload } => add(&payload)?,
@@ -66,11 +66,11 @@ fn convert_filter(filter: log::LevelFilter) -> tracing_subscriber::filter::Level
     }
 }
 
-fn execute(path: Utf8PathBuf, favorite: Option<String>, wait: bool) -> Result<()> {
+fn execute(path: &Utf8Path, favorite: Option<&str>, wait: bool) -> Result<()> {
     let payload = if let Some(favorite) = favorite {
         let favorites = Favorites::new();
         let Some(fav) = favorites.get(&favorite) else {
-            bail!("Failed to execute favorite: `{}` not found", &favorite);
+            bail!("Failed to execute favorite: `{}` not found", favorite);
         };
         fav.read()?
     } else {
@@ -159,28 +159,17 @@ fn list() -> usize {
 }
 
 fn add(payload: &Utf8Path) -> Result<()> {
-    let favorites = Favorites::new();
-    favorites.add(payload.as_std_path(), true)?;
-    println!(
-        "Successfully added favorite: {}",
-        style(&payload.file_name().unwrap()).cyan()
-    );
+    let mut favorites = Favorites::new();
+    let file = favorites.add(payload.as_std_path(), true)?;
+    println!("Successfully added favorite: {}", style(file).cyan());
     Ok(())
 }
 
 fn remove(favorite: &str) -> Result<()> {
     let mut favorites = Favorites::new();
 
-    let Some(fav) = favorites.get(favorite) else {
-        bail!("Failed to remove favorite, not found: {}", style(favorite).red());
-    };
-    let fav = fav.clone();
-
-    favorites.remove(&fav)?;
-    println!(
-        "Successfully removed favorite: {}",
-        style(&fav.name()).cyan()
-    );
+    favorites.remove_str(favorite)?;
+    println!("Successfully removed favorite: {}", style(favorite).cyan());
     Ok(())
 }
 
