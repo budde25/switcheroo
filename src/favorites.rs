@@ -1,5 +1,7 @@
 use color_eyre::eyre::{bail, Result, WrapErr};
+use log::warn;
 use once_cell::sync::Lazy;
+use std::collections::BTreeSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 use tegra_rcm::Payload;
@@ -17,27 +19,31 @@ static FAVORITES_PATH: Lazy<PathBuf> = Lazy::new(|| {
 /// Favorite payloads
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Favorites {
-    list: Vec<Favorite>,
+    list: BTreeSet<Favorite>,
 }
 
 impl Favorites {
     /// Create a new Favorites this points to the OS's <data_dir>/switcheroo/favorites folder and creates it if it does not exist
-    pub fn new() -> Result<Self> {
-        let mut list = Vec::new();
-        for entry in fs::read_dir(Self::directory())?.flatten() {
+    pub fn new() -> Self {
+        let mut list = BTreeSet::new();
+        for entry in fs::read_dir(Self::directory())
+            .expect("Favorites direcotry exists")
+            .flatten()
+        {
             let file_name = entry.file_name();
-            list.push(Favorite::new(
-                file_name.to_str().expect("A valid UTF-8 String"),
-            ));
+            let Some(file_name) = file_name.to_str() else {
+                warn!("File name is not a valid UTF-8 string: {:?}", file_name);
+                continue;
+            };
+            list.insert(Favorite::new(file_name));
         }
-        list.sort();
 
-        Ok(Self { list })
+        Self { list }
     }
 
-    /// Get a slice of the favorites in the directory
-    pub fn list(&self) -> &[Favorite] {
-        &self.list
+    /// Get an iterator to the favorites, these will be sorted by name
+    pub fn iter(&self) -> impl Iterator<Item = &Favorite> {
+        self.list.iter()
     }
 
     /// Add a payload to the favorites directory, if `check_valid` is true, we will make sure that the payload parses correctly (but slower)

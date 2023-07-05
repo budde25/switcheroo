@@ -46,7 +46,7 @@ fn main() -> Result<()> {
             wait,
         } => execute(payload, favorite, wait)?,
         Commands::Device { wait } => device(wait)?,
-        Commands::List => _ = list()?,
+        Commands::List => _ = list(),
         Commands::Add { payload } => add(&payload)?,
         Commands::Remove { favorite } => remove(&favorite)?,
         #[cfg(feature = "gui")]
@@ -68,7 +68,7 @@ fn convert_filter(filter: log::LevelFilter) -> tracing_subscriber::filter::Level
 
 fn execute(path: Utf8PathBuf, favorite: Option<String>, wait: bool) -> Result<()> {
     let payload = if let Some(favorite) = favorite {
-        let favorites = Favorites::new()?;
+        let favorites = Favorites::new();
         let Some(fav) = favorites.get(&favorite) else {
             bail!("Failed to execute favorite: `{}` not found", &favorite);
         };
@@ -142,24 +142,24 @@ fn device(wait: bool) -> Result<()> {
 /// Prints the favorites to stdout
 /// Errors on trying to read from the favorites directory
 /// Returns the number of entries
-fn list() -> Result<usize> {
-    let favorites = Favorites::new()?;
-    let list = favorites.list();
+fn list() -> usize {
+    let favorites = Favorites::new();
 
-    if list.is_empty() {
-        println!("No favorites");
-        return Ok(0);
-    }
-
-    for entry in list {
+    let mut count = 0;
+    for entry in favorites.iter() {
         println!("{}", style(entry.name()));
+        count += 1;
     }
 
-    Ok(list.len())
+    if count == 0 {
+        println!("No favorites");
+    }
+
+    count
 }
 
 fn add(payload: &Utf8Path) -> Result<()> {
-    let favorites = Favorites::new()?;
+    let favorites = Favorites::new();
     favorites.add(payload.as_std_path(), true)?;
     println!(
         "Successfully added favorite: {}",
@@ -169,7 +169,7 @@ fn add(payload: &Utf8Path) -> Result<()> {
 }
 
 fn remove(favorite: &str) -> Result<()> {
-    let mut favorites = Favorites::new()?;
+    let mut favorites = Favorites::new();
 
     let Some(fav) = favorites.get(favorite) else {
         bail!("Failed to remove favorite, not found: {}", style(favorite).red());
