@@ -3,18 +3,18 @@ use clap_verbosity_flag::Verbosity;
 
 use clap::{builder::ArgPredicate, Parser, Subcommand, ValueHint};
 
-#[derive(Parser)]
+#[derive(Debug, Parser)]
 #[command(name = "switcheroo", author, version, about, long_about = None)]
-pub struct Cli {
+pub(crate) struct Args {
     #[clap(subcommand)]
-    pub command: Commands,
+    pub(crate) command: Commands,
 
     #[clap(flatten)]
-    pub verbose: Verbosity,
+    pub(crate) verbose: Verbosity,
 }
 
-#[derive(Subcommand)]
-pub enum Commands {
+#[derive(Debug, Subcommand)]
+pub(crate) enum Commands {
     /// Executes a payload on a connected Switch
     Execute {
         /// Path to the payload file
@@ -53,4 +53,15 @@ pub enum Commands {
     /// Opens the graphical user interface
     #[cfg(feature = "gui")]
     Gui,
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn verify_app() {
+        use clap::CommandFactory;
+        Args::command().debug_assert()
+    }
 }

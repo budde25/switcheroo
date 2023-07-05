@@ -10,14 +10,14 @@ use color_eyre::eyre::{bail, Result};
 use favorites::Favorites;
 use tegra_rcm::{Payload, Switch};
 
-mod cli;
+mod args;
 mod favorites;
 #[cfg(feature = "gui")]
 mod gui;
 mod switch;
 mod usb;
 
-use cli::{Cli, Commands};
+use args::{Args, Commands};
 use usb::spawn_thread;
 
 use crate::switch::SwitchDevice;
@@ -33,7 +33,7 @@ fn main() -> Result<()> {
     #[cfg(feature = "gui")]
     launch_gui_only_mode();
 
-    let args = Cli::parse();
+    let args = Args::parse();
 
     tracing_subscriber::fmt()
         .with_max_level(convert_filter(args.verbose.log_level_filter()))
