@@ -69,7 +69,7 @@ fn convert_filter(filter: log::LevelFilter) -> tracing_subscriber::filter::Level
 fn execute(path: &Utf8Path, favorite: Option<&str>, wait: bool) -> Result<()> {
     let payload = if let Some(favorite) = favorite {
         let favorites = Favorites::new();
-        let Some(fav) = favorites.get(&favorite) else {
+        let Some(fav) = favorites.get(favorite) else {
             bail!("Failed to execute favorite: `{}` not found", favorite);
         };
         fav.read()?
@@ -84,7 +84,7 @@ fn execute(path: &Utf8Path, favorite: Option<&str>, wait: bool) -> Result<()> {
             return Ok(());
         };
         switch.execute(&payload)?;
-        println!("{}Payload excuted!", EMOJI_ROCKET);
+        println!("{}Payload executed!", EMOJI_ROCKET);
 
         Ok(())
     } else {
@@ -95,8 +95,8 @@ fn execute(path: &Utf8Path, favorite: Option<&str>, wait: bool) -> Result<()> {
             Box::new(move || {
                 if let Some(s) = switch.0.lock().unwrap().take() {
                     s.execute(&payload)
-                        .expect("Excute should have been successful");
-                    spinner.finish_with_message(format!("{}Payload excuted!", EMOJI_ROCKET));
+                        .expect("Execute should have been successful");
+                    spinner.finish_with_message(format!("{}Payload executed!", EMOJI_ROCKET));
                     std::process::exit(0)
                 }
             }),

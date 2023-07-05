@@ -12,7 +12,7 @@ impl Hotplug for HotplugHandler {
         // if this is not Ok, it probably got unplugged really fast
         if let Ok(dev) = device.open() {
             let device = SwitchDevice::with_device_handle(dev);
-            // propogate error
+            // prapogate error
             let switch = match Switch::with_device(device) {
                 Ok(switch) => switch,
                 Err(e) => {
