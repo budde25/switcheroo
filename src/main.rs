@@ -1,6 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
 use camino::{Utf8Path, Utf8PathBuf};
+use console::{style, Emoji};
 use indicatif::{ProgressBar, ProgressStyle};
 use std::time::Duration;
 
@@ -20,6 +21,10 @@ use cli::{Cli, Commands};
 use usb::spawn_thread;
 
 use crate::switch::SwitchDevice;
+
+const EMOJI_FOUND: Emoji = Emoji("🟢 ", "");
+const EMOJI_NOT_FOUND: Emoji = Emoji("🔴 ", "");
+const EMOJI_ROCKET: Emoji = Emoji("🚀 ", "");
 
 fn main() -> Result<()> {
     color_eyre::install()?;
@@ -75,11 +80,11 @@ fn execute(path: Utf8PathBuf, favorite: Option<String>, wait: bool) -> Result<()
     if !wait {
         let switch = Switch::new()?;
         let Some(switch) = switch else {
-            println!("[x] Switch in RCM mode not found");
+            println!("{}Switch in RCM mode not found", EMOJI_NOT_FOUND);
             return Ok(());
         };
         switch.execute(&payload)?;
-        println!("Done!");
+        println!("{}Payload excuted!", EMOJI_ROCKET);
 
         Ok(())
     } else {
@@ -91,7 +96,7 @@ fn execute(path: Utf8PathBuf, favorite: Option<String>, wait: bool) -> Result<()
                 if let Some(s) = switch.0.lock().unwrap().take() {
                     s.execute(&payload)
                         .expect("Excute should have been successful");
-                    spinner.finish_with_message("Payload excuted!");
+                    spinner.finish_with_message(format!("{}Payload excuted!", EMOJI_ROCKET));
                     std::process::exit(0)
                 }
             }),
@@ -107,11 +112,11 @@ fn device(wait: bool) -> Result<()> {
     if !wait {
         let switch = Switch::new()?;
         if switch.is_none() {
-            println!("[x] Switch in RCM mode not found");
+            println!("{}Switch in RCM mode not found", EMOJI_NOT_FOUND);
             return Ok(());
         };
 
-        println!("[✓] Switch is RCM mode and connected");
+        println!("{}Switch is RCM mode and connected", EMOJI_FOUND);
 
         Ok(())
     } else {
@@ -122,7 +127,7 @@ fn device(wait: bool) -> Result<()> {
             Box::new(move || {
                 if switch.0.lock().unwrap().is_some() {
                     spinner.finish_and_clear();
-                    println!("[✓] Switch is RCM mode and connected");
+                    println!("{}Switch is RCM mode and connected", EMOJI_FOUND);
                     std::process::exit(0)
                 }
             }),
@@ -147,7 +152,7 @@ fn list() -> Result<usize> {
     }
 
     for entry in list {
-        println!("{}", entry.name());
+        println!("{}", style(entry.name()));
     }
 
     Ok(list.len())
@@ -157,8 +162,8 @@ fn add(payload: &Utf8Path) -> Result<()> {
     let favorites = Favorites::new()?;
     favorites.add(payload.as_std_path(), true)?;
     println!(
-        "Successfully added favorite: `{}`",
-        &payload.file_name().unwrap()
+        "Successfully added favorite: {}",
+        style(&payload.file_name().unwrap()).cyan()
     );
     Ok(())
 }
@@ -167,12 +172,15 @@ fn remove(favorite: &str) -> Result<()> {
     let mut favorites = Favorites::new()?;
 
     let Some(fav) = favorites.get(favorite) else {
-        bail!("Failed to remove favorite: `{}` not found", &favorite);
+        bail!("Failed to remove favorite, not found: {}", style(favorite).red());
     };
     let fav = fav.clone();
 
     favorites.remove(&fav)?;
-    println!("Successfully removed favorite: `{}`", &fav.name());
+    println!(
+        "Successfully removed favorite: {}",
+        style(&fav.name()).cyan()
+    );
     Ok(())
 }
 
