@@ -4,8 +4,8 @@ use indicatif::{ProgressBar, ProgressStyle};
 use run::RunCommand;
 use std::time::Duration;
 
+use anyhow::Result;
 use clap::Parser;
-use color_eyre::eyre::Result;
 
 mod cli;
 mod error;
@@ -19,8 +19,6 @@ mod usb;
 use cli::{Cli, Commands};
 
 fn main() -> Result<()> {
-    color_eyre::install()?;
-
     // check if we should start the gui, rn we start with env var set, or platform = windows
     #[cfg(feature = "gui")]
     launch_gui_only_mode();

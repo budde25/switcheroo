@@ -1,7 +1,7 @@
 use std::rc::Rc;
 use std::sync::atomic::AtomicBool;
 
-use color_eyre::Result;
+use anyhow::Result;
 use eframe::egui::panel::Side;
 use eframe::egui::{
     global_dark_light_mode_switch, Button, Grid, Layout, RichText, SidePanel, TextStyle, Ui,

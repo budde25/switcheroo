@@ -1,7 +1,7 @@
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 
-use color_eyre::Result;
+use anyhow::Result;
 
 use tegra_rcm::Payload;
 

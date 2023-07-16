@@ -15,7 +15,7 @@ const EMOJI_FOUND: Emoji = Emoji("🟢 ", "");
 const EMOJI_NOT_FOUND: Emoji = Emoji("🔴 ", "");
 const EMOJI_ROCKET: Emoji = Emoji("🚀 ", "");
 
-type CliError = color_eyre::eyre::Error;
+type CliError = crate::error::Error;
 
 pub(crate) trait RunCommand {
     fn run(self) -> Result<(), CliError>;
@@ -26,8 +26,7 @@ impl RunCommand for Execute {
         let payload = if let Some(favorite) = self.favorite {
             let favorites = Favorites::new();
             let Some(fav) = favorites.get(&favorite) else {
-                todo!()
-                //bail!("Failed to execute favorite: `{}` not found", favorite);
+                return Err(crate::error::Error::FavoriteNotFound(favorite.to_owned()));
             };
             fav.read()?
         } else {

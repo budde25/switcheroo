@@ -1,4 +1,7 @@
-use std::{path::PathBuf, string::FromUtf8Error};
+use std::{
+    path::{Path, PathBuf},
+    string::FromUtf8Error,
+};
 
 use thiserror::Error;
 
@@ -12,5 +15,23 @@ pub(crate) enum Error {
     },
 
     #[error(transparent)]
-    Uf8(FromUtf8Error),
+    Generic(#[from] anyhow::Error),
+
+    #[error(transparent)]
+    Switch(#[from] tegra_rcm::SwitchError),
+
+    #[error(transparent)]
+    Payload(#[from] tegra_rcm::PayloadError),
+
+    #[error("Favorite not found: {0}")]
+    FavoriteNotFound(String),
+}
+
+impl Error {
+    pub(crate) fn io_with_path(path: impl AsRef<Path>) -> Self {
+        Self::Io {
+            source: std::io::Error::from_raw_os_error(2),
+            path: path.as_ref().to_owned(),
+        }
+    }
 }

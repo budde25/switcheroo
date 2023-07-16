@@ -1,4 +1,4 @@
-use color_eyre::eyre::{bail, Result, WrapErr};
+use anyhow::{bail, Context, Result};
 use log::warn;
 use once_cell::sync::Lazy;
 use std::collections::BTreeSet;
@@ -50,7 +50,7 @@ impl Favorites {
     pub fn add<'a>(&mut self, payload_path: &'a Path, check_valid: bool) -> Result<&'a str> {
         if check_valid {
             // ensure we have been passed a valid payload
-            let payload_bytes = fs::read(payload_path).wrap_err_with(|| {
+            let payload_bytes = fs::read(payload_path).with_context(|| {
                 format!("Failed to read payload from path: {:?}", &payload_path)
             })?;
             let _ = Payload::new(&payload_bytes)?;
@@ -112,11 +112,11 @@ impl Favorite {
 
     pub fn read(&self) -> Result<Payload> {
         let payload_bytes = fs::read(self.path())
-            .wrap_err_with(|| format!("Failed to read payload from: {:?}", &self.path()))?;
+            .with_context(|| format!("Failed to read payload from: {:?}", &self.path()))?;
         Ok(Payload::new(&payload_bytes)?)
     }
 
-    fn path(&self) -> Box<Path> {
+    pub fn path(&self) -> Box<Path> {
         Favorites::directory()
             .to_owned()
             .join(self.name.as_ref())
