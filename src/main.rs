@@ -1,30 +1,22 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
-use camino::Utf8Path;
-use console::{style, Emoji};
 use indicatif::{ProgressBar, ProgressStyle};
+use run::RunCommand;
 use std::time::Duration;
 
 use clap::Parser;
-use color_eyre::eyre::{bail, Result};
-use favorites::Favorites;
-use tegra_rcm::{Payload, Switch};
+use color_eyre::eyre::Result;
 
-mod args;
+mod cli;
+mod error;
 mod favorites;
 #[cfg(feature = "gui")]
 mod gui;
+mod run;
 mod switch;
 mod usb;
 
-use args::{Args, Commands};
-use usb::spawn_thread;
-
-use crate::switch::SwitchDevice;
-
-const EMOJI_FOUND: Emoji = Emoji("🟢 ", "");
-const EMOJI_NOT_FOUND: Emoji = Emoji("🔴 ", "");
-const EMOJI_ROCKET: Emoji = Emoji("🚀 ", "");
+use cli::{Cli, Commands};
 
 fn main() -> Result<()> {
     color_eyre::install()?;
@@ -33,24 +25,20 @@ fn main() -> Result<()> {
     #[cfg(feature = "gui")]
     launch_gui_only_mode();
 
-    let args = Args::parse();
+    let cli = Cli::parse();
 
     tracing_subscriber::fmt()
-        .with_max_level(convert_filter(args.verbose.log_level_filter()))
+        .with_max_level(convert_filter(cli.verbose.log_level_filter()))
         .init();
 
-    match args.command {
-        Commands::Execute {
-            payload,
-            favorite,
-            wait,
-        } => execute(&payload, favorite.as_deref(), wait)?,
-        Commands::Device { wait } => device(wait)?,
-        Commands::List => _ = list(),
-        Commands::Add { payload } => add(&payload)?,
-        Commands::Remove { favorite } => remove(&favorite)?,
+    match cli.command {
+        Commands::Execute(cmd) => cmd.run()?,
+        Commands::Device(cmd) => cmd.run()?,
+        Commands::List(cmd) => cmd.run()?,
+        Commands::Add(cmd) => cmd.run()?,
+        Commands::Remove(cmd) => cmd.run()?,
         #[cfg(feature = "gui")]
-        Commands::Gui {} => gui::gui(),
+        Commands::Gui(cmd) => cmd.run()?,
     }
     Ok(())
 }
@@ -66,113 +54,6 @@ fn convert_filter(filter: log::LevelFilter) -> tracing_subscriber::filter::Level
     }
 }
 
-fn execute(path: &Utf8Path, favorite: Option<&str>, wait: bool) -> Result<()> {
-    let payload = if let Some(favorite) = favorite {
-        let favorites = Favorites::new();
-        let Some(fav) = favorites.get(favorite) else {
-            bail!("Failed to execute favorite: `{}` not found", favorite);
-        };
-        fav.read()?
-    } else {
-        Payload::read(&path)?
-    };
-
-    if !wait {
-        let switch = Switch::new()?;
-        let Some(switch) = switch else {
-            println!("{}Switch in RCM mode not found", EMOJI_NOT_FOUND);
-            return Ok(());
-        };
-        switch.execute(&payload)?;
-        println!("{}Payload executed!", EMOJI_ROCKET);
-
-        Ok(())
-    } else {
-        let switch = SwitchDevice::new()?;
-        let spinner = spinner();
-        spawn_thread(
-            switch.clone(),
-            Box::new(move || {
-                if let Some(s) = switch.0.lock().unwrap().take() {
-                    s.execute(&payload)
-                        .expect("Execute should have been successful");
-                    spinner.finish_with_message(format!("{}Payload executed!", EMOJI_ROCKET));
-                    std::process::exit(0)
-                }
-            }),
-        );
-
-        loop {
-            std::thread::sleep(Duration::from_secs(1));
-        }
-    }
-}
-
-fn device(wait: bool) -> Result<()> {
-    if !wait {
-        let switch = Switch::new()?;
-        if switch.is_none() {
-            println!("{}Switch in RCM mode not found", EMOJI_NOT_FOUND);
-            return Ok(());
-        };
-
-        println!("{}Switch is RCM mode and connected", EMOJI_FOUND);
-
-        Ok(())
-    } else {
-        let switch = SwitchDevice::new()?;
-        let spinner = spinner();
-        spawn_thread(
-            switch.clone(),
-            Box::new(move || {
-                if switch.0.lock().unwrap().is_some() {
-                    spinner.finish_and_clear();
-                    println!("{}Switch is RCM mode and connected", EMOJI_FOUND);
-                    std::process::exit(0)
-                }
-            }),
-        );
-
-        loop {
-            std::thread::sleep(Duration::from_secs(1));
-        }
-    }
-}
-
-/// Prints the favorites to stdout
-/// Errors on trying to read from the favorites directory
-/// Returns the number of entries
-fn list() -> usize {
-    let favorites = Favorites::new();
-
-    let mut count = 0;
-    for entry in favorites.iter() {
-        println!("{}", style(entry.name()));
-        count += 1;
-    }
-
-    if count == 0 {
-        println!("No favorites");
-    }
-
-    count
-}
-
-fn add(payload: &Utf8Path) -> Result<()> {
-    let mut favorites = Favorites::new();
-    let file = favorites.add(payload.as_std_path(), true)?;
-    println!("Successfully added favorite: {}", style(file).cyan());
-    Ok(())
-}
-
-fn remove(favorite: &str) -> Result<()> {
-    let mut favorites = Favorites::new();
-
-    favorites.remove_str(favorite)?;
-    println!("Successfully removed favorite: {}", style(favorite).cyan());
-    Ok(())
-}
-
 /// Launch the gui if we are in gui only mode
 /// Most commonly by checking the env variable
 /// SWITCHEROO_GUI_ONLY is set to "0"
@@ -183,13 +64,8 @@ fn launch_gui_only_mode() {
     };
 
     if gui_only == "0" {
-        launch_gui();
+        gui::gui();
     }
-}
-
-#[cfg(feature = "gui")]
-fn launch_gui() {
-    gui::gui();
 }
 
 pub fn spinner() -> ProgressBar {

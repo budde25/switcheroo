@@ -6,7 +6,7 @@ use std::io::Error;
 use std::path::{Path, PathBuf};
 use std::{env, process};
 
-include!("src/args.rs");
+include!("src/cli.rs");
 
 fn main() -> Result<(), Error> {
     let mut outdir = match env::var_os("CARGO_MANIFEST_DIR") {
@@ -20,7 +20,7 @@ fn main() -> Result<(), Error> {
     app_dir(&outdir)?;
     outdir.push("extra");
 
-    let mut cmd = Args::command();
+    let mut cmd = Cli::command();
 
     let completions_out = outdir.join("completions");
     let man_out = outdir.join("man");

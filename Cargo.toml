@@ -52,6 +52,7 @@ notify = { version = "6.0.1", optional = true }
 once_cell = "1.18.0"
 rfd = { version = "0.11.4", optional = true, default-features = false, features = [ "xdg-portal" ] }
 tegra-rcm = { version = "0.5.0", path = "crates/tegra-rcm" }
+thiserror = "1.0.43"
 tracing-subscriber = { version = "0.3.17", features = [ "env-filter" ] }
 
 [build-dependencies]
