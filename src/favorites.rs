@@ -32,7 +32,11 @@ impl Favorites {
         {
             let file_name = entry.file_name();
             let Some(file_name) = file_name.to_str() else {
-                warn!("Favorite file name is not a valid UTF-8 string: {:?} in directory {}", file_name, Self::directory().display());
+                warn!(
+                    "Favorite file name is not a valid UTF-8 string: {:?} in directory {}",
+                    file_name,
+                    Self::directory().display()
+                );
                 continue;
             };
             list.insert(Favorite::new(file_name));

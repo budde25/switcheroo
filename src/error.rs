@@ -1,7 +1,4 @@
-use std::{
-    path::{Path, PathBuf},
-    string::FromUtf8Error,
-};
+use std::path::{Path, PathBuf};
 
 use thiserror::Error;
 

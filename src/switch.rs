@@ -20,7 +20,7 @@ impl SwitchDevice {
         let mut guard = self.0.lock().expect("Lock should not be poisoned");
 
         let Some(switch) = guard.take() else {
-            return Err(SwitchError::SwitchNotFound)
+            return Err(SwitchError::SwitchNotFound);
         };
 
         switch.execute(payload)?;
