@@ -281,4 +281,4 @@ _switcheroo() {
     esac
 }
 
-complete -F _switcheroo -o bashdefault -o default switcheroo
+complete -F _switcheroo -o nosort -o bashdefault -o default switcheroo
