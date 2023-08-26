@@ -1,7 +1,7 @@
 use std::rc::Rc;
 use std::sync::atomic::AtomicBool;
 
-use color_eyre::Result;
+use anyhow::Result;
 use eframe::egui::panel::Side;
 use eframe::egui::{
     global_dark_light_mode_switch, Button, Grid, Layout, RichText, SidePanel, TextStyle, Ui,
@@ -33,8 +33,7 @@ pub struct FavoritesData {
 impl FavoritesData {
     /// Create a new `FavoritesData` which is a wrapper around the favorites and a cache
     pub fn new() -> Self {
-        let favorites = Favorites::new()
-            .expect("Failed to read favorite directory, are we missing permission?");
+        let favorites = Favorites::new();
 
         let mut fav = Self {
             selected: Selected::None,
@@ -76,10 +75,7 @@ impl FavoritesData {
 
     /// Grab new favorites from the the disk
     fn update_cache(&mut self) {
-        let Ok(favorites) = Favorites::new() else {
-            eprintln!("Failed to read favorite directory, are we missing permissions?");
-            return;
-        };
+        let favorites = Favorites::new();
 
         self.cache = favorites;
 
@@ -100,8 +96,8 @@ impl FavoritesData {
     }
 
     /// Get the favorites (from the cache) does not access the disk
-    fn favorites(&self) -> &[Favorite] {
-        self.cache.list()
+    fn favorites(&self) -> impl Iterator<Item = &Favorite> {
+        self.cache.iter()
     }
 
     /// Removes a payload from the favorites (then updates the cache)
@@ -141,7 +137,7 @@ impl FavoritesData {
             });
             ui.separator();
 
-            if self.favorites().is_empty() {
+            if self.favorites().count() == 0 {
                 ui.label(RichText::new("Nothing here..."));
                 return;
             }
@@ -157,8 +153,7 @@ impl FavoritesData {
         Grid::new("favorites").show(ui, |ui| {
             // TODO: find a way cheaper way to iterate
             // TODO: Remove once false positive is resolved
-            #[allow(clippy::unnecessary_to_owned)]
-            for entry in self.favorites().to_owned() {
+            for entry in self.favorites().cloned().collect::<Vec<_>>() {
                 ui.horizontal(|ui| {
                     let (rem, sel) = self.render_entry(&entry, ui);
                     if rem {

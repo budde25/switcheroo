@@ -1,7 +1,4 @@
-use std::{
-    path::{Path, PathBuf},
-    rc::Rc,
-};
+use std::path::{Path, PathBuf};
 
 use log::{debug, trace};
 use thiserror::Error;
@@ -9,7 +6,7 @@ use thiserror::Error;
 /// A constructed payload, this is transferred to the switch in RCM mode to execute bootROM exploit
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Payload {
-    data: Rc<[u8]>,
+    data: Box<[u8]>,
 }
 
 /// The max length for the total payload
@@ -86,9 +83,7 @@ impl Payload {
             data.len()
         );
 
-        Ok(Self {
-            data: Rc::from(data),
-        })
+        Ok(Self { data })
     }
 
     /// Read a payload from a file

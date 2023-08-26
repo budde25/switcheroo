@@ -1,5 +1,7 @@
-use color_eyre::eyre::{bail, Result, WrapErr};
+use anyhow::{bail, Context, Result};
+use log::warn;
 use once_cell::sync::Lazy;
+use std::collections::BTreeSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 use tegra_rcm::Payload;
@@ -17,49 +19,54 @@ static FAVORITES_PATH: Lazy<PathBuf> = Lazy::new(|| {
 /// Favorite payloads
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Favorites {
-    list: Vec<Favorite>,
+    list: BTreeSet<Favorite>,
 }
 
 impl Favorites {
     /// Create a new Favorites this points to the OS's <data_dir>/switcheroo/favorites folder and creates it if it does not exist
-    pub fn new() -> Result<Self> {
-        let mut list = Vec::new();
-        for entry in fs::read_dir(Self::directory())?.flatten() {
+    pub fn new() -> Self {
+        let mut list = BTreeSet::new();
+        for entry in fs::read_dir(Self::directory())
+            .expect("Favorites directory exists")
+            .flatten()
+        {
             let file_name = entry.file_name();
-            list.push(Favorite::new(
-                file_name.to_str().expect("A valid UTF-8 String"),
-            ));
+            let Some(file_name) = file_name.to_str() else {
+                warn!("Favorite file name is not a valid UTF-8 string: {:?} in directory {}", file_name, Self::directory().display());
+                continue;
+            };
+            list.insert(Favorite::new(file_name));
         }
-        list.sort();
 
-        Ok(Self { list })
+        Self { list }
     }
 
-    /// Get a slice of the favorites in the directory
-    pub fn list(&self) -> &[Favorite] {
-        &self.list
+    /// Get an iterator to the favorites, these will be sorted by name
+    pub fn iter(&self) -> impl Iterator<Item = &Favorite> {
+        self.list.iter()
     }
 
     /// Add a payload to the favorites directory, if `check_valid` is true, we will make sure that the payload parses correctly (but slower)
-    pub fn add(&self, payload_path: &Path, check_valid: bool) -> Result<()> {
+    pub fn add<'a>(&mut self, payload_path: &'a Path, check_valid: bool) -> Result<&'a str> {
         if check_valid {
             // ensure we have been passed a valid payload
-            let payload_bytes = fs::read(payload_path).wrap_err_with(|| {
-                format!("Failed to read payload from: {}", &payload_path.display())
+            let payload_bytes = fs::read(payload_path).with_context(|| {
+                format!("Failed to read payload from path: {:?}", &payload_path)
             })?;
             let _ = Payload::new(&payload_bytes)?;
         }
 
         let Some(payload) = payload_path.file_name() else {
-            bail!("Path provided is not a file: {}", payload_path.display())
+            bail!("Path provided is not a file: {:?}", payload_path)
         };
 
         let Some(file_name) = payload.to_str() else {
-            bail!("Payload is not a valid UTF-8 string")
+            bail!("file name is not a valid UTF-8 string")
         };
 
         fs::copy(payload_path, Self::directory().join(file_name))?;
-        Ok(())
+        self.list.insert(Favorite::new(file_name));
+        Ok(file_name)
     }
 
     /// Get a Favorite, if None, did not find one
@@ -67,11 +74,18 @@ impl Favorites {
         self.list.iter().find(|x| x.name() == favorite.trim())
     }
 
-    /// Returns true if it successfully removed the favorite, false otherwise
     pub fn remove(&mut self, favorite: &Favorite) -> Result<()> {
         fs::remove_file(favorite.path())?;
         self.list.retain(|x| x != favorite);
         Ok(())
+    }
+
+    /// Returns true if it successfully removed the favorite, false otherwise
+    pub fn remove_str(&mut self, favorite_str: &str) -> Result<()> {
+        let Some(favorite) = self.get(favorite_str) else {
+            bail!("Failed to remove, favorite not found: {}", favorite_str)
+        };
+        self.remove(&favorite.to_owned())
     }
 
     /// The actual favorites directory on the file system
@@ -82,13 +96,13 @@ impl Favorites {
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Favorite {
-    name: String,
+    name: Box<str>,
 }
 
 impl Favorite {
     fn new(name: &str) -> Self {
         Self {
-            name: name.trim().to_owned(),
+            name: name.trim().to_string().into_boxed_str(),
         }
     }
 
@@ -98,11 +112,14 @@ impl Favorite {
 
     pub fn read(&self) -> Result<Payload> {
         let payload_bytes = fs::read(self.path())
-            .wrap_err_with(|| format!("Failed to read payload from: {}", &self.path().display()))?;
+            .with_context(|| format!("Failed to read payload from: {:?}", &self.path()))?;
         Ok(Payload::new(&payload_bytes)?)
     }
 
-    fn path(&self) -> PathBuf {
-        Favorites::directory().to_owned().join(&self.name)
+    pub fn path(&self) -> Box<Path> {
+        Favorites::directory()
+            .to_owned()
+            .join(self.name.as_ref())
+            .into_boxed_path()
     }
 }

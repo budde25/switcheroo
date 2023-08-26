@@ -1,12 +1,11 @@
 mod favorites;
 mod image;
 mod payload;
-mod switch;
-mod usb;
 
 use std::rc::Rc;
 
 use self::image::Images;
+use super::switch::{State, SwitchData};
 use eframe::egui::{
     style, Button, CentralPanel, Color32, Context, Direction, Layout, RichText, Ui,
 };
@@ -14,7 +13,6 @@ use egui_notify::Toasts;
 use favorites::FavoritesData;
 use payload::PayloadData;
 use rfd::FileDialog;
-use switch::{State, SwitchData, SwitchDevice};
 
 pub fn gui() {
     let options = eframe::NativeOptions {
@@ -39,7 +37,11 @@ pub fn gui() {
                 return Box::new(app);
             };
 
-            usb::spawn_thread(switch_data.switch(), cc.egui_ctx.clone());
+            let myctx = cc.egui_ctx.clone();
+            super::usb::spawn_thread(
+                switch_data.switch(),
+                Box::new(move || myctx.request_repaint()),
+            );
 
             // We have to do it like this, we need to update the cache when loading up.
             let app = MyApp {

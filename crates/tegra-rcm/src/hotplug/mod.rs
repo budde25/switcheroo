@@ -18,7 +18,7 @@ use crate::Switch;
 /// Defines the two actions for when a device is plugged in or removed
 pub trait Actions {
     /// A switch device has a arrived
-    fn arrives(&mut self, swtich: Switch);
+    fn arrives(&mut self, switch: Switch);
     /// A switch device has left
     fn leaves(&mut self);
 }
