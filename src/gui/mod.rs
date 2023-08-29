@@ -6,6 +6,7 @@ use std::rc::Rc;
 
 use self::image::Images;
 use super::switch::{State, SwitchData};
+use camino::{Utf8Path, Utf8PathBuf};
 use eframe::egui::{
     style, Button, CentralPanel, Color32, Context, Direction, Layout, RichText, Ui,
 };
@@ -186,7 +187,7 @@ impl MyApp {
             .clicked()
         {
             if let Some(file) = FileDialog::new().add_filter("binary", &["bin"]).pick_file() {
-                match PayloadData::new(&file) {
+                match PayloadData::new(&Utf8PathBuf::from_path_buf(file).unwrap()) {
                     Ok(payload) => {
                         self.payload_data = Some(Rc::new(payload));
                         self.favorites_data.set_selected_none();
@@ -253,7 +254,7 @@ impl eframe::App for MyApp {
         ctx.input(|i| {
             if let Some(last) = i.raw.dropped_files.last() {
                 if let Some(path) = &last.path {
-                    match PayloadData::new(path) {
+                    match PayloadData::new(Utf8Path::from_path(path).unwrap()) {
                         Ok(payload) => self.payload_data = Some(Rc::new(payload)),
                         Err(e) => {
                             self.toast.error(e.to_string());

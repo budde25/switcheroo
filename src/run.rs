@@ -3,19 +3,15 @@ use std::time::Duration;
 use console::{style, Emoji};
 use tegra_rcm::{Payload, Switch};
 
-use crate::{
-    cli::{Add, Device, Execute, Gui, List, Remove},
-    favorites::Favorites,
-    spinner,
-    switch::SwitchDevice,
-    usb::spawn_thread,
-};
+use crate::cli::{Add, Device, Execute, Gui, List, Remove};
+use crate::error::Error;
+use crate::{favorites::Favorites, spinner, switch::SwitchDevice, usb::spawn_thread};
+
+type CliError = Error;
 
 const EMOJI_FOUND: Emoji = Emoji("🟢 ", "");
 const EMOJI_NOT_FOUND: Emoji = Emoji("🔴 ", "");
 const EMOJI_ROCKET: Emoji = Emoji("🚀 ", "");
-
-type CliError = crate::error::Error;
 
 pub(crate) trait RunCommand {
     fn run(self) -> Result<(), CliError>;
@@ -26,7 +22,7 @@ impl RunCommand for Execute {
         let payload = if let Some(favorite) = self.favorite {
             let favorites = Favorites::new();
             let Some(fav) = favorites.get(&favorite) else {
-                return Err(crate::error::Error::FavoriteNotFound(favorite.to_owned()));
+                return Err(Error::FavoriteNotFound(favorite.to_owned()));
             };
             fav.read()?
         } else {
@@ -118,7 +114,7 @@ impl RunCommand for List {
 impl RunCommand for Add {
     fn run(self) -> Result<(), CliError> {
         let mut favorites = Favorites::new();
-        let file = favorites.add(self.payload.as_std_path(), true)?;
+        let file = favorites.add(&self.payload, true)?;
         println!("Successfully added favorite: {}", style(file).cyan());
         Ok(())
     }

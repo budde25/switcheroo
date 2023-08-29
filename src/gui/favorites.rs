@@ -57,7 +57,10 @@ impl FavoritesData {
 
         match watcher {
             Ok(mut fsw) => {
-                if let Err(e) = fsw.watch(Favorites::directory(), RecursiveMode::Recursive) {
+                if let Err(e) = fsw.watch(
+                    Favorites::directory().as_std_path(),
+                    RecursiveMode::Recursive,
+                ) {
                     warn!("File watch error: {:?}", e);
                 }
             }

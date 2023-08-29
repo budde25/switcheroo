@@ -4,7 +4,7 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub(crate) enum Error {
-    #[error("An IO error occured to: {path}")]
+    #[error("An IO error occurred to path: {path}")]
     Io {
         #[source]
         source: std::io::Error,
@@ -24,11 +24,15 @@ pub(crate) enum Error {
     FavoriteNotFound(String),
 }
 
-impl Error {
-    pub(crate) fn io_with_path(path: impl AsRef<Path>) -> Self {
-        Self::Io {
-            source: std::io::Error::from_raw_os_error(2),
-            path: path.as_ref().to_owned(),
+pub(crate) trait AddPath {
+    fn with_path<P: AsRef<Path>>(self, path: P) -> Error;
+}
+
+impl AddPath for std::io::Error {
+    fn with_path<P: AsRef<Path>>(self, path: P) -> Error {
+        Error::Io {
+            source: self,
+            path: path.as_ref().to_path_buf(),
         }
     }
 }

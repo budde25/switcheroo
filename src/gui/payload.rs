@@ -1,8 +1,6 @@
-use std::ffi::OsStr;
-use std::path::{Path, PathBuf};
-
 use anyhow::Result;
 
+use camino::{Utf8Path, Utf8PathBuf};
 use tegra_rcm::Payload;
 
 use crate::favorites::{Favorite, Favorites};
@@ -10,23 +8,19 @@ use crate::favorites::{Favorite, Favorites};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PayloadData {
     payload: Payload,
-    path: PathBuf,
+    path: Utf8PathBuf,
     file_name: String,
 }
 
 impl PayloadData {
     /// Makes a payload from a given file path
-    pub fn new(path: &Path) -> Result<Self> {
-        let bytes = std::fs::read(path)?;
+    pub fn new(path: &Utf8Path) -> Result<Self> {
+        let payload = Payload::read(&path)?;
 
         let payload_data = PayloadData {
             path: path.to_owned(),
-            payload: Payload::new(&bytes)?,
-            file_name: path
-                .file_name()
-                .unwrap_or_else(|| OsStr::new("Unknown File"))
-                .to_string_lossy()
-                .to_string(),
+            payload,
+            file_name: path.file_name().unwrap().to_string(),
         };
         Ok(payload_data)
     }
@@ -42,7 +36,7 @@ impl PayloadData {
     }
 
     /// Get the path
-    pub fn path(&self) -> &PathBuf {
+    pub fn path(&self) -> &Utf8Path {
         &self.path
     }
 }
