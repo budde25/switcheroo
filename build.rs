@@ -39,7 +39,7 @@ fn main() -> Result<(), Error> {
     let mut buffer: Vec<u8> = Vec::default();
     man.render(&mut buffer)?;
 
-    std::fs::write(man_out.join("switcheroo.1"), buffer)?;
+    fs::write(man_out.join("switcheroo.1"), buffer)?;
 
     Ok(())
 }
