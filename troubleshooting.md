@@ -21,7 +21,7 @@ SUBSYSTEM=="usb", ATTRS{idVendor}=="0955", ATTRS{idProduct}=="7321", MODE="0666"
 then reload the udev rules:  
 `sudo udevadm control --reload-rules`
 
-Finally unplug and plug back in the switch.  
+Finally, unplug and plug back in the switch.  
 
 ### Linux: Flatpak not detecting Switch
 

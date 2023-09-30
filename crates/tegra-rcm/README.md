@@ -2,7 +2,7 @@
 
 A library to help exploit the bootROM exploit for the Tegra X1's RCM mode.  
 
-Currently compatible with Linux and MacOS.  
+Currently compatible with Linux and macOS.  
 Windows support is WIP.
 
 ## Example

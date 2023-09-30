@@ -9,7 +9,7 @@
 ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/budde25/switcheroo/ci.yml?label=CI&style=for-the-badge&branch=main)
 ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/budde25/switcheroo/release.yml?label=CD&style=for-the-badge)
 
-A cross platform CLI and GUI for the RCM BootRom exploit (Fusée Gelée exploit for Nintendo Switch).  
+A cross-platform CLI and GUI for the RCM BootRom exploit (Fusée Gelée exploit for Nintendo Switch).  
 Written in Rust using [clap](https://github.com/clap-rs/clap) for the CLI and [egui](https://github.com/emilk/egui) for the GUI.
 
 Only works on unpatched Switches: <https://ismyswitchpatched.com/>
@@ -18,7 +18,7 @@ Only works on unpatched Switches: <https://ismyswitchpatched.com/>
 
 * CLI interface
 * GUI interface
-* Works on MacOS, Linux, and Windows
+* Works on macOS, Linux, and Windows
 * A favorites tab for saving payloads
 
 </br>
@@ -66,7 +66,7 @@ Here are some other similar projects
 
 * [TegraRcmGUI](https://github.com/eliboa/TegraRcmGUI) GUI for Windows
 * [Fusée Launcher](https://github.com/Cease-and-DeSwitch/fusee-launcher) CLI for (Linux, Windows, MacOS)
-* [NXBoot](https://mologie.github.io/nxboot/) (MacOS, iOS)
+* [NXBoot](https://mologie.github.io/nxboot/) (macOS, iOS)
 * [JTegraNX](https://github.com/dylwedma11748/JTegraNX) Java GUI for (Windows, OS X, GNU/Linux)
 * [NXLoader](https://github.com/DavidBuchanan314/NXLoader) (Android)
 * [Web Fusée Launcher](https://fusee-gelee.firebaseapp.com/) Web App (only Chrome)
@@ -80,4 +80,4 @@ Gui design inspired from the great:
 
 ## License
 
-[GPL-2.0 License](LICENSE-APACHE)
+[GPL-2.0 License](LICENSE)
