@@ -12,8 +12,11 @@ use eframe::egui::{
 };
 use egui_notify::Toasts;
 use favorites::FavoritesData;
+use once_cell::sync::Lazy;
 use payload::PayloadData;
 use rfd::FileDialog;
+
+static IMAGES: Lazy<Images> = Lazy::new(|| Images::load());
 
 pub fn gui() {
     let options = eframe::NativeOptions {
@@ -48,7 +51,6 @@ pub fn gui() {
             let app = MyApp {
                 switch_data,
                 payload_data: None,
-                images: Images::load(),
                 favorites_data: FavoritesData::new(),
                 toast: Toasts::default(),
             };
@@ -64,7 +66,7 @@ struct InitError {
 }
 
 impl eframe::App for InitError {
-    fn update(&mut self, ctx: &eframe::egui::Context, _frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
         CentralPanel::default().show(ctx, |ui| {
             ui.vertical_centered(|ui| {
                 ui.with_layout(Layout::centered_and_justified(Direction::TopDown), |ui| {
@@ -80,7 +82,6 @@ struct MyApp {
     switch_data: SwitchData,
     payload_data: Option<Rc<PayloadData>>,
     favorites_data: FavoritesData,
-    images: Images,
     toast: Toasts,
 }
 
@@ -114,6 +115,8 @@ impl MyApp {
     }
 
     fn main_tab(&mut self, ctx: &Context) {
+        egui_extras::install_image_loaders(ctx);
+
         let (removed, clicked) = self.favorites_data.render(ctx);
         if removed {
             self.payload_data = None;
@@ -143,13 +146,9 @@ impl MyApp {
 
             ui.centered_and_justified(|ui| {
                 match self.switch_data.state() {
-                    State::Available => {
-                        self.images.connected.show_max_size(ui, ui.available_size())
-                    }
-                    State::NotAvailable => {
-                        self.images.not_found.show_max_size(ui, ui.available_size())
-                    }
-                    State::Done => self.images.done.show_max_size(ui, ui.available_size()),
+                    State::Available => ui.add(IMAGES.connected.clone()),
+                    State::NotAvailable => ui.add(IMAGES.not_found.clone()),
+                    State::Done => ui.add(IMAGES.done.clone()),
                 };
             });
         });
@@ -286,7 +285,7 @@ fn gen_error(error: &tegra_rcm::SwitchError) -> Option<String> {
 }
 
 /// Preview hovering files:
-fn preview_files_being_dropped(ctx: &eframe::egui::Context) {
+fn preview_files_being_dropped(ctx: &Context) {
     use eframe::egui::{Align2, Id, LayerId, Order, TextStyle};
     use std::fmt::Write as _;
 

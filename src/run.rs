@@ -1,11 +1,10 @@
-use std::time::Duration;
-
 use console::{style, Emoji};
-use tegra_rcm::{Payload, Switch};
+use tegra_rcm::{create_hotplug, Payload, Switch};
 
 use crate::cli::{Add, Device, Execute, Gui, List, Remove};
 use crate::error::Error;
-use crate::{favorites::Favorites, spinner, switch::SwitchDevice, usb::spawn_thread};
+use crate::usb::HotplugHandler;
+use crate::{favorites::Favorites, spinner, switch::SwitchThreaded};
 
 type CliError = Error;
 
@@ -29,6 +28,8 @@ impl RunCommand for Execute {
             Payload::read(&self.payload)?
         };
 
+        let success_msg = format!("{}Payload executed!", EMOJI_ROCKET);
+
         if !self.wait {
             let switch = Switch::new()?;
             let Some(switch) = switch else {
@@ -36,28 +37,24 @@ impl RunCommand for Execute {
                 return Ok(());
             };
             switch.execute(&payload)?;
-            println!("{}Payload executed!", EMOJI_ROCKET);
-
-            Ok(())
+            println!("{success_msg}");
         } else {
-            let switch = SwitchDevice::new()?;
+            let switch = SwitchThreaded::new()?;
             let spinner = spinner();
-            spawn_thread(
-                switch.clone(),
-                Box::new(move || {
+
+            create_hotplug(Box::new(HotplugHandler {
+                switch: switch.clone(),
+                callback: Box::new(move || {
                     if let Some(s) = switch.0.lock().unwrap().take() {
-                        s.execute(&payload)
-                            .expect("Execute should have been successful");
-                        spinner.finish_with_message(format!("{}Payload executed!", EMOJI_ROCKET));
+                        s.execute(&payload).unwrap();
+                        spinner.finish_with_message(success_msg.clone());
                         std::process::exit(0)
                     }
                 }),
-            );
-
-            loop {
-                std::thread::sleep(Duration::from_secs(1));
-            }
+            }))
+            .unwrap();
         }
+        Ok(())
     }
 }
 
@@ -65,32 +62,28 @@ impl RunCommand for Device {
     fn run(self) -> Result<(), CliError> {
         if !self.wait {
             let switch = Switch::new()?;
-            if switch.is_none() {
+            if switch.is_some() {
+                println!("{}Switch is in RCM mode and connected", EMOJI_FOUND);
+            } else {
                 println!("{}Switch in RCM mode not found", EMOJI_NOT_FOUND);
-                return Ok(());
             };
-
-            println!("{}Switch is RCM mode and connected", EMOJI_FOUND);
-
-            Ok(())
         } else {
-            let switch = SwitchDevice::new()?;
+            let switch = SwitchThreaded::new()?;
             let spinner = spinner();
-            spawn_thread(
-                switch.clone(),
-                Box::new(move || {
-                    if switch.0.lock().unwrap().is_some() {
+
+            create_hotplug(Box::new(HotplugHandler {
+                switch: switch.clone(),
+                callback: Box::new(move || {
+                    if switch.0.lock().unwrap().take().is_some() {
                         spinner.finish_and_clear();
                         println!("{}Switch is RCM mode and connected", EMOJI_FOUND);
-                        std::process::exit(0)
+                        std::process::exit(0);
                     }
                 }),
-            );
-
-            loop {
-                std::thread::sleep(Duration::from_secs(1));
-            }
+            }))
+            .unwrap();
         }
+        Ok(())
     }
 }
 

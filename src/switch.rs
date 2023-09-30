@@ -3,9 +3,9 @@ use std::sync::{Arc, Mutex};
 use tegra_rcm::{Payload, Switch, SwitchError};
 
 #[derive(Debug, Clone)]
-pub struct SwitchDevice(pub Arc<Mutex<Option<Switch>>>);
+pub struct SwitchThreaded(pub Arc<Mutex<Option<Switch>>>);
 
-impl SwitchDevice {
+impl SwitchThreaded {
     /// Create a new switch device
     /// This is proteced by a mutex and arc so it is thread safe
     pub fn new() -> Result<Self, SwitchError> {
@@ -23,8 +23,7 @@ impl SwitchDevice {
             return Err(SwitchError::SwitchNotFound);
         };
 
-        switch.execute(payload)?;
-        Ok(())
+        switch.execute(payload)
     }
 }
 
@@ -37,7 +36,7 @@ pub enum State {
 
 #[derive(Debug, Clone)]
 pub struct SwitchData {
-    switch: SwitchDevice,
+    switch: SwitchThreaded,
     state: State,
 }
 
@@ -45,7 +44,7 @@ impl SwitchData {
     /// Create some new Switch Data
     pub fn new() -> Result<Self, SwitchError> {
         Ok(Self {
-            switch: SwitchDevice::new()?,
+            switch: SwitchThreaded::new()?,
             state: State::NotAvailable,
         })
     }
@@ -65,11 +64,7 @@ impl SwitchData {
     }
 
     pub fn execute(&mut self, payload: &Payload) -> Result<(), SwitchError> {
-        match self.switch.execute(payload) {
-            Ok(_) => self.state = State::Done,
-            Err(e) => return Err(e),
-        }
-        Ok(())
+        self.switch.execute(payload)
     }
 
     pub fn reset_state(&mut self) {
@@ -80,7 +75,7 @@ impl SwitchData {
         self.state
     }
 
-    pub fn switch(&self) -> SwitchDevice {
+    pub fn switch(&self) -> SwitchThreaded {
         self.switch.clone()
     }
 }

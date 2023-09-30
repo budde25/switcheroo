@@ -84,6 +84,6 @@ pub fn spinner() -> ProgressBar {
                 "▪▪▪▪▪",
             ]),
     );
-    pb.set_message("Waiting for Switch in RCM mode...");
+    pb.set_message("Searching for Switch in RCM mode");
     pb
 }

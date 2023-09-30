@@ -1,17 +1,20 @@
-use eframe::IconData;
-use egui_extras::RetainedImage;
+use eframe::egui::Image;
+use eframe::{egui, IconData};
 
-pub struct Images {
-    pub not_found: RetainedImage,
-    pub connected: RetainedImage,
-    pub done: RetainedImage,
+pub struct Images<'a> {
+    pub not_found: Image<'a>,
+    pub connected: Image<'a>,
+    pub done: Image<'a>,
 }
 
-impl Images {
+impl<'a> Images<'a> {
     pub fn load() -> Self {
-        let not_found = Self::load_image("Rcm Not Found", include_bytes!("images/not_found.svg"));
-        let connected = Self::load_image("Rcm Connected", include_bytes!("images/connected.svg"));
-        let done = Self::load_image("Rcm Complete", include_bytes!("images/done.svg"));
+        let not_found = Image::new(egui::include_image!("images/not_found.svg"));
+        let connected = Image::new(egui::include_image!("images/connected.svg"));
+        let done = Image::new(egui::include_image!("images/done.svg"));
+        //let not_found = Self::load_image("Rcm Not Found", include_bytes!("images/not_found.svg"));
+        //let connected = Self::load_image("Rcm Connected", include_bytes!("images/connected.svg"));
+        //let done = Self::load_image("Rcm Complete", include_bytes!("images/done.svg"));
         Self {
             not_found,
             connected,
@@ -19,9 +22,9 @@ impl Images {
         }
     }
 
-    fn load_image(debug_name: &'static str, image_bytes: &'static [u8]) -> RetainedImage {
-        RetainedImage::from_svg_bytes(debug_name, image_bytes).expect("Image should be valid svg")
-    }
+    // fn load_image(debug_name: &'static str, image_bytes: &'static [u8]) -> RetainedImage {
+    //     RetainedImage::from_svg_bytes(debug_name, image_bytes).expect("Image should be valid svg")
+    // }
 
     pub fn load_icon() -> IconData {
         const ICON: &[u8; 16_975] = include_bytes!("../../extra/logo/io.ebudd.Switcheroo.png");
@@ -43,29 +46,8 @@ impl Images {
     }
 }
 
-impl Default for Images {
+impl<'a> Default for Images<'a> {
     fn default() -> Self {
         Self::load()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn load_images() {
-        fn load(debug_name: &'static str, image_bytes: &'static [u8]) -> RetainedImage {
-            RetainedImage::from_svg_bytes(debug_name, image_bytes)
-                .expect("Image should be valid svg")
-        }
-
-        let not_found = load("Rcm Not Found", include_bytes!("images/not_found.svg"));
-        let connected = load("Rcm Connected", include_bytes!("images/connected.svg"));
-        let done = load("Rcm Complete", include_bytes!("images/done.svg"));
-
-        assert!(not_found.debug_name() == "Rcm Not Found");
-        assert!(connected.debug_name() == "Rcm Connected");
-        assert!(done.debug_name() == "Rcm Complete");
     }
 }

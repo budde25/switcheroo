@@ -2,9 +2,23 @@ use camino::Utf8PathBuf;
 use clap_verbosity_flag::Verbosity;
 
 use clap::{builder::ArgPredicate, Args, Parser, Subcommand, ValueHint};
+use clap::builder::Styles;
+
+fn style() -> Styles {
+    use clap::builder::styling::*;
+    Styles::styled()
+        .header(AnsiColor::Green.on_default() | Effects::BOLD)
+        .usage(AnsiColor::Green.on_default() | Effects::BOLD)
+        .literal(AnsiColor::Cyan.on_default() | Effects::BOLD)
+        .placeholder(AnsiColor::Cyan.on_default())
+        .error(AnsiColor::Red.on_default() | Effects::BOLD)
+        .valid(AnsiColor::Cyan.on_default() | Effects::BOLD)
+        .invalid(AnsiColor::Yellow.on_default() | Effects::BOLD)
+}
 
 #[derive(Debug, Parser)]
 #[command(name = "switcheroo", author, version, about, long_about = None)]
+#[clap(styles = style())]
 pub(crate) struct Cli {
     #[clap(subcommand)]
     pub(crate) command: Commands,

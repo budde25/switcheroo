@@ -2,12 +2,12 @@ use log::debug;
 use std::thread;
 use tegra_rcm::{create_hotplug, Actions, Switch};
 
-use crate::switch::SwitchDevice;
+use crate::switch::SwitchThreaded;
 
-struct HotplugHandler<'callback> {
-    switch: SwitchDevice,
+pub(crate) struct HotplugHandler<'callback> {
+    pub switch: SwitchThreaded,
     /// Must be none blocking
-    callback: Box<dyn Fn() + 'callback>,
+    pub callback: Box<dyn Fn() + 'callback>,
 }
 
 impl<'callback> Actions for HotplugHandler<'callback> {
@@ -31,6 +31,6 @@ impl<'callback> Actions for HotplugHandler<'callback> {
 }
 
 /// Spawn a separate thread too
-pub fn spawn_thread(switch: SwitchDevice, callback: Box<dyn Fn() + Send>) {
+pub fn spawn_thread(switch: SwitchThreaded, callback: Box<dyn Fn() + Send>) {
     thread::spawn(move || create_hotplug(Box::new(HotplugHandler { switch, callback })));
 }
