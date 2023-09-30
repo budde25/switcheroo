@@ -8,4 +8,5 @@ build-dir/
 repo/
 .vscode/
 .vs/
+.idea/
 public/
