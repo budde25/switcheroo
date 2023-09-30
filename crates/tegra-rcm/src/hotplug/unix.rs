@@ -38,7 +38,7 @@ pub fn create_hotplug(data: Box<dyn Actions>) -> Result<(), HotplugError> {
         return Err(HotplugError::NotSupported);
     }
 
-    let context = rusb::GlobalContext::default();
+    let context = GlobalContext::default();
 
     let _hotplug = HotplugBuilder::new()
         .vendor_id(SWITCH_VID)
