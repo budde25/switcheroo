@@ -62,7 +62,7 @@ fn launch_gui_only_mode() {
     };
 
     if gui_only == "0" {
-        gui::gui();
+        gui::gui().expect("GUI is able to be started");
     }
 }
 

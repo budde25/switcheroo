@@ -1,50 +1,49 @@
+mod error;
 mod favorites;
 mod image;
 mod payload;
 
 use std::rc::Rc;
 
-use self::image::Images;
 use super::switch::{State, SwitchData};
 use camino::{Utf8Path, Utf8PathBuf};
-use eframe::egui::{
-    style, Button, CentralPanel, Color32, Context, Direction, Layout, RichText, Ui,
-};
+use eframe::egui::{style, Button, CentralPanel, Color32, Context, RichText, Ui};
 use egui_notify::Toasts;
 use favorites::FavoritesData;
-use once_cell::sync::Lazy;
 use payload::PayloadData;
 use rfd::FileDialog;
 
-static IMAGES: Lazy<Images> = Lazy::new(|| Images::load());
+const APP_NAME: &str = "Switcheroo";
 
-pub fn gui() {
+pub fn gui() -> eframe::Result<()> {
     let options = eframe::NativeOptions {
         drag_and_drop_support: true,
         min_window_size: Some((500.0, 300.0).into()),
-        icon_data: Some(Images::load_icon()),
+        icon_data: Some(image::load_icon()),
         ..Default::default()
     };
 
     eframe::run_native(
-        "Switcheroo",
+        APP_NAME,
         options,
         Box::new(|cc| {
             let mut style = style::Style::default();
             style.visuals = style::Visuals::dark();
             cc.egui_ctx.set_style(style);
 
+            egui_extras::install_image_loaders(&cc.egui_ctx);
+
             let Ok(switch_data) = SwitchData::new() else {
-                let app = InitError {
-                    error: gen_error(&tegra_rcm::SwitchError::LinuxEnv).unwrap(),
-                };
-                return Box::new(app);
+                #[cfg(target_os = "linux")]
+                return Box::new(error::InitError::new(tegra_rcm::SwitchError::LinuxEnv));
+                #[cfg(not(target_os = "linux"))]
+                panic!("Failed to init SwitchData");
             };
 
-            let myctx = cc.egui_ctx.clone();
+            let ctx = cc.egui_ctx.clone();
             super::usb::spawn_thread(
                 switch_data.switch(),
-                Box::new(move || myctx.request_repaint()),
+                Box::new(move || ctx.request_repaint()),
             );
 
             // We have to do it like this, we need to update the cache when loading up.
@@ -58,24 +57,6 @@ pub fn gui() {
             Box::new(app)
         }),
     )
-    .expect("Window is able to run");
-}
-
-struct InitError {
-    error: String,
-}
-
-impl eframe::App for InitError {
-    fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
-        CentralPanel::default().show(ctx, |ui| {
-            ui.vertical_centered(|ui| {
-                ui.with_layout(Layout::centered_and_justified(Direction::TopDown), |ui| {
-                    ui.heading(&self.error);
-                    ui.label("Unrecoverable error, please correct this error and relaunch the app");
-                })
-            });
-        });
-    }
 }
 
 struct MyApp {
@@ -115,8 +96,6 @@ impl MyApp {
     }
 
     fn main_tab(&mut self, ctx: &Context) {
-        egui_extras::install_image_loaders(ctx);
-
         let (removed, clicked) = self.favorites_data.render(ctx);
         if removed {
             self.payload_data = None;
@@ -144,13 +123,7 @@ impl MyApp {
             // check for changes
             self.favorites_data.update(false);
 
-            ui.centered_and_justified(|ui| {
-                match self.switch_data.state() {
-                    State::Available => ui.add(IMAGES.connected.clone()),
-                    State::NotAvailable => ui.add(IMAGES.not_found.clone()),
-                    State::Done => ui.add(IMAGES.done.clone()),
-                };
-            });
+            ui.centered_and_justified(|ui| self.switch_image(ui));
         });
     }
 
@@ -235,7 +208,7 @@ impl MyApp {
                 .expect("Is executable, therefore payload must exist")
                 .payload();
             if let Err(e) = self.switch_data.execute(payload) {
-                if let Some(err) = gen_error(&e) {
+                if let Some(err) = error::gen_error(&e) {
                     self.toast.error(err);
                 }
             }
@@ -262,25 +235,6 @@ impl eframe::App for MyApp {
                 }
             }
         });
-    }
-}
-
-fn gen_error(error: &tegra_rcm::SwitchError) -> Option<String> {
-    match error {
-        tegra_rcm::SwitchError::SwitchNotFound => None,
-        tegra_rcm::SwitchError::AccessDenied => {
-            let link = "https://github.com/budde25/switcheroo#linux-permission-denied-error";
-            Some(format!(
-                "USB permission error, see the following to troubleshoot\n{link}"
-            ))
-        }
-        tegra_rcm::SwitchError::WindowsWrongDriver(i) => {
-            let link = "https://github.com/budde25/switcheroo#windows-wrong-driver-error";
-            Some(format!(
-                "Wrong USB driver installed, expected libusbK but found `{i}`, see the following to troubleshoot\n{link}"
-            ))
-        }
-        e => Some(e.to_string()),
     }
 }
 

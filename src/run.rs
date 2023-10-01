@@ -129,7 +129,7 @@ impl RunCommand for Remove {
 #[cfg(feature = "gui")]
 impl RunCommand for Gui {
     fn run(self) -> Result<(), CliError> {
-        crate::gui::gui();
+        crate::gui::gui().expect("GUI is able to be started");
         Ok(())
     }
 }
