@@ -3,14 +3,11 @@ mod image;
 mod payload;
 mod selected;
 
-use std::rc::Rc;
-
 use super::switch::{State, SwitchData};
-use camino::{Utf8Path, Utf8PathBuf};
+use camino::Utf8Path;
 use eframe::egui::{style, Button, CentralPanel, Color32, Context, RichText, Ui};
 use egui_notify::Toasts;
 use payload::PayloadData;
-use rfd::FileDialog;
 use selected::SelectedData;
 
 const APP_NAME: &str = "Switcheroo";
@@ -92,47 +89,19 @@ impl MyApp {
     }
 
     fn payload_window(&mut self, ui: &mut Ui) {
-        self.render_payload(ui);
-    }
-
-    pub fn render_payload(&mut self, ui: &mut Ui) {
-        let payload = self
-            .selected_data
-            .payload_data()
-            .map(|x| Rc::new(x.unwrap()));
-
         ui.horizontal(|ui| {
-            ui.label(RichText::new("Payload:").size(16.0));
-
-            if let Some(selected) = payload {
-                ui.monospace(
-                    RichText::new(selected.file_name())
-                        .color(Color32::LIGHT_BLUE)
-                        .size(16.0),
-                );
-            } else {
-                ui.monospace(RichText::new("None").size(16.0));
-            }
+            self.selected_data.render_payload_name(ui);
         });
     }
 
     fn payload_buttons(&mut self, ui: &mut Ui) {
-        let file_picker = FileDialog::new().add_filter("binary", &["bin"]);
-
         if ui
             .button(RichText::new("📂").size(50.0))
             .on_hover_text("Load payload from file")
             .clicked()
         {
-            if let Some(file) = file_picker.pick_file() {
-                match PayloadData::new(&Utf8PathBuf::from_path_buf(file).unwrap()) {
-                    Ok(payload) => {
-                        self.selected_data.set_payload(payload);
-                    }
-                    Err(e) => {
-                        self.toast.error(e.to_string());
-                    }
-                }
+            if let Err(e) = self.selected_data.file_picker() {
+                self.toast.error(e.to_string());
             }
         }
 
@@ -144,7 +113,9 @@ impl MyApp {
             .on_hover_text("Add currently loaded payload to favorites")
             .clicked()
         {
-            self.selected_data.favorite();
+            if let Err(e) = self.selected_data.favorite() {
+                self.toast.error(format!("Error adding favorite: {}", e));
+            }
         }
 
         if self.switch_data.state() == State::Done {
@@ -163,11 +134,9 @@ impl MyApp {
             .on_hover_text("Inject loaded payload")
             .clicked()
         {
-            let payload = self.selected_data.payload_data().unwrap();
-            let payload = payload
-                .as_ref()
-                .expect("Is executable, therefore payload must exist")
-                .payload();
+            let payload = self.selected_data.payload_data().unwrap().unwrap();
+
+            let payload = payload.payload();
             if let Err(e) = self.switch_data.execute(payload) {
                 if let Some(err) = error::gen_error(&e) {
                     self.toast.error(err);

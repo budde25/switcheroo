@@ -1,9 +1,12 @@
 use anyhow::Result;
+use camino::Utf8PathBuf;
 use eframe::egui::panel::Side;
 use eframe::egui::{
     global_dark_light_mode_switch, Button, Grid, Layout, RichText, SidePanel, TextStyle, Ui,
 };
 use eframe::emath::Align;
+use eframe::epaint::Color32;
+use rfd::FileDialog;
 
 use crate::favorites::{Favorite, Favorites};
 
@@ -18,6 +21,18 @@ pub enum Selected {
 }
 
 impl Selected {
+    fn rich_text(&self) -> RichText {
+        match self {
+            Selected::None => return RichText::new("None").size(16.0),
+            Selected::Payload(p) => RichText::new(p.file_name()),
+            Selected::Favorite(f) => RichText::new(f.name()),
+        }
+        .size(16.0)
+        .color(Color32::LIGHT_BLUE)
+    }
+}
+
+impl Selected {
     fn payload_data(&self) -> Option<Result<PayloadData>> {
         match self {
             Selected::None => None,
@@ -27,7 +42,7 @@ impl Selected {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct SelectedData {
     selected: Selected,
     cache: Favorites,
@@ -36,10 +51,7 @@ pub struct SelectedData {
 impl SelectedData {
     /// Create a new `FavoritesData` which is a wrapper around the favorites and a cache
     pub fn new() -> Self {
-        Self {
-            selected: Selected::None,
-            cache: Favorites::new(),
-        }
+        Self::default()
     }
 
     /// Grab new favorites from the the disk
@@ -105,6 +117,26 @@ impl SelectedData {
         self.selected = Selected::Payload(payload);
     }
 
+    pub fn file_picker(&mut self) -> Result<bool> {
+        let file_picker = FileDialog::new().add_filter("binary", &["bin"]);
+
+        let Some(file) = file_picker.pick_file() else {
+            return Ok(false);
+        };
+
+        let path = Utf8PathBuf::from_path_buf(file).unwrap();
+        let payload = PayloadData::new(path)?;
+
+        self.set_payload(payload);
+
+        Ok(true)
+    }
+
+    pub fn render_payload_name(&mut self, ui: &mut Ui) {
+        ui.label(RichText::new("Payload:").size(16.0));
+        ui.monospace(self.selected.rich_text());
+    }
+
     pub fn render(&mut self, ctx: &eframe::egui::Context) {
         SidePanel::new(Side::Left, "Favorites").show(ctx, |ui| {
             ui.add_space(5.0);
@@ -131,26 +163,24 @@ impl SelectedData {
             // TODO: Remove once false positive is resolved
             for entry in self.favorites().cloned().collect::<Vec<_>>() {
                 ui.horizontal(|ui| {
-                    self.render_entry(&entry, ui);
+                    ui.selectable_value(
+                        &mut self.selected,
+                        Selected::Favorite(entry.clone()),
+                        entry.name(),
+                    );
+                    ui.add_space(36.0);
+                    ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                        let remove_button = Button::new("🗑");
+                        if ui
+                            .add(remove_button)
+                            .on_hover_text("Remove from favorites")
+                            .clicked()
+                        {
+                            self.remove(&entry);
+                        }
+                    });
                 });
                 ui.end_row();
-            }
-        });
-    }
-
-    fn render_entry(&mut self, entry: &Favorite, ui: &mut Ui) {
-        ui.selectable_value(
-            &mut self.selected,
-            Selected::Favorite(entry.clone()),
-            entry.name(),
-        );
-        ui.add_space(36.0);
-        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-            let remove_button = Button::new("🗑");
-            let remove_resp = ui.add(remove_button).on_hover_text("Remove from favorites");
-
-            if remove_resp.clicked() {
-                self.remove(entry);
             }
         });
     }

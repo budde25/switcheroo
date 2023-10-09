@@ -11,11 +11,11 @@ pub struct PayloadData {
 
 impl PayloadData {
     /// Makes a payload from a given file path
-    pub fn new(path: &Utf8Path) -> Result<Self, PayloadError> {
-        let payload = Payload::read(&path)?;
+    pub fn new<P: AsRef<Utf8Path>>(path: P) -> Result<Self, PayloadError> {
+        let payload = Payload::read(&path.as_ref())?;
 
         let payload_data = PayloadData {
-            path: path.to_owned().into_boxed_path(),
+            path: path.as_ref().to_owned().into_boxed_path(),
             payload,
         };
         Ok(payload_data)

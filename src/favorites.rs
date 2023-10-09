@@ -24,6 +24,12 @@ pub struct Favorites {
     list: BTreeSet<Favorite>,
 }
 
+impl Default for Favorites {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Favorites {
     /// Create a new Favorites this points to the OS's <data_dir>/switcheroo/favorites folder and creates it if it does not exist
     pub fn new() -> Self {
@@ -47,7 +53,7 @@ impl Favorites {
     }
 
     /// Add a payload to the favorites directory, if `check_valid` is true, we will make sure that the payload parses correctly (but slower)
-    pub fn add<'a>(&mut self, payload_path: &'a Utf8Path, check_valid: bool) -> Result<Favorite> {
+    pub fn add(&mut self, payload_path: &Utf8Path, check_valid: bool) -> Result<Favorite> {
         if check_valid {
             // ensure we have been passed a valid payload
             let payload_bytes = fs::read(payload_path).map_err(|x| x.with_path(payload_path))?;
