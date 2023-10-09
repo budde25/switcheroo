@@ -41,6 +41,10 @@ impl Favorites {
                 continue;
             };
             let file_name = entry.file_name();
+            if file_name == ".DS_Store" {
+                continue;
+            }
+
             list.insert(Favorite::new(file_name));
         }
 
