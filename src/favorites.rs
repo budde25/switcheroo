@@ -1,6 +1,6 @@
 use anyhow::{bail, Result};
 use camino::{Utf8Path, Utf8PathBuf};
-use log::warn;
+use log::{error, warn};
 use once_cell::sync::Lazy;
 use std::collections::BTreeSet;
 use std::fs;
@@ -78,6 +78,12 @@ impl Favorites {
     pub fn remove(&mut self, favorite: &Favorite) -> Result<()> {
         let utf8_path = favorite.path();
         let path = utf8_path.as_std_path();
+        #[cfg(feature = "gui")]
+        if let Err(e) = trash::delete(path) {
+            error!("could not trash files: {}", e);
+            fs::remove_file(path).map_err(|x| x.with_path(path))?;
+        };
+        #[cfg(not(feature = "gui"))]
         fs::remove_file(path).map_err(|x| x.with_path(path))?;
         self.list.retain(|x| x != favorite);
         Ok(())
