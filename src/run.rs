@@ -108,7 +108,7 @@ impl RunCommand for Add {
     fn run(self) -> Result<(), CliError> {
         let mut favorites = Favorites::new();
         let file = favorites.add(&self.payload, true)?;
-        println!("Successfully added favorite: {}", style(file).cyan());
+        println!("Successfully added favorite: {}", style(file.name()).cyan());
         Ok(())
     }
 }

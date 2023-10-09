@@ -1,7 +1,7 @@
 mod error;
-mod favorites;
 mod image;
 mod payload;
+mod selected;
 
 use std::rc::Rc;
 
@@ -9,9 +9,9 @@ use super::switch::{State, SwitchData};
 use camino::{Utf8Path, Utf8PathBuf};
 use eframe::egui::{style, Button, CentralPanel, Color32, Context, RichText, Ui};
 use egui_notify::Toasts;
-use favorites::FavoritesData;
 use payload::PayloadData;
 use rfd::FileDialog;
+use selected::SelectedData;
 
 const APP_NAME: &str = "Switcheroo";
 
@@ -49,8 +49,7 @@ pub fn gui() -> eframe::Result<()> {
             // We have to do it like this, we need to update the cache when loading up.
             let app = MyApp {
                 switch_data,
-                payload_data: None,
-                favorites_data: FavoritesData::new(),
+                selected_data: SelectedData::new(),
                 toast: Toasts::default(),
             };
 
@@ -61,45 +60,19 @@ pub fn gui() -> eframe::Result<()> {
 
 struct MyApp {
     switch_data: SwitchData,
-    payload_data: Option<Rc<PayloadData>>,
-    favorites_data: FavoritesData,
+    selected_data: SelectedData,
     toast: Toasts,
 }
 
 impl MyApp {
     // we can execute if we have a payload and rcm is available
     fn is_executable(&self) -> bool {
-        // we can't be executable in this state
-        if self.switch_data.state() != State::Available {
-            return false;
-        }
-
-        // Finally do we even have a payload
-        self.payload_data.is_some()
-    }
-
-    fn allow_favoriting(&self) -> bool {
-        let mut should_enabled = self.payload_data.is_some();
-        if let Some(payload_data) = &self.payload_data {
-            let current_loaded_name = payload_data.file_name();
-
-            let already_favorited = self.favorites_data.contains(current_loaded_name);
-
-            should_enabled = !already_favorited;
-
-            if !payload_data.path().exists() {
-                should_enabled = false;
-            }
-        }
-
-        should_enabled
+        // we can't be executable unless switch is available and we can get a payload
+        self.switch_data.state() == State::Available && self.selected_data.is_some()
     }
 
     fn main_tab(&mut self, ctx: &Context) {
-        let (removed, clicked) = self.favorites_data.render(ctx);
-        if removed {
-            self.payload_data = None;
-        }
+        self.selected_data.render(ctx);
 
         CentralPanel::default().show(ctx, |ui| {
             ui.group(|ui| {
@@ -114,15 +87,6 @@ impl MyApp {
 
             self.switch_data.update_state();
 
-            if let Some(p) = self.favorites_data.payload() {
-                if clicked {
-                    self.payload_data = Some(p);
-                };
-            }
-
-            // check for changes
-            self.favorites_data.update(false);
-
             ui.centered_and_justified(|ui| self.switch_image(ui));
         });
     }
@@ -132,10 +96,10 @@ impl MyApp {
     }
 
     pub fn render_payload(&mut self, ui: &mut Ui) {
-        let mut payload = self.favorites_data.payload();
-        if payload.is_none() {
-            payload = self.payload_data.clone();
-        };
+        let payload = self
+            .selected_data
+            .payload_data()
+            .map(|x| Rc::new(x.unwrap()));
 
         ui.horizontal(|ui| {
             ui.label(RichText::new("Payload:").size(16.0));
@@ -153,37 +117,34 @@ impl MyApp {
     }
 
     fn payload_buttons(&mut self, ui: &mut Ui) {
+        let file_picker = FileDialog::new().add_filter("binary", &["bin"]);
+
         if ui
             .button(RichText::new("📂").size(50.0))
             .on_hover_text("Load payload from file")
             .clicked()
         {
-            if let Some(file) = FileDialog::new().add_filter("binary", &["bin"]).pick_file() {
+            if let Some(file) = file_picker.pick_file() {
                 match PayloadData::new(&Utf8PathBuf::from_path_buf(file).unwrap()) {
                     Ok(payload) => {
-                        self.payload_data = Some(Rc::new(payload));
-                        self.favorites_data.set_selected_none();
+                        self.selected_data.set_payload(payload);
                     }
                     Err(e) => {
                         self.toast.error(e.to_string());
                     }
                 }
-            } else {
-                eprintln!("File Dialog Error");
             }
         }
 
         if ui
             .add_enabled(
-                self.allow_favoriting(),
+                self.selected_data.can_favorite(),
                 Button::new(RichText::new("♥").size(50.0)),
             )
             .on_hover_text("Add currently loaded payload to favorites")
             .clicked()
         {
-            if let Some(payload_data) = &self.payload_data {
-                self.favorites_data.add(payload_data).unwrap();
-            }
+            self.selected_data.favorite();
         }
 
         if self.switch_data.state() == State::Done {
@@ -202,8 +163,8 @@ impl MyApp {
             .on_hover_text("Inject loaded payload")
             .clicked()
         {
-            let payload = self
-                .payload_data
+            let payload = self.selected_data.payload_data().unwrap();
+            let payload = payload
                 .as_ref()
                 .expect("Is executable, therefore payload must exist")
                 .payload();
@@ -227,7 +188,7 @@ impl eframe::App for MyApp {
             if let Some(last) = i.raw.dropped_files.last() {
                 if let Some(path) = &last.path {
                     match PayloadData::new(Utf8Path::from_path(path).unwrap()) {
-                        Ok(payload) => self.payload_data = Some(Rc::new(payload)),
+                        Ok(payload) => self.selected_data.set_payload(payload),
                         Err(e) => {
                             self.toast.error(e.to_string());
                         }
