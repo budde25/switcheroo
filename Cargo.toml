@@ -25,15 +25,19 @@ log = "0.4.20"
 # Config for 'cargo dist'
 [workspace.metadata.dist]
 # The preferred cargo-dist version to use in CI (Cargo.toml SemVer syntax)
-cargo-dist-version = "0.0.7"
-# The preferred Rust toolchain to use in CI (rustup toolchain syntax)
-rust-toolchain-version = "1.69.0"
-# CI backends to support (see 'cargo dist generate-ci')
+cargo-dist-version = "0.3.1"
+# CI backends to support
 ci = ["github"]
 # Target platforms to build apps for (Rust target-triple syntax)
-targets = ["x86_64-unknown-linux-gnu", "x86_64-apple-darwin", "x86_64-pc-windows-msvc", "aarch64-apple-darwin"]
+targets = ["x86_64-unknown-linux-gnu", "aarch64-apple-darwin", "x86_64-apple-darwin", "x86_64-pc-windows-msvc"]
 # The installers to generate for each app
-installers = ["shell", "powershell"]
+installers = ["shell", "powershell", "homebrew", "msi"]
+# Publish jobs to run in CI
+pr-run-mode = "plan"
+# A GitHub repo to push Homebrew formulas to
+tap = "budde25/homebrew-tap"
+# Publish jobs to run in CI
+publish-jobs = ["homebrew"]
 
 [dependencies]
 anyhow = "1.0"
@@ -95,4 +99,8 @@ assets = [
     # man file
     [ "extra/man/switcheroo.1", "usr/share/man/man1/switcheroo.1", "644" ],
 ]
+
+[package.metadata.wix]
+upgrade-guid = "944569E4-9258-4FB8-A89F-99F3988DA323"
+path-guid = "4375E8D1-D41E-43CF-B1CD-91171E8B32F5"
 
