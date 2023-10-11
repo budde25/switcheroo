@@ -23,7 +23,7 @@ rusb = "0.9.3"
 # Linux specific
 [target.'cfg(target_os = "linux")'.dependencies]
 glob = "0.3.1"
-nix = "0.27.1"
+nix = { version = "0.27.1", features = ["ioctl"] }
 
 # Windows specific
 [target.'cfg(target_os = "windows")'.dependencies]
