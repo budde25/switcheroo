@@ -1,6 +1,6 @@
 [package]
 name = "switcheroo-nx"
-version = "0.5.0"
+version = "0.6.0"
 edition = "2021"
 authors = ["Ethan Budd <budde25@protonmail.com>"]
 description = "A cross platform CLI and GUI for the Nintendo Switch RCM exploit"
@@ -19,7 +19,7 @@ path = "src/main.rs"
 members = ["crates/tegra-rcm"]
 
 [workspace.dependencies]
-clap = { version = "4.4.6", features = [ "derive" ] }
+clap = { version = "4.4.6", features = ["derive"] }
 log = "0.4.20"
 
 # Config for 'cargo dist'
@@ -29,7 +29,12 @@ cargo-dist-version = "0.3.1"
 # CI backends to support
 ci = ["github"]
 # Target platforms to build apps for (Rust target-triple syntax)
-targets = ["x86_64-unknown-linux-gnu", "aarch64-apple-darwin", "x86_64-apple-darwin", "x86_64-pc-windows-msvc"]
+targets = [
+    "x86_64-unknown-linux-gnu",
+    "aarch64-apple-darwin",
+    "x86_64-apple-darwin",
+    "x86_64-pc-windows-msvc",
+]
 # The installers to generate for each app
 installers = ["shell", "powershell", "homebrew", "msi"]
 # Publish jobs to run in CI
@@ -48,15 +53,17 @@ console = "0.15"
 dirs = "5.0"
 eframe = { version = "0.23", optional = true }
 egui-notify = { version = "0.10", optional = true }
-egui_extras = { version = "0.23", features = [ "svg" ], optional = true }
+egui_extras = { version = "0.23", features = ["svg"], optional = true }
 image = { version = "0.24", optional = true }
 indicatif = "0.17"
 log = { workspace = true }
 once_cell = "1.18"
-rfd = { version = "0.12", optional = true, default-features = false, features = [ "xdg-portal" ] }
+rfd = { version = "0.12", optional = true, default-features = false, features = [
+    "xdg-portal",
+] }
 tegra-rcm = { version = "0.5", path = "crates/tegra-rcm" }
 thiserror = "1.0"
-tracing-subscriber = { version = "0.3", features = [ "env-filter" ] }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 trash = { version = "3.1", optional = true }
 
 [build-dependencies]
@@ -68,7 +75,14 @@ camino = "1.1"
 
 [features]
 default = ["gui"]
-gui = ["dep:egui_extras", "dep:eframe", "dep:rfd", "dep:image", "dep:egui-notify", "dep:trash"]
+gui = [
+    "dep:egui_extras",
+    "dep:eframe",
+    "dep:rfd",
+    "dep:image",
+    "dep:egui-notify",
+    "dep:trash",
+]
 
 # The profile that 'cargo dist' will build with
 [profile.dist]
@@ -79,28 +93,75 @@ lto = "thin"
 depends = "$auto"
 section = "utility"
 assets = [
-    [ "target/release/switcheroo", "usr/bin/", "755" ],
-    [ "LICENSE", "usr/share/doc/switcheroo/", "644" ],
-    [ "README.md", "usr/share/doc/switcheroo/README", "644" ],
+    [
+        "target/release/switcheroo",
+        "usr/bin/",
+        "755",
+    ],
+    [
+        "LICENSE",
+        "usr/share/doc/switcheroo/",
+        "644",
+    ],
+    [
+        "README.md",
+        "usr/share/doc/switcheroo/README",
+        "644",
+    ],
     # desktop file
-    [ "extra/linux/io.ebudd.Switcheroo.desktop", "usr/share/applications/", "644" ],
+    [
+        "extra/linux/io.ebudd.Switcheroo.desktop",
+        "usr/share/applications/",
+        "644",
+    ],
     # icon
-    [ "extra/logo/io.ebudd.Switcheroo.png", "/usr/share/icons/hicolor/512x512/apps/", "644" ],
-    [ "extra/logo/io.ebudd.Switcheroo.png", "/usr/share/pixmaps/", "644" ],
+    [
+        "extra/logo/io.ebudd.Switcheroo.png",
+        "/usr/share/icons/hicolor/512x512/apps/",
+        "644",
+    ],
+    [
+        "extra/logo/io.ebudd.Switcheroo.png",
+        "/usr/share/pixmaps/",
+        "644",
+    ],
     # meta info
-    [ "extra/linux/io.ebudd.Switcheroo.appdata.xml", "/usr/share/metainfo/", "644" ],
+    [
+        "extra/linux/io.ebudd.Switcheroo.appdata.xml",
+        "/usr/share/metainfo/",
+        "644",
+    ],
     # udev rules
-    [ "extra/linux/99-switch.rules", "/lib/udev/rules.d/", "644" ],
+    [
+        "extra/linux/99-switch.rules",
+        "/lib/udev/rules.d/",
+        "644",
+    ],
     # TODO: Consider not committing shell completions/man files, and generating them on demand during CI
     # shell completions
-    [ "extra/completions/switcheroo.bash", "usr/share/bash-completion/completions/switcheroo", "644" ],
-    [ "extra/completions/switcheroo.fish", "usr/share/fish/vendor_completions.d/switcheroo.fish", "644" ],
-    [ "extra/completions/_switcheroo", "usr/share/zsh/vendor-completions/_switcheroo", "644" ],
+    [
+        "extra/completions/switcheroo.bash",
+        "usr/share/bash-completion/completions/switcheroo",
+        "644",
+    ],
+    [
+        "extra/completions/switcheroo.fish",
+        "usr/share/fish/vendor_completions.d/switcheroo.fish",
+        "644",
+    ],
+    [
+        "extra/completions/_switcheroo",
+        "usr/share/zsh/vendor-completions/_switcheroo",
+        "644",
+    ],
     # man file
-    [ "extra/man/switcheroo.1", "usr/share/man/man1/switcheroo.1", "644" ],
+    [
+        "extra/man/switcheroo.1",
+        "usr/share/man/man1/switcheroo.1",
+        "644",
+    ],
 ]
 
 [package.metadata.wix]
 upgrade-guid = "944569E4-9258-4FB8-A89F-99F3988DA323"
 path-guid = "4375E8D1-D41E-43CF-B1CD-91171E8B32F5"
-

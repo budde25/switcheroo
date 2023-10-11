@@ -34,7 +34,7 @@
   </provides>
   <content_rating type="oars-1.0" />
   <releases>
-    <release version="0.5.0" date="2023-03-5">
+    <release version="0.6.0" date="2023-03-5">
       <description>
         <p>Initial Release.</p>
       </description>

@@ -6,7 +6,7 @@ AppDir:
     id: io.ebudd.Switcheroo
     name: Switcheroo
     icon: io.ebudd.Switcheroo
-    version: 0.5.0
+    version: 0.6.0
     exec: usr/bin/switcheroo
     exec_args: gui
   files:
