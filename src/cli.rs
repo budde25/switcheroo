@@ -1,8 +1,8 @@
 use camino::Utf8PathBuf;
 use clap_verbosity_flag::Verbosity;
 
-use clap::{builder::ArgPredicate, Args, Parser, Subcommand, ValueHint};
 use clap::builder::Styles;
+use clap::{builder::ArgPredicate, Args, Parser, Subcommand, ValueHint};
 
 fn style() -> Styles {
     use clap::builder::styling::*;
