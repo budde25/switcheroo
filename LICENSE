@@ -31,7 +31,7 @@ These restrictions translate to certain responsibilities for you if you
 distribute copies of the software, or if you modify it.
 
   For example, if you distribute copies of such a program, whether
-gratis or for a fee, you must givesudo dnf install docker-ce docker-ce-cli containerd.io docker-compose-plugi the recipients all the rights that
+gratis or for a fee, you must give the recipients all the rights that
 you have.  You must make sure that they, too, receive or can get the
 source code.  And you must show them these terms so they know their
 rights.
@@ -317,9 +317,9 @@ when it starts in an interactive mode:
     This is free software, and you are welcome to redistribute it
     under certain conditions; type `show c' for details.
 
-The hypothetical commands `show w' and`show c' should show the appropriate
+The hypothetical commands `show w' and `show c' should show the appropriate
 parts of the General Public License.  Of course, the commands you use may
-be called something other than `show w' and`show c'; they could even be
+be called something other than `show w' and `show c'; they could even be
 mouse-clicks or menu items--whatever suits your program.
 
 You should also get your employer (if you work as a programmer) or your
