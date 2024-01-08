@@ -1,14 +1,13 @@
-use eframe::egui::Ui;
-use eframe::{egui, IconData};
+use eframe::egui::{include_image, IconData, Ui};
 
 use super::MyApp;
 
 impl MyApp {
     pub fn switch_image(&self, ui: &mut Ui) {
         let src = match self.switch_data.state() {
-            crate::switch::State::NotAvailable => egui::include_image!("images/not_found.svg"),
-            crate::switch::State::Available => egui::include_image!("images/connected.svg"),
-            crate::switch::State::Done => egui::include_image!("images/done.svg"),
+            crate::switch::State::NotAvailable => include_image!("images/not_found.svg"),
+            crate::switch::State::Available => include_image!("images/connected.svg"),
+            crate::switch::State::Done => include_image!("images/done.svg"),
         };
         ui.image(src);
     }

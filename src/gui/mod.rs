@@ -5,7 +5,7 @@ mod selected;
 
 use super::switch::{State, SwitchData};
 use camino::Utf8Path;
-use eframe::egui::{style, Button, CentralPanel, Color32, Context, RichText, Ui};
+use eframe::egui::{style, Button, CentralPanel, Color32, Context, RichText, Ui, ViewportBuilder};
 use egui_notify::Toasts;
 use payload::PayloadData;
 use selected::SelectedData;
@@ -14,9 +14,10 @@ const APP_NAME: &str = "Switcheroo";
 
 pub fn gui() -> eframe::Result<()> {
     let options = eframe::NativeOptions {
-        drag_and_drop_support: true,
-        min_window_size: Some((500.0, 300.0).into()),
-        icon_data: Some(image::load_icon()),
+        viewport: ViewportBuilder::default()
+            .with_min_inner_size([400.0, 300.0])
+            .with_drag_and_drop(true)
+            .with_icon(image::load_icon()),
         ..Default::default()
     };
 

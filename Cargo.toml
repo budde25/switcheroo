@@ -19,7 +19,7 @@ path = "src/main.rs"
 members = ["crates/tegra-rcm"]
 
 [workspace.dependencies]
-clap = { version = "4.4.6", features = ["derive"] }
+clap = { version = "4.4.14", features = ["derive"] }
 log = "0.4.20"
 
 # Config for 'cargo dist'
@@ -48,16 +48,16 @@ publish-jobs = ["homebrew"]
 anyhow = "1.0"
 camino = "1.1"
 clap = { workspace = true }
-clap-verbosity-flag = "2.0"
+clap-verbosity-flag = "2.1"
 console = "0.15"
 dirs = "5.0"
-eframe = { version = "0.23", optional = true }
-egui-notify = { version = "0.10", optional = true }
-egui_extras = { version = "0.23", features = ["svg"], optional = true }
+eframe = { version = "0.25", optional = true }
+egui-notify = { version = "0.12", optional = true }
+egui_extras = { version = "0.25", features = ["svg"], optional = true }
 image = { version = "0.24", optional = true }
 indicatif = "0.17"
 log = { workspace = true }
-once_cell = "1.18"
+once_cell = "1.19"
 rfd = { version = "0.12", optional = true, default-features = false, features = [
     "xdg-portal",
 ] }
@@ -68,7 +68,7 @@ trash = { version = "3.1", optional = true }
 
 [build-dependencies]
 clap = { workspace = true }
-clap-verbosity-flag = "2.0"
+clap-verbosity-flag = "2.1"
 clap_complete = "4.4"
 clap_mangen = "0.2"
 camino = "1.1"
