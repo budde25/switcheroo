@@ -281,4 +281,8 @@ _switcheroo() {
     esac
 }
 
-complete -F _switcheroo -o nosort -o bashdefault -o default switcheroo
+if [[ "${BASH_VERSINFO[0]}" -eq 4 && "${BASH_VERSINFO[1]}" -ge 4 || "${BASH_VERSINFO[0]}" -gt 4 ]]; then
+    complete -F _switcheroo -o nosort -o bashdefault -o default switcheroo
+else
+    complete -F _switcheroo -o bashdefault -o default switcheroo
+fi

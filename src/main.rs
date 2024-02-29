@@ -57,13 +57,11 @@ fn convert_filter(filter: log::LevelFilter) -> tracing_subscriber::filter::Level
 /// SWITCHEROO_GUI_ONLY is set to "0"
 #[cfg(feature = "gui")]
 fn launch_gui_only_mode() {
-    let Some(gui_only) = std::env::var_os("SWITCHEROO_GUI_ONLY") else {
-        return;
-    };
+    let gui_only = std::env::var("SWITCHEROO_GUI_ONLY");
 
-    if gui_only == "0" {
-        gui::gui().expect("GUI is able to be started");
-    }
+    if gui_only.is_ok() {
+        gui::gui().expect("GUI should be able to launch");
+    };
 }
 
 pub fn spinner() -> ProgressBar {

@@ -14,7 +14,7 @@ categories = ["os", "hardware-support"]
 [dependencies]
 cfg-if = "1.0.0"
 log = { workspace = true }
-thiserror = "1.0.56"
+thiserror = "1.0.57"
 
 # Linux and Mac specific
 [target.'cfg(any(target_os = "linux", target_os = "macos"))'.dependencies]
@@ -23,7 +23,7 @@ rusb = "0.9.3"
 # Linux specific
 [target.'cfg(target_os = "linux")'.dependencies]
 glob = "0.3.1"
-nix = { version = "0.27.1", features = ["ioctl"] }
+nix = { version = "0.28.0", features = ["ioctl"] }
 
 # Windows specific
 [target.'cfg(target_os = "windows")'.dependencies]
