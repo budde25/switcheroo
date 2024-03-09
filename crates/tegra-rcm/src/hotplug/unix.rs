@@ -1,13 +1,13 @@
 use log::error;
-use rusb::{has_hotplug, Device, GlobalContext, Hotplug, HotplugBuilder, UsbContext};
+use rusb::{has_hotplug, Context, Device, Hotplug, HotplugBuilder, UsbContext};
 
 use super::{Actions, HotplugError, HotplugHandler};
 use crate::device::{SwitchDevice, SWITCH_PID, SWITCH_VID};
 use crate::Switch;
 
-impl Hotplug<GlobalContext> for HotplugHandler {
+impl Hotplug<Context> for HotplugHandler {
     /// Gets called whenever a new usb device arrives
-    fn device_arrived(&mut self, device: Device<GlobalContext>) {
+    fn device_arrived(&mut self, device: Device<Context>) {
         // if this is not Ok, it probably got unplugged really fast
         if let Ok(dev) = device.open() {
             let device = SwitchDevice::with_device_handle(dev);
@@ -27,7 +27,7 @@ impl Hotplug<GlobalContext> for HotplugHandler {
     }
 
     /// Gets called whenever a usb device leaves
-    fn device_left(&mut self, _device: Device<GlobalContext>) {
+    fn device_left(&mut self, _device: Device<Context>) {
         self.inner.leaves();
     }
 }
@@ -38,13 +38,13 @@ pub fn create_hotplug(data: Box<dyn Actions>) -> Result<(), HotplugError> {
         return Err(HotplugError::NotSupported);
     }
 
-    let context = GlobalContext::default();
+    let context = Context::new().unwrap();
 
     let _hotplug = HotplugBuilder::new()
         .vendor_id(SWITCH_VID)
         .product_id(SWITCH_PID)
         .enumerate(true)
-        .register(context, Box::new(HotplugHandler { inner: data }))
+        .register(context.clone(), Box::new(HotplugHandler { inner: data }))
         .expect("We where able to successfully wrap the context");
 
     loop {
