@@ -4,10 +4,10 @@ use super::MyApp;
 
 impl MyApp {
     pub fn switch_image(&self, ui: &mut Ui) {
-        let src = match self.switch_data.state() {
-            crate::switch::State::NotAvailable => include_image!("images/not_found.svg"),
-            crate::switch::State::Available => include_image!("images/connected.svg"),
-            crate::switch::State::Done => include_image!("images/done.svg"),
+        let src = match self.switch {
+            crate::switch::SwitchData::None => include_image!("images/not_found.svg"),
+            crate::switch::SwitchData::Available(_) => include_image!("images/connected.svg"),
+            crate::switch::SwitchData::Done => include_image!("images/done.svg"),
         };
         ui.image(src);
     }

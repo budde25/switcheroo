@@ -18,10 +18,10 @@ mod payload;
 mod switch;
 mod vulnerability;
 
-use device::SwitchDevice;
+use device::SwitchHandle;
 use error::Result;
 
 pub use error::SwitchError;
 pub use hotplug::{create_hotplug, Actions};
 pub use payload::{Payload, PayloadError};
-pub use switch::Switch;
+pub use switch::{Handle, Switch};

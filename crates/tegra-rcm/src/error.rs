@@ -9,13 +9,17 @@ pub(crate) type Result<T> = std::result::Result<T, SwitchError>;
 #[derive(Error, Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum SwitchError {
-    /// We expected to get a timeout after smashing the stack but we did not
+    /// Expected to get a timeout after smashing the stack but we did not
     #[error("Expected timeout error after smashing the stack")]
     ExpectedError,
 
-    /// We cannot find a switch in RCM mode connected
+    /// Cannot find a switch in RCM mode connected
     #[error("Nintendo Switch in RCM mode not found")]
     SwitchNotFound,
+
+    /// Usb device was not initalized
+    #[error("Usb device was not initalized")]
+    NotInit,
 
     /// Unable to claim the Switches interface
     #[error("Unable to claim interface: `{0}`")]
@@ -96,6 +100,8 @@ impl From<rusb::Error> for SwitchError {
     fn from(err: rusb::Error) -> Self {
         match err {
             rusb::Error::Access => Self::AccessDenied,
+            rusb::Error::NoDevice => Self::SwitchNotFound,
+            rusb::Error::NotFound => Self::SwitchNotFound,
             _ => Self::Usb(err.to_string()),
         }
     }

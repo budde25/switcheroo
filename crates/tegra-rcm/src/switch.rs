@@ -3,54 +3,53 @@ use log::{debug, trace};
 use crate::Result;
 
 use crate::buffer::BufferState;
-use crate::device::{Device, SwitchDevice};
+use crate::device::{Device, DeviceHandle, SwitchDevice, SwitchHandle};
 use crate::vulnerability::Vulnerability;
 use crate::Payload;
 
-/// An RCM connection object
-/// This is the main interface to communicate with the switch
-#[derive(Debug)]
+/// Switch Device
+#[derive(Debug, Clone)]
 pub struct Switch {
     switch: SwitchDevice,
-    current_buffer: BufferState,
-    total_written: usize,
 }
 
 impl Switch {
     /// Create a new Rcm object from an existing SwitchDevice
     /// Should not have its interface claimed yet
-    pub(crate) fn with_device(device: SwitchDevice) -> Result<Option<Self>> {
-        device.validate_environment()?;
-
-        Ok(Some(Self {
-            switch: device,
-            current_buffer: BufferState::Low,
-            total_written: 0,
-        }))
+    pub(crate) fn new(device: SwitchDevice) -> Self {
+        Self { switch: device }
     }
 
     /// Finds and connects to a Switch device
-    /// Returns None if no device is found
-    pub fn new() -> Result<Option<Self>> {
-        let switch = SwitchDevice::find_device()?;
-        match switch {
-            None => Ok(None),
-            Some(switch) => {
-                switch.validate_environment()?;
-                Ok(Some(Self {
-                    switch,
-                    current_buffer: BufferState::Low,
-                    total_written: 0,
-                }))
-            }
-        }
+    pub fn find() -> Result<Self> {
+        let device = SwitchDevice::find_device()?;
+        Ok(Self { switch: device })
     }
 
+    /// Gets the Switch handle
+    pub fn handle(&mut self) -> Result<Handle> {
+        let handle = self.switch.init()?;
+        Ok(Handle {
+            handle,
+            current_buffer: BufferState::Low,
+            total_written: 0,
+        })
+    }
+}
+
+/// An RCM connection object
+/// This is the main interface to communicate with the switch
+#[derive(Debug)]
+pub struct Handle {
+    handle: SwitchHandle,
+    current_buffer: BufferState,
+    total_written: usize,
+}
+
+impl Handle {
     /// This will execute the payload on the connected device
     /// This consumes the device
     pub fn execute(mut self, payload: &Payload) -> Result<()> {
-        self.switch.init()?;
-
         let device_id = self.read_device_id()?;
         trace!("Device ID: {:?}", device_id);
 
@@ -106,7 +105,7 @@ impl Switch {
         );
 
         let length = STACK_END - self.current_buffer.address();
-        self.switch.trigger(length)?;
+        self.handle.trigger(length)?;
         Ok(())
     }
 
@@ -120,14 +119,14 @@ impl Switch {
 
     fn write_buffer(&mut self, buf: &[u8]) -> Result<usize> {
         self.current_buffer.toggle();
-        let written = self.switch.write(buf)?;
+        let written = self.handle.write(buf)?;
         Ok(written)
     }
 
     /// Read from the device
     /// Returns bytes read
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
-        let read = self.switch.read(buf)?;
+        let read = self.handle.read(buf)?;
         Ok(read)
     }
 }

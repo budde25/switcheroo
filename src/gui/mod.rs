@@ -3,12 +3,18 @@ mod image;
 mod payload;
 mod selected;
 
-use super::switch::{State, SwitchData};
+use std::sync::mpsc::Receiver;
+
+use crate::switch::SwitchData;
+
+use self::error::gen_error;
+
 use camino::Utf8Path;
 use eframe::egui::{style, Button, CentralPanel, Color32, Context, RichText, Ui, ViewportBuilder};
 use egui_notify::Toasts;
 use payload::PayloadData;
 use selected::SelectedData;
+use tegra_rcm::{Switch, SwitchError};
 
 const APP_NAME: &str = "Switcheroo";
 
@@ -31,24 +37,21 @@ pub fn gui() -> eframe::Result<()> {
 
             egui_extras::install_image_loaders(&cc.egui_ctx);
 
-            let Ok(switch_data) = SwitchData::new() else {
-                #[cfg(target_os = "linux")]
-                return Box::new(error::InitError::new(tegra_rcm::SwitchError::LinuxEnv));
-                #[cfg(not(target_os = "linux"))]
-                panic!("Failed to init SwitchData");
-            };
+            // let Ok(switch) = Switch::find() else {
+            //     #[cfg(target_os = "linux")]
+            //     return Box::new(error::InitError::new(tegra_rcm::SwitchError::LinuxEnv));
+            //     #[cfg(not(target_os = "linux"))]
+            //     panic!("Failed to init SwitchData");
+            // };
 
-            let ctx = cc.egui_ctx.clone();
-            super::usb::spawn_thread(
-                switch_data.switch(),
-                Box::new(move || ctx.request_repaint()),
-            );
+            let recv = spawn_thread_context(cc.egui_ctx.clone());
 
             // We have to do it like this, we need to update the cache when loading up.
             let app = MyApp {
-                switch_data,
+                switch: SwitchData::None,
                 selected_data: SelectedData::new(),
                 toast: Toasts::default(),
+                recv,
             };
 
             Box::new(app)
@@ -57,16 +60,17 @@ pub fn gui() -> eframe::Result<()> {
 }
 
 struct MyApp {
-    switch_data: SwitchData,
+    switch: SwitchData,
     selected_data: SelectedData,
     toast: Toasts,
+    recv: Receiver<Result<Switch, SwitchError>>,
 }
 
 impl MyApp {
     // we can execute if we have a payload and rcm is available
     fn is_executable(&self) -> bool {
         // we can't be executable unless switch is available and we can get a payload
-        self.switch_data.state() == State::Available && self.selected_data.is_some()
+        matches!(self.switch, SwitchData::Available(_)) && self.selected_data.is_some()
     }
 
     fn main_tab(&mut self, ctx: &Context) {
@@ -82,8 +86,6 @@ impl MyApp {
                 // Buttons
                 ui.horizontal(|ui| self.payload_buttons(ui));
             });
-
-            self.switch_data.update_state();
 
             ui.centered_and_justified(|ui| self.switch_image(ui));
         });
@@ -119,13 +121,13 @@ impl MyApp {
             }
         }
 
-        if self.switch_data.state() == State::Done {
+        if self.switch == SwitchData::Done {
             if ui
                 .button(RichText::new("↺").size(50.0))
                 .on_hover_text("Reset status")
                 .clicked()
             {
-                self.switch_data.reset_state();
+                self.switch = SwitchData::None;
             }
         } else if ui
             .add_enabled(
@@ -138,10 +140,9 @@ impl MyApp {
             let payload = self.selected_data.payload_data().unwrap().unwrap();
 
             let payload = payload.payload();
-            if let Err(e) = self.switch_data.execute(payload) {
-                if let Some(err) = error::gen_error(&e) {
-                    self.toast.error(err);
-                }
+            if let SwitchData::Available(mut switch) = self.switch.clone() {
+                let handle = switch.handle().unwrap(); // TODO
+                handle.execute(payload).unwrap();
             }
         }
     }
@@ -149,6 +150,16 @@ impl MyApp {
 
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
+        if let Ok(switch_res) = self.recv.try_recv() {
+            if self.switch != SwitchData::Done {
+                match switch_res {
+                    Ok(s) => self.switch = SwitchData::Available(s),
+                    Err(SwitchError::SwitchNotFound) => self.switch = SwitchData::None,
+                    Err(e) => eprintln!("{e}"),
+                }
+            }
+        }
+
         self.toast.show(ctx);
         self.main_tab(ctx);
         preview_files_being_dropped(ctx);
@@ -202,4 +213,11 @@ fn preview_files_being_dropped(ctx: &Context) {
             Color32::WHITE,
         );
     }
+}
+
+/// Spawn a separate thread
+pub fn spawn_thread_context(ctx: Context) -> Receiver<Result<Switch, SwitchError>> {
+    let (tx, rx) = std::sync::mpsc::channel();
+    std::thread::spawn(move || tegra_rcm::create_hotplug(tx, Some(move || ctx.request_repaint())));
+    rx
 }

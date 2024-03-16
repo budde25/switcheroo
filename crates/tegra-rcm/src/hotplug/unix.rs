@@ -1,50 +1,67 @@
+use std::sync::mpsc::Sender;
+
 use log::error;
 use rusb::{has_hotplug, Context, Device, Hotplug, HotplugBuilder, UsbContext};
 
-use super::{Actions, HotplugError, HotplugHandler};
-use crate::device::{SwitchDevice, SWITCH_PID, SWITCH_VID};
-use crate::Switch;
+use super::{HotplugError, HotplugHandler};
+use crate::device::{SwitchDevice, RCM_PID, RCM_VID};
+use crate::switch::Switch;
+use crate::SwitchError;
 
 impl Hotplug<Context> for HotplugHandler {
     /// Gets called whenever a new usb device arrives
     fn device_arrived(&mut self, device: Device<Context>) {
-        // if this is not Ok, it probably got unplugged really fast
-        if let Ok(dev) = device.open() {
-            let device = SwitchDevice::with_device_handle(dev);
-            // propagate error
-            let switch = match Switch::with_device(device) {
-                Ok(switch) => switch,
-                Err(e) => {
-                    error!("Failed to initialize switch: {e}");
-                    return;
-                }
-            };
-            // if this is not Some, it probably got unplugged really fast
-            if let Some(switch) = switch {
-                self.inner.arrives(switch);
-            }
+        let device = SwitchDevice::new(device);
+        let switch = Switch::new(device);
+
+        if let Err(e) = self.sender.send(Ok(switch)) {
+            error!("device arrive event {e}");
+        }
+
+        if let Some(callback) = &self.callback {
+            callback();
         }
     }
 
     /// Gets called whenever a usb device leaves
     fn device_left(&mut self, _device: Device<Context>) {
-        self.inner.leaves();
+        if let Err(e) = self.sender.send(Err(crate::SwitchError::SwitchNotFound)) {
+            error!("device left event {e}");
+        }
+
+        if let Some(callback) = &self.callback {
+            callback();
+        }
     }
 }
 
 /// create a hotplug setup, this blocks
-pub fn create_hotplug(data: Box<dyn Actions>) -> Result<(), HotplugError> {
+pub fn create_hotplug(
+    tx: Sender<Result<Switch, SwitchError>>,
+    mut callback: Option<impl Fn() + Send + Sync + 'static>,
+) -> Result<(), HotplugError> {
     if !has_hotplug() {
         return Err(HotplugError::NotSupported);
     }
 
     let context = Context::new().unwrap();
 
+    let hotplug_handler = match callback.take() {
+        Some(callback) => HotplugHandler {
+            sender: tx,
+            callback: Some(Box::new(callback)),
+        },
+        None => HotplugHandler {
+            sender: tx,
+            callback: None,
+        },
+    };
+
     let _hotplug = HotplugBuilder::new()
-        .vendor_id(SWITCH_VID)
-        .product_id(SWITCH_PID)
+        .vendor_id(RCM_VID)
+        .product_id(RCM_PID)
         .enumerate(true)
-        .register(context.clone(), Box::new(HotplugHandler { inner: data }))
+        .register(context.clone(), Box::new(hotplug_handler))
         .expect("We where able to successfully wrap the context");
 
     loop {

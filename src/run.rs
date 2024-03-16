@@ -1,10 +1,10 @@
 use console::{style, Emoji};
-use tegra_rcm::{create_hotplug, Payload, Switch};
+use tegra_rcm::{Payload, Switch, SwitchError};
 
 use crate::cli::{Add, Device, Execute, Gui, List, Remove};
 use crate::error::Error;
-use crate::usb::HotplugHandler;
-use crate::{favorites::Favorites, spinner, switch::SwitchThreaded};
+use crate::usb::spawn_thread;
+use crate::{favorites::Favorites, spinner};
 
 type CliError = Error;
 
@@ -31,28 +31,34 @@ impl RunCommand for Execute {
         let success_msg = format!("{}Payload executed!", EMOJI_ROCKET);
 
         if !self.wait {
-            let switch = Switch::new()?;
-            let Some(switch) = switch else {
+            let switch = Switch::find();
+            let Ok(mut switch) = switch else {
                 println!("{}Switch in RCM mode not found", EMOJI_NOT_FOUND);
                 return Ok(());
             };
-            switch.execute(&payload)?;
+            let handle = switch.handle()?;
+            handle.execute(&payload)?;
             println!("{success_msg}");
         } else {
-            let switch = SwitchThreaded::new()?;
-            let spinner = spinner();
+            let _spinner = spinner();
 
-            create_hotplug(Box::new(HotplugHandler {
-                switch: switch.clone(),
-                callback: Box::new(move || {
-                    if let Some(s) = switch.0.lock().unwrap().take() {
-                        s.execute(&payload).unwrap();
-                        spinner.finish_with_message(success_msg.clone());
-                        std::process::exit(0)
+            let switch = Switch::find();
+            if let Ok(mut switch) = switch {
+                switch.handle()?.execute(&payload)?;
+                return Ok(());
+            }
+
+            let rx = spawn_thread();
+            while let Ok(switch) = rx.recv() {
+                match switch {
+                    Ok(mut switch) => {
+                        switch.handle()?.execute(&payload)?;
+                        return Ok(());
                     }
-                }),
-            }))
-            .unwrap();
+                    Err(SwitchError::SwitchNotFound) => (),
+                    Err(e) => return Err(e.into()),
+                }
+            }
         }
         Ok(())
     }
@@ -61,27 +67,35 @@ impl RunCommand for Execute {
 impl RunCommand for Device {
     fn run(self) -> Result<(), CliError> {
         if !self.wait {
-            let switch = Switch::new()?;
-            if switch.is_some() {
-                println!("{}Switch is in RCM mode and connected", EMOJI_FOUND);
-            } else {
-                println!("{}Switch in RCM mode not found", EMOJI_NOT_FOUND);
-            };
+            match Switch::find() {
+                Ok(_) => println!("{}Switch is in RCM mode and connected", EMOJI_FOUND),
+                Err(SwitchError::SwitchNotFound) => {
+                    println!("{}Switch in RCM mode not found", EMOJI_NOT_FOUND)
+                }
+                Err(e) => return Err(e.into()),
+            }
         } else {
-            let switch = SwitchThreaded::new()?;
-            let spinner = spinner();
+            let _spinner = spinner();
 
-            create_hotplug(Box::new(HotplugHandler {
-                switch: switch.clone(),
-                callback: Box::new(move || {
-                    if switch.0.lock().unwrap().take().is_some() {
-                        spinner.finish_and_clear();
-                        println!("{}Switch is RCM mode and connected", EMOJI_FOUND);
-                        std::process::exit(0);
+            let switch = Switch::find();
+            if let Ok(mut switch) = switch {
+                switch.handle()?;
+                println!("{}Switch is in RCM mode and connected", EMOJI_FOUND);
+                return Ok(());
+            }
+
+            let rx = spawn_thread();
+            while let Ok(switch) = rx.recv() {
+                match switch {
+                    Ok(mut switch) => {
+                        switch.handle()?;
+                        println!("{}Switch is in RCM mode and connected", EMOJI_FOUND);
+                        return Ok(());
                     }
-                }),
-            }))
-            .unwrap();
+                    Err(SwitchError::SwitchNotFound) => (),
+                    Err(e) => return Err(e.into()),
+                }
+            }
         }
         Ok(())
     }
