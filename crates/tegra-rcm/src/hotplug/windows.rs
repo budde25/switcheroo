@@ -11,7 +11,7 @@ use super::{HotplugError, HotplugHandler};
 impl Hotplug for HotplugHandler {
     /// Gets called whenever a new usb device arrives
     fn device_arrived(&mut self, device: Device) {
-        let device = SwitchDevice{ device };
+        let device = SwitchDevice { device };
         let switch = Switch::new(device);
 
         if let Err(e) = self.sender.send(Ok(switch)) {
@@ -61,13 +61,10 @@ pub fn create_hotplug(
         .register(Box::new(hotplug_handler))
         .expect("We where able to successfully wrap the context");
 
-   register.init().expect("Register init should pass");
+    register.init().expect("Register init should pass");
 
     let leak = Box::new(register);
     let _ = Box::leak(leak);
-  
-  Ok(())
-   
 
-     
+    Ok(())
 }

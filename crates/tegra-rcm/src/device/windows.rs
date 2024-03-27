@@ -1,4 +1,4 @@
-use libusbk::{DeviceHandle, DeviceList, Device};
+use libusbk::{Device, DeviceHandle, DeviceList};
 
 use super::{RCM_PID, RCM_VID};
 use crate::Result;
@@ -20,16 +20,18 @@ impl super::Device for SwitchDevice {
     fn find_device() -> Result<Self> {
         let devices = DeviceList::new()?;
         let device = devices.find_with_vid_and_pid(RCM_PID as i32, RCM_VID as i32)?;
-        Ok(Self{device})
+        Ok(Self { device })
     }
 
     /// Init the device
     fn init(&mut self) -> Result<SwitchHandle> {
-        Ok(SwitchHandle { handle: self.device.open()? })
+        Ok(SwitchHandle {
+            handle: self.device.open()?,
+        })
     }
 }
 
-impl super::DeviceHandle for  SwitchHandle {
+impl super::DeviceHandle for SwitchHandle {
     /// Read from the device into the buffer
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
         let amount = self.handle.read_pipe(0x81, buf)?;
