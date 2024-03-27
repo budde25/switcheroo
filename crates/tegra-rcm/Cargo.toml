@@ -11,6 +11,8 @@ readme = "README.md"
 categories = ["os", "hardware-support"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+
+
 [dependencies]
 cfg-if = "1.0.0"
 log = { workspace = true }
@@ -36,3 +38,6 @@ criterion = "0.5.1"
 [[bench]]
 name = "my_benchmark"
 harness = false
+
+[patch.crates-io]
+libsubk = { git = 'https://github.com/budde25/libusbk-rs'}

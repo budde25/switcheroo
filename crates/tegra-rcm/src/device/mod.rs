@@ -9,6 +9,7 @@ cfg_if! {
     } else if #[cfg(target_os = "windows")] {
         mod windows;
         pub use windows::SwitchDevice;
+        pub use windows::SwitchHandle;
     } else {
         compile_error!("Unsupported OS");
     }
