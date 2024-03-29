@@ -5,7 +5,6 @@ pub struct InitError {
 }
 
 impl InitError {
-    #[allow(unused)]
     pub fn new(error: tegra_rcm::SwitchError) -> Self {
         Self {
             error: gen_error(&error).unwrap(),

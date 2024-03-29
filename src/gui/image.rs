@@ -1,6 +1,6 @@
 use eframe::egui::{include_image, IconData, Ui};
 
-use super::MyApp;
+use super::app::MyApp;
 
 impl MyApp {
     pub fn switch_image(&self, ui: &mut Ui) {
