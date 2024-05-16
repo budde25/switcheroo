@@ -113,9 +113,9 @@ pub struct Favorite {
 }
 
 impl Favorite {
-    fn new(name: &str) -> Self {
+    fn new<S: AsRef<str>>(name: S) -> Self {
         Self {
-            name: name.trim().to_string().into_boxed_str(),
+            name: name.as_ref().trim().to_string().into_boxed_str(),
         }
     }
 
@@ -124,10 +124,7 @@ impl Favorite {
     }
 
     pub fn read(&self) -> Result<Payload> {
-        let utf8_path = self.path();
-        let path = utf8_path.as_std_path();
-        let payload_bytes = fs::read(path).map_err(|x| x.with_path(path))?;
-        Ok(Payload::new(&payload_bytes)?)
+        Ok(Payload::read(&*self.path())?)
     }
 
     pub fn path(&self) -> Box<Utf8Path> {
