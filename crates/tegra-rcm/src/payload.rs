@@ -87,8 +87,8 @@ impl Payload {
     }
 
     /// Read a payload from a file
-    pub fn read<P: AsRef<Path>>(path: &P) -> Result<Self, PayloadError> {
-        let Ok(bytes) = std::fs::read(path) else {
+    pub fn read<P: AsRef<Path>>(path: P) -> Result<Self, PayloadError> {
+        let Ok(bytes) = std::fs::read(path.as_ref()) else {
             return Err(PayloadError::Io(path.as_ref().into()));
         };
         Self::new(&bytes)
