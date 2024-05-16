@@ -15,11 +15,11 @@ categories = ["os", "hardware-support"]
 [dependencies]
 cfg-if = "1.0.0"
 log = { workspace = true }
-thiserror = "1.0.57"
+thiserror = "1.0.60"
 
 # Linux and Mac specific
 [target.'cfg(any(target_os = "linux", target_os = "macos"))'.dependencies]
-rusb = "0.9.3"
+rusb = "0.9.4"
 
 # Linux specific
 [target.'cfg(target_os = "linux")'.dependencies]
