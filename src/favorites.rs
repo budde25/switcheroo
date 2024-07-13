@@ -35,17 +35,17 @@ impl Favorites {
     pub fn new() -> Self {
         let mut list = BTreeSet::new();
         let dir = Utf8Path::read_dir_utf8(Self::directory()).expect("Favorites directory exists");
-        for dir_res in dir {
-            let Ok(entry) = dir_res else {
-                warn!("Error parsing favorite: {}", dir_res.unwrap_err());
-                continue;
-            };
-            let file_name = entry.file_name();
-            if file_name == ".DS_Store" {
-                continue;
-            }
-
-            list.insert(Favorite::new(file_name));
+        for dir in dir
+            .filter_map(|x| match x {
+                Ok(dir) => Some(dir),
+                Err(e) => {
+                    warn!("Error parsing favorite: {}", e);
+                    None
+                }
+            })
+            .filter(|x| x.path().extension() == Some("bin"))
+        {
+            list.insert(Favorite::new(dir.file_name()));
         }
 
         Self { list }
