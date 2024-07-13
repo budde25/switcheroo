@@ -26,17 +26,13 @@ impl MyApp {
             return None;
         };
 
-        let Some(data) = self.selected_data.payload_data() else {
-            return None;
-        };
+        let payload = self
+            .selected_data
+            .payload_data()?
+            .inspect_err(|e| error!("payload load {e}"))
+            .ok()?;
 
-        match data {
-            Ok(payload) => return Some((switch.clone(), payload)),
-            Err(e) => {
-                error!("payload load: {e}");
-                return None;
-            }
-        };
+        Some((switch.clone(), payload))
     }
 
     fn main_tab(&mut self, ctx: &Context) {
@@ -45,43 +41,43 @@ impl MyApp {
         CentralPanel::default().show(ctx, |ui| {
             ui.group(|ui| {
                 ui.add_space(5.0);
-                self.payload_window(ui);
+                self.render_payload_window(ui);
                 ui.add_space(5.0);
                 ui.separator();
 
                 // Buttons
-                ui.horizontal(|ui| self.payload_buttons(ui));
+                ui.horizontal(|ui| self.render_payload_buttons(ui));
             });
 
-            ui.centered_and_justified(|ui| self.switch_image(ui));
+            ui.centered_and_justified(|ui| self.show_image(ui));
         });
     }
 
-    fn payload_window(&mut self, ui: &mut Ui) {
+    fn render_payload_window(&mut self, ui: &mut Ui) {
         ui.horizontal(|ui| {
             self.selected_data.render_payload_name(ui);
         });
     }
 
-    fn payload_buttons(&mut self, ui: &mut Ui) {
-        if ui
+    fn render_payload_buttons(&mut self, ui: &mut Ui) {
+        let file_picker_button = ui
             .button(RichText::new("📂").size(50.0))
-            .on_hover_text("Load payload from file")
-            .clicked()
-        {
+            .on_hover_text("Load payload from file");
+
+        let favorite_button = ui
+            .add_enabled(
+                self.selected_data.can_favorite(),
+                Button::new(RichText::new("♥").size(50.0)),
+            )
+            .on_hover_text("Add currently loaded payload to favorites");
+
+        if file_picker_button.clicked() {
             if let Err(e) = self.selected_data.file_picker() {
                 self.toast.error(e.to_string());
             }
         }
 
-        if ui
-            .add_enabled(
-                self.selected_data.can_favorite(),
-                Button::new(RichText::new("♥").size(50.0)),
-            )
-            .on_hover_text("Add currently loaded payload to favorites")
-            .clicked()
-        {
+        if favorite_button.clicked() {
             if let Err(e) = self.selected_data.favorite() {
                 self.toast.error(format!("Error adding favorite: {}", e));
             }
@@ -89,73 +85,77 @@ impl MyApp {
 
         let executable = self.executable();
         if self.switch == SwitchData::Done {
-            if ui
+            let reset_button = ui
                 .button(RichText::new("↺").size(50.0))
-                .on_hover_text("Reset status")
-                .clicked()
-            {
+                .on_hover_text("Reset status");
+
+            if reset_button.clicked() {
                 self.switch = SwitchData::None;
+            };
+        } else {
+            let execute_button = ui
+                .add_enabled(
+                    executable.is_some(),
+                    Button::new(RichText::new("🚀").size(50.0)),
+                )
+                .on_hover_text("Inject loaded payload");
+
+            if execute_button.clicked() {
+                let (switch, payload) = executable.expect("device is executable");
+
+                execute_helper(switch, payload.payload(), &mut self.toast);
             }
-        } else if ui
-            .add_enabled(
-                executable.is_some(),
-                Button::new(RichText::new("🚀").size(50.0)),
-            )
-            .on_hover_text("Inject loaded payload")
-            .clicked()
-        {
-            let (switch, payload) = executable.expect("device is executable");
+        }
+    }
 
-            fn execute(mut switch: Switch, payload: &Payload, toast: &mut Toasts) {
-                let handle = match switch.handle() {
-                    Ok(handle) => handle,
-                    Err(e) => {
-                        toast.error(e.to_string());
-                        return;
-                    }
-                };
+    fn file_dropper(&mut self, ctx: &Context) {
+        // Collect dropped files:
+        ctx.input(|i| {
+            let Some(last) = i.raw.dropped_files.last() else {
+                return;
+            };
+            let Some(path) = &last.path else { return };
+            let payload = PayloadData::new(Utf8Path::from_path(path).expect("valid UTF-8"));
 
-                if let Err(e) = handle.execute(payload) {
-                    toast.error(e.to_string());
+            match payload {
+                Ok(payload) => self.selected_data.set_payload(payload),
+                Err(e) => {
+                    self.toast.error(e.to_string());
                 }
-            }
+            };
+        });
+    }
 
-            execute(switch, payload.payload(), &mut self.toast);
+    /// update the switch state, without blocking thread
+    fn retrieve_switch_state(&mut self) {
+        if self.switch == SwitchData::Done {
+            return;
+        }
+        let Some(switch_res) = self.recv.try_iter().last() else {
+            return;
+        };
+
+        match switch_res {
+            Ok(s) => self.switch = SwitchData::Available(s),
+            Err(SwitchError::SwitchNotFound) => self.switch = SwitchData::None,
+            Err(e) => {
+                self.toast.error(e.to_string());
+            }
         }
     }
 }
 
-impl eframe::App for MyApp {
-    fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
-        if let Ok(switch_res) = self.recv.try_recv() {
-            if self.switch != SwitchData::Done {
-                match switch_res {
-                    Ok(s) => self.switch = SwitchData::Available(s),
-                    Err(SwitchError::SwitchNotFound) => self.switch = SwitchData::None,
-                    Err(e) => {
-                        self.toast.error(e.to_string());
-                    }
-                }
-            }
+fn execute_helper(mut switch: Switch, payload: &Payload, toast: &mut Toasts) {
+    let handle = match switch.handle() {
+        Ok(handle) => handle,
+        Err(e) => {
+            toast.error(e.to_string());
+            return;
         }
+    };
 
-        self.toast.show(ctx);
-        self.main_tab(ctx);
-        preview_files_being_dropped(ctx);
-
-        // Collect dropped files:
-        ctx.input(|i| {
-            if let Some(last) = i.raw.dropped_files.last() {
-                if let Some(path) = &last.path {
-                    match PayloadData::new(Utf8Path::from_path(path).unwrap()) {
-                        Ok(payload) => self.selected_data.set_payload(payload),
-                        Err(e) => {
-                            self.toast.error(e.to_string());
-                        }
-                    }
-                }
-            }
-        });
+    if let Err(e) = handle.execute(payload) {
+        toast.error(e.to_string());
     }
 }
 
@@ -191,5 +191,16 @@ fn preview_files_being_dropped(ctx: &Context) {
             TextStyle::Heading.resolve(&ctx.style()),
             Color32::WHITE,
         );
+    }
+}
+
+impl eframe::App for MyApp {
+    fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
+        self.retrieve_switch_state();
+        self.toast.show(ctx);
+        self.main_tab(ctx);
+        preview_files_being_dropped(ctx);
+
+        self.file_dropper(ctx)
     }
 }

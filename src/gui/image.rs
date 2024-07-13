@@ -3,7 +3,7 @@ use eframe::egui::{include_image, IconData, Ui};
 use super::app::MyApp;
 
 impl MyApp {
-    pub fn switch_image(&self, ui: &mut Ui) {
+    pub fn show_image(&self, ui: &mut Ui) {
         let src = match self.switch {
             crate::switch::SwitchData::None => include_image!("images/not_found.svg"),
             crate::switch::SwitchData::Available(_) => include_image!("images/connected.svg"),
@@ -18,7 +18,7 @@ pub fn load_icon() -> IconData {
 
     let (icon_rgba, icon_width, icon_height) = {
         let image = image::load_from_memory(ICON)
-            .expect("Failed to open icon path")
+            .expect("icon to load from memory")
             .into_rgba8();
         let (width, height) = image.dimensions();
         let rgba = image.into_raw();

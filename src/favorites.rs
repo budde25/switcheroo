@@ -123,6 +123,10 @@ impl Favorite {
         self.name.as_ref()
     }
 
+    pub fn stem(&self) -> &str {
+        self.name().trim_end_matches(".bin")
+    }
+
     pub fn read(&self) -> Result<Payload> {
         Ok(Payload::read(&*self.path())?)
     }
