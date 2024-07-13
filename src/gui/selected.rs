@@ -1,8 +1,8 @@
 use anyhow::Result;
 use camino::Utf8PathBuf;
-use eframe::egui::panel::Side;
 use eframe::egui::{
-    global_dark_light_mode_switch, Button, Grid, Layout, RichText, SidePanel, TextStyle, Ui,
+    global_dark_light_mode_buttons, global_dark_light_mode_switch, Button, Context, Grid, Layout,
+    RichText, SidePanel, TextStyle, Ui, Visuals,
 };
 use eframe::emath::Align;
 use eframe::epaint::Color32;
@@ -21,14 +21,19 @@ pub enum Selected {
 }
 
 impl Selected {
-    fn rich_text(&self) -> RichText {
-        match self {
+    fn rich_text(&self, ctx: &Context) -> RichText {
+        let text = match self {
             Selected::None => return RichText::new("None").size(16.0),
             Selected::Payload(p) => RichText::new(p.file_name()),
             Selected::Favorite(f) => RichText::new(f.name()),
         }
-        .size(16.0)
-        .color(Color32::LIGHT_BLUE)
+        .size(16.0);
+
+        if ctx.style().visuals == Visuals::dark() {
+            text.color(Color32::LIGHT_BLUE)
+        } else {
+            text.color(Color32::DARK_BLUE)
+        }
     }
 }
 
@@ -134,11 +139,11 @@ impl SelectedData {
 
     pub fn render_payload_name(&mut self, ui: &mut Ui) {
         ui.label(RichText::new("Payload:").size(16.0));
-        ui.monospace(self.selected.rich_text());
+        ui.monospace(self.selected.rich_text(ui.ctx()));
     }
 
     pub fn render(&mut self, ctx: &eframe::egui::Context) {
-        SidePanel::new(Side::Left, "Favorites").show(ctx, |ui| {
+        SidePanel::left("favorites").show(ctx, |ui| {
             ui.add_space(5.0);
             ui.horizontal(|ui| {
                 ui.label(RichText::new("Favorites").text_style(TextStyle::Heading));

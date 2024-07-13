@@ -20,7 +20,7 @@ const APP_NAME: &str = "Switcheroo";
 pub fn gui() -> eframe::Result<()> {
     let options = eframe::NativeOptions {
         viewport: ViewportBuilder::default()
-            .with_min_inner_size([400.0, 300.0])
+            .with_min_inner_size([450.0, 300.0])
             .with_drag_and_drop(true)
             .with_icon(image::load_icon()),
         ..Default::default()
@@ -39,7 +39,7 @@ pub fn gui() -> eframe::Result<()> {
             let switch = match Switch::find() {
                 Ok(a) => SwitchData::Available(a),
                 Err(SwitchError::SwitchNotFound) => SwitchData::None,
-                Err(e) => return Box::new(InitError::new(e)),
+                Err(e) => return Ok(Box::new(InitError::new(e))),
             };
 
             let recv = spawn_thread_context(cc.egui_ctx.clone());
@@ -52,7 +52,7 @@ pub fn gui() -> eframe::Result<()> {
                 recv,
             };
 
-            Box::new(app)
+            Ok(Box::new(app))
         }),
     )
 }
