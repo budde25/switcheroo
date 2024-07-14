@@ -4,16 +4,16 @@ use clap_verbosity_flag::Verbosity;
 use clap::builder::Styles;
 use clap::{builder::ArgPredicate, Args, Parser, Subcommand, ValueHint};
 
-fn style() -> Styles {
+const fn style() -> Styles {
     use clap::builder::styling::*;
     Styles::styled()
-        .header(AnsiColor::Green.on_default() | Effects::BOLD)
-        .usage(AnsiColor::Green.on_default() | Effects::BOLD)
-        .literal(AnsiColor::Cyan.on_default() | Effects::BOLD)
+        .header(AnsiColor::Green.on_default().effects(Effects::BOLD))
+        .usage(AnsiColor::Green.on_default().effects(Effects::BOLD))
+        .literal(AnsiColor::Cyan.on_default().effects(Effects::BOLD))
         .placeholder(AnsiColor::Cyan.on_default())
-        .error(AnsiColor::Red.on_default() | Effects::BOLD)
-        .valid(AnsiColor::Cyan.on_default() | Effects::BOLD)
-        .invalid(AnsiColor::Yellow.on_default() | Effects::BOLD)
+        .error(AnsiColor::Red.on_default().effects(Effects::BOLD))
+        .valid(AnsiColor::Cyan.on_default().effects(Effects::BOLD))
+        .invalid(AnsiColor::Yellow.on_default().effects(Effects::BOLD))
 }
 
 #[derive(Debug, Parser)]
