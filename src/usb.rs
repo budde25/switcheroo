@@ -3,6 +3,7 @@ use std::sync::mpsc::{channel, Receiver, Sender};
 use std::thread;
 use tegra_rcm::{create_hotplug, Actions, Switch, SwitchError};
 
+#[allow(dead_code)]
 pub(crate) struct HotplugHandler {
     sender: Sender<Result<Switch, SwitchError>>,
 }

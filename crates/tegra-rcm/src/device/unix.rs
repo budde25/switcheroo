@@ -29,7 +29,7 @@ impl super::Device for SwitchDevice {
 
     /// Init the device
     fn init(&mut self) -> Result<SwitchHandle> {
-        let mut handle = self.device.open()?;
+        let handle = self.device.open()?;
         handle.claim_interface(0)?;
         let switch_handle = SwitchHandle { handle };
         switch_handle.validate_environment()?;
