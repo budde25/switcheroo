@@ -16,7 +16,7 @@
   </description>
   <screenshots>
     <screenshot type="default">
-      <image>https://raw.githubusercontent.com/budde25/switcheroo/main/extra/images/gui-small.png</image>
+      <image>https://raw.githubusercontent.com/budde25/switcheroo/main/extra/images/gui.png</image>
       <caption>A GUI for the Nintendo Switch RCM exploit</caption>
     </screenshot>
   </screenshots>
@@ -28,7 +28,9 @@
   </keywords>
   <url type="homepage">https://github.com/budde25/switcheroo</url>
   <url type="bugtracker">https://github.com/budde25/switcheroo/issues</url>
-  <developer_name>Ethan Budd</developer_name>
+  <developer id="dev.budd">
+    <name>Ethan Budd</name>
+  </developer>
    <provides>
   <id>io.ebudd.Switcheroo.desktop</id>
   </provides>
