@@ -1,6 +1,6 @@
 use std::sync::mpsc::Sender;
 
-use log::error;
+use log::{error, info};
 use rusb::{has_hotplug, Context, Device, Hotplug, HotplugBuilder, UsbContext};
 
 use super::{HotplugError, HotplugHandler};
@@ -18,6 +18,8 @@ impl Hotplug<Context> for HotplugHandler {
             error!("device arrive event {e}");
         }
 
+        info!("rcm device arrived");
+
         if let Some(callback) = &self.callback {
             callback();
         }
@@ -28,6 +30,8 @@ impl Hotplug<Context> for HotplugHandler {
         if let Err(e) = self.sender.send(Err(crate::SwitchError::SwitchNotFound)) {
             error!("device left event {e}");
         }
+
+        info!("rcm device left");
 
         if let Some(callback) = &self.callback {
             callback();

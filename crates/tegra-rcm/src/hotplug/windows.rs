@@ -1,7 +1,7 @@
 use std::sync::mpsc::Sender;
 
 use libusbk::{has_hotplug, Device, Hotplug, HotplugBuilder};
-use log::error;
+use log::{error, info};
 
 use crate::device::{SwitchDevice, RCM_PID, RCM_VID};
 use crate::{Switch, SwitchError};
@@ -18,6 +18,8 @@ impl Hotplug for HotplugHandler {
             error!("device arrive event {e}");
         }
 
+        info!("rcm device arrived");
+
         if let Some(callback) = &self.callback {
             callback();
         }
@@ -28,6 +30,8 @@ impl Hotplug for HotplugHandler {
         if let Err(e) = self.sender.send(Err(crate::SwitchError::SwitchNotFound)) {
             error!("device left event {e}");
         }
+
+        info!("rcm device left");
 
         if let Some(callback) = &self.callback {
             callback();
