@@ -21,5 +21,5 @@ build() {
 
 package() {
   install -Dm755 "$srcdir/$_pkgname/target/release/switcheroo" "$pkgdir/usr/bin/switcheroo"
-  install -Dm644 "$srcdir/$_pkgname/extra/linux/io.ebudd.Switcheroo.desktop" -t "$pkgdir/usr/share/applications/"
+  install -Dm644 "$srcdir/$_pkgname/extra/linux/dev.budd.Switcheroo.desktop" -t "$pkgdir/usr/share/applications/"
 }

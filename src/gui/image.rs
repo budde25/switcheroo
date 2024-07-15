@@ -14,7 +14,7 @@ impl MyApp {
 }
 
 pub fn load_icon() -> IconData {
-    const ICON: &[u8; 16_975] = include_bytes!("../../extra/logo/io.ebudd.Switcheroo.png");
+    const ICON: &[u8; 16_975] = include_bytes!("../../extra/logo/dev.budd.Switcheroo.png");
 
     let (icon_rgba, icon_width, icon_height) = {
         let image = image::load_from_memory(ICON)

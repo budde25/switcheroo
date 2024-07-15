@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Copyright 2022 Ethan Budd -->
 <component type="desktop-application">
-  <id>io.ebudd.Switcheroo</id>
+  <id>dev.budd.Switcheroo</id>
   <!-- Translators: The application name -->
   <name>Switcheroo</name>
   <project_license>GPL-2.0-or-later</project_license>
   <metadata_license>MIT</metadata_license>
-  <launchable type="desktop-id">io.ebudd.Switcheroo.desktop</launchable>
+  <launchable type="desktop-id">dev.budd.Switcheroo.desktop</launchable>
   <!-- Translators: The application's summary / tagline -->
   <summary>A GUI for the Nintendo Switch RCM exploit</summary>
   <description>
@@ -32,7 +32,7 @@
     <name>Ethan Budd</name>
   </developer>
    <provides>
-  <id>io.ebudd.Switcheroo.desktop</id>
+  <id>dev.budd.Switcheroo.desktop</id>
   </provides>
   <content_rating type="oars-1.0" />
   <releases>

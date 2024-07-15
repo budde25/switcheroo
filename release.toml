@@ -1,7 +1,0 @@
-pre-release-replacements = [
-    { file = "appimage.yml", search = "version: 0.*.", replace = "version: {{version}}" },
-    { file = "PKGBUILD", search = "pkgver='*'", replace = "pkgver='{{version}}'" },
-    { file = "io.ebudd.Switcheroo.appdata", search = "release version=\"*\"", replace = "release version=\"{{version}}\"" },
-    { file = "info.plist", search = "<string>0.*<string>", replace = "<string>{{version}}<string>" },
-    { file = "switcheroo.wxs", search = "Version=\"*\"", replace = "Version=\"{{version}}\"" },
-]

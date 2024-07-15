@@ -2,7 +2,7 @@
 Type=Application
 TryExec=switcheroo
 Exec=switcheroo gui
-Icon=io.ebudd.Switcheroo
+Icon=dev.budd.Switcheroo
 Terminal=false
 Categories=Utility;
 
