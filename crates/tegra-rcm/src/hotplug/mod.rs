@@ -5,7 +5,7 @@ use thiserror::Error;
 use crate::error::Result;
 use crate::Switch;
 
-#[cfg(feature = "notify")]
+#[cfg(all(feature = "notify", target_os = "linux"))]
 mod notify;
 
 cfg_if::cfg_if! {
@@ -13,7 +13,6 @@ cfg_if::cfg_if! {
         mod unix;
         pub use unix::create_hotplug;
     } else if #[cfg(target_os = "windows")] {
-        #[cfg(target_os = "windows")]
         mod windows;
         pub use windows::create_hotplug;
     } else {

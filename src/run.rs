@@ -1,7 +1,7 @@
 use console::{style, Emoji};
 use tegra_rcm::{Payload, Switch, SwitchError};
 
-use crate::cli::{Add, Device, Execute, Gui, List, Remove};
+use crate::cli::{Add, Device, Execute, List, Remove};
 use crate::error::Error;
 use crate::usb::spawn_thread;
 use crate::{favorites::Favorites, spinner};
@@ -141,7 +141,7 @@ impl RunCommand for Remove {
 }
 
 #[cfg(feature = "gui")]
-impl RunCommand for Gui {
+impl RunCommand for crate::cli::Gui {
     fn run(self) -> Result<(), CliError> {
         crate::gui::gui().expect("GUI is able to be started");
         Ok(())

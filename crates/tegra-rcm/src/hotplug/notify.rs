@@ -1,10 +1,11 @@
 use notify::{Config, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
-use std::{path::Path, sync::mpsc::Sender};
+use std::sync::mpsc::Sender;
 
 use crate::{Switch, SwitchError};
 
-pub fn watcher_hotplug<P: AsRef<Path>>(
-    path: P,
+const USB_DEV_PATH: &str = "/dev/bus/usb";
+
+pub fn watcher_hotplug(
     sender: Sender<Result<Switch, SwitchError>>,
     callback: Option<impl Fn() + Send + Sync + 'static>,
 ) -> notify::Result<()> {
@@ -16,7 +17,7 @@ pub fn watcher_hotplug<P: AsRef<Path>>(
 
     // Add a path to be watched. All files and directories at that path and
     // below will be monitored for changes.
-    watcher.watch(path.as_ref(), RecursiveMode::Recursive)?;
+    watcher.watch(USB_DEV_PATH, RecursiveMode::Recursive)?;
 
     for res in rx {
         match res {
@@ -43,7 +44,7 @@ pub fn watcher_hotplug<P: AsRef<Path>>(
         }
     }
 
-    eprintln!("watcher loop ended");
+    log::error!("watcher loop ended");
 
     Ok(())
 }

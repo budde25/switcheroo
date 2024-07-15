@@ -1,6 +1,7 @@
 use tegra_rcm::Switch;
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub enum SwitchData {
     Available(Switch),
     None,
