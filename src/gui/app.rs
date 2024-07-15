@@ -19,6 +19,14 @@ pub struct MyApp {
 }
 
 impl MyApp {
+    fn is_executable(&self) -> bool {
+        let SwitchData::Available(_) = self.switch else {
+            return false;
+        };
+
+        self.selected_data.is_some()
+    }
+
     // we can execute if we have a payload and rcm is available
     fn executable(&self) -> Option<(Switch, PayloadData)> {
         // we can't be executable unless switch is available and we can get a payload
@@ -83,7 +91,6 @@ impl MyApp {
             }
         }
 
-        let executable = self.executable();
         if self.switch == SwitchData::Done {
             let reset_button = ui
                 .button(RichText::new("↺").size(50.0))
@@ -95,15 +102,22 @@ impl MyApp {
         } else {
             let execute_button = ui
                 .add_enabled(
-                    executable.is_some(),
+                    self.is_executable(),
                     Button::new(RichText::new("🚀").size(50.0)),
                 )
                 .on_hover_text("Inject loaded payload");
 
             if execute_button.clicked() {
-                let (switch, payload) = executable.expect("device is executable");
-
-                execute_helper(switch, payload.payload(), &mut self.toast);
+                match self.executable() {
+                    Some((switch, payload)) => {
+                        if execute_helper(switch, payload.payload(), &mut self.toast) {
+                            self.switch = SwitchData::Done;
+                        }
+                    }
+                    None => {
+                        self.toast.error("No payload selected");
+                    }
+                }
             }
         }
     }
@@ -145,18 +159,22 @@ impl MyApp {
     }
 }
 
-fn execute_helper(mut switch: Switch, payload: &Payload, toast: &mut Toasts) {
+/// Execute the payload on the switch, returns true on success
+fn execute_helper(mut switch: Switch, payload: &Payload, toast: &mut Toasts) -> bool {
     let handle = match switch.handle() {
         Ok(handle) => handle,
         Err(e) => {
             toast.error(e.to_string());
-            return;
+            return false;
         }
     };
 
     if let Err(e) = handle.execute(payload) {
+        error!("error executing payload: {e}");
         toast.error(e.to_string());
+        return false;
     }
+    true
 }
 
 /// Preview hovering files:

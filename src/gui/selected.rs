@@ -86,6 +86,11 @@ impl SelectedData {
         res.is_ok()
     }
 
+    /// Is there selected data
+    pub fn is_some(&self) -> bool {
+        self.selected != Selected::None
+    }
+
     /// Add a payload to the favorites (then updates the cache)
     pub fn add(&mut self, payload_data: &PayloadData) -> Result<()> {
         let favorite = self.cache.add(payload_data.path(), true)?.clone();

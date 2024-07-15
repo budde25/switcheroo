@@ -73,7 +73,6 @@ clap_mangen = "0.2"
 camino = "1.1"
 
 [features]
-default = ["gui"]
 gui = [
     "dep:egui_extras",
     "dep:eframe",
@@ -82,6 +81,8 @@ gui = [
     "dep:egui-notify",
     "dep:trash",
 ]
+# Enables the alternative notify hotplug implementation for udev restrcited environments (such a flatpak)
+notify = ["tegra-rcm/notify"]
 
 # The profile that 'cargo dist' will build with
 [profile.dist]

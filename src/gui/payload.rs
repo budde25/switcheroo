@@ -1,4 +1,5 @@
 use camino::Utf8Path;
+use log::info;
 use tegra_rcm::{Payload, PayloadError};
 
 use crate::favorites::Favorite;
@@ -12,6 +13,7 @@ pub struct PayloadData {
 impl PayloadData {
     /// Makes a payload from a given file path
     pub fn new<P: AsRef<Utf8Path>>(path: P) -> Result<Self, PayloadError> {
+        info!("load payload data from: {}", path.as_ref());
         let payload = Payload::read(path.as_ref())?;
 
         let payload_data = PayloadData {
@@ -44,6 +46,7 @@ impl PayloadData {
 impl Favorite {
     pub fn read_payload_data(&self) -> Result<PayloadData, PayloadError> {
         let payload = Payload::read(self.path().as_std_path())?;
+        info!("load payload data from favorite: {}", self.path());
         Ok(PayloadData {
             payload,
             path: self.path(),

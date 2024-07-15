@@ -5,6 +5,9 @@ use thiserror::Error;
 use crate::error::Result;
 use crate::Switch;
 
+#[cfg(feature = "notify")]
+mod notify;
+
 cfg_if::cfg_if! {
     if #[cfg(any(target_os = "macos", target_os = "linux"))] {
         mod unix;
@@ -35,4 +38,7 @@ struct HotplugHandler {
 pub enum HotplugError {
     #[error("The hotplug API is not supported on this platform")]
     NotSupported,
+
+    #[error("A file watcher error occurred")]
+    Watcher,
 }

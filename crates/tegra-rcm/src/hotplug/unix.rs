@@ -42,12 +42,17 @@ impl Hotplug<Context> for HotplugHandler {
 /// create a hotplug setup, this blocks
 pub fn create_hotplug(
     tx: Sender<Result<Switch, SwitchError>>,
-    mut callback: Option<impl Fn() + Send + Sync + 'static>,
+    callback: Option<impl Fn() + Send + Sync + 'static>,
 ) -> Result<(), HotplugError> {
     if !has_hotplug() {
         return Err(HotplugError::NotSupported);
     }
 
+    #[cfg(feature = "notify")]
+    return super::notify::watcher_hotplug("/dev/bus/usb", tx.clone(), callback)
+        .map_err(|_| HotplugError::Watcher);
+
+    let mut callback = callback;
     let context = Context::new().unwrap();
 
     let hotplug_handler = match callback.take() {
