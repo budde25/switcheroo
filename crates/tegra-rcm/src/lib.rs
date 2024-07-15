@@ -3,13 +3,6 @@
 //! A library to help exploit the bootROM exploit for the Tegra X1's RCM mode
 //! Current support OS's are Linux, MacOS, and Windows
 
-#![deny(
-    missing_docs,
-    missing_debug_implementations,
-    trivial_casts,
-    trivial_numeric_casts
-)]
-
 mod buffer;
 mod device;
 mod error;

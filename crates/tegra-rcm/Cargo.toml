@@ -34,9 +34,9 @@ notify = { version = "6.1.1", optional = true }
 libusbk = { version = "0.1.2", features = ["vendored"] }
 winapi = { version = "0.3.9", features = ["ioapiset", "errhandlingapi"] }
 
-[dev-dependencies]
-criterion = "0.5.1"
-
-[[bench]]
-name = "my_benchmark"
-harness = false
+[lints.rust]
+dead_code = "allow"
+missing_docs = "deny"
+missing_debug_implementations = "deny"
+trivial_casts = "deny"
+trivial_numeric_casts = "deny"
