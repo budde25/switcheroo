@@ -1,4 +1,5 @@
 use notify::{Config, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
+use std::path::Path;
 use std::sync::mpsc::Sender;
 
 use crate::{Switch, SwitchError};
@@ -17,7 +18,7 @@ pub fn watcher_hotplug(
 
     // Add a path to be watched. All files and directories at that path and
     // below will be monitored for changes.
-    watcher.watch(USB_DEV_PATH, RecursiveMode::Recursive)?;
+    watcher.watch(Path::new(USB_DEV_PATH), RecursiveMode::Recursive)?;
 
     for res in rx {
         match res {
