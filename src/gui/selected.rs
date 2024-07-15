@@ -1,8 +1,8 @@
 use anyhow::Result;
 use camino::Utf8PathBuf;
-use eframe::egui::panel::Side;
 use eframe::egui::{
-    global_dark_light_mode_switch, Button, Grid, Layout, RichText, SidePanel, TextStyle, Ui,
+    global_dark_light_mode_switch, Button, Context, Layout, RichText, ScrollArea, SidePanel,
+    TextStyle, Ui, Visuals,
 };
 use eframe::emath::Align;
 use eframe::epaint::Color32;
@@ -21,14 +21,19 @@ pub enum Selected {
 }
 
 impl Selected {
-    fn rich_text(&self) -> RichText {
-        match self {
+    fn rich_text(&self, ctx: &Context) -> RichText {
+        let text = match self {
             Selected::None => return RichText::new("None").size(16.0),
-            Selected::Payload(p) => RichText::new(p.file_name()),
-            Selected::Favorite(f) => RichText::new(f.name()),
+            Selected::Payload(p) => RichText::new(p.file_stem()),
+            Selected::Favorite(f) => RichText::new(f.stem()),
         }
-        .size(16.0)
-        .color(Color32::LIGHT_BLUE)
+        .size(16.0);
+
+        if ctx.style().visuals == Visuals::dark() {
+            text.color(Color32::LIGHT_BLUE)
+        } else {
+            text.color(Color32::DARK_BLUE)
+        }
     }
 }
 
@@ -81,6 +86,11 @@ impl SelectedData {
         res.is_ok()
     }
 
+    /// Is there selected data
+    pub fn is_some(&self) -> bool {
+        self.selected != Selected::None
+    }
+
     /// Add a payload to the favorites (then updates the cache)
     pub fn add(&mut self, payload_data: &PayloadData) -> Result<()> {
         let favorite = self.cache.add(payload_data.path(), true)?.clone();
@@ -91,10 +101,6 @@ impl SelectedData {
 
     pub fn contains(&self, file_name: &str) -> bool {
         self.cache.get(file_name).is_some()
-    }
-
-    pub fn is_some(&self) -> bool {
-        self.selected != Selected::None
     }
 
     pub fn can_favorite(&self) -> bool {
@@ -134,31 +140,38 @@ impl SelectedData {
 
     pub fn render_payload_name(&mut self, ui: &mut Ui) {
         ui.label(RichText::new("Payload:").size(16.0));
-        ui.monospace(self.selected.rich_text());
+        ui.monospace(self.selected.rich_text(ui.ctx()));
     }
 
     pub fn render(&mut self, ctx: &eframe::egui::Context) {
-        SidePanel::new(Side::Left, "Favorites").show(ctx, |ui| {
-            ui.add_space(5.0);
-            ui.horizontal(|ui| {
-                ui.label(RichText::new("Favorites").text_style(TextStyle::Heading));
-                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                    global_dark_light_mode_switch(ui);
+        SidePanel::left("favorites")
+            .resizable(false)
+            .show(ctx, |ui| {
+                ui.add_space(5.0);
+                ui.horizontal(|ui| {
+                    ui.label(RichText::new("Favorites").text_style(TextStyle::Heading));
+                    ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                        global_dark_light_mode_switch(ui);
+                        let refresh_button =
+                            ui.button("🔄").on_hover_text("Refresh favorites list");
+                        if refresh_button.clicked() {
+                            self.update()
+                        }
+                    });
                 });
+                ui.separator();
+
+                if self.favorites().count() == 0 {
+                    ui.label(RichText::new("No favorites"));
+                    return;
+                }
+
+                self.render_grid(ui);
             });
-            ui.separator();
-
-            if self.favorites().count() == 0 {
-                ui.label(RichText::new("Nothing here..."));
-                return;
-            }
-
-            self.render_grid(ui);
-        });
     }
 
     fn render_grid(&mut self, ui: &mut Ui) {
-        Grid::new("favorites").show(ui, |ui| {
+        ScrollArea::vertical().show(ui, |ui| {
             // TODO: find a way cheaper way to iterate
             // TODO: Remove once false positive is resolved
             for entry in self.favorites().cloned().collect::<Vec<_>>() {
@@ -166,9 +179,9 @@ impl SelectedData {
                     ui.selectable_value(
                         &mut self.selected,
                         Selected::Favorite(entry.clone()),
-                        entry.name(),
+                        entry.stem(),
                     );
-                    ui.add_space(36.0);
+                    ui.add_space(16.0);
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                         let remove_button = Button::new("🗑");
                         if ui

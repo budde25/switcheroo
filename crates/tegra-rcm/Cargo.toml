@@ -11,28 +11,32 @@ readme = "README.md"
 categories = ["os", "hardware-support"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+notify = ["dep:notify"]
+
 [dependencies]
 cfg-if = "1.0.0"
 log = { workspace = true }
-thiserror = "1.0.57"
+thiserror = "1.0.62"
 
 # Linux and Mac specific
 [target.'cfg(any(target_os = "linux", target_os = "macos"))'.dependencies]
-rusb = "0.9.3"
+rusb = "0.9.4"
 
 # Linux specific
 [target.'cfg(target_os = "linux")'.dependencies]
 glob = "0.3.1"
-nix = { version = "0.28.0", features = ["ioctl"] }
+nix = { version = "0.29.0", features = ["ioctl"] }
+notify = { version = "6.1.1", optional = true }
 
 # Windows specific
 [target.'cfg(target_os = "windows")'.dependencies]
-libusbk = { version = "0.1.2", features = ["vendored"] }
+libusbk = { version = "0.2.0", features = ["vendored"] }
 winapi = { version = "0.3.9", features = ["ioapiset", "errhandlingapi"] }
 
-[dev-dependencies]
-criterion = "0.5.1"
-
-[[bench]]
-name = "my_benchmark"
-harness = false
+[lints.rust]
+dead_code = "allow"
+missing_docs = "deny"
+missing_debug_implementations = "deny"
+trivial_casts = "deny"
+trivial_numeric_casts = "deny"

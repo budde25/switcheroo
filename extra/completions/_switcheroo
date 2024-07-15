@@ -14,7 +14,7 @@ _switcheroo() {
     fi
 
     local context curcontext="$curcontext" state line
-    _arguments "${_arguments_options[@]}" \
+    _arguments "${_arguments_options[@]}" : \
 '*-v[Increase logging verbosity]' \
 '*--verbose[Increase logging verbosity]' \
 '(-v --verbose)*-q[Decrease logging verbosity]' \
@@ -33,7 +33,7 @@ _switcheroo() {
         curcontext="${curcontext%:*:*}:switcheroo-command-$line[1]:"
         case $line[1] in
             (execute)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 '-f+[Use a favorite payload instead]:FAVORITE: ' \
 '--favorite=[Use a favorite payload instead]:FAVORITE: ' \
 '-w[Wait for device to be connected]' \
@@ -48,7 +48,7 @@ _arguments "${_arguments_options[@]}" \
 && ret=0
 ;;
 (device)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 '-w[Wait for device to be connected]' \
 '--wait[Wait for device to be connected]' \
 '*-v[Increase logging verbosity]' \
@@ -60,7 +60,7 @@ _arguments "${_arguments_options[@]}" \
 && ret=0
 ;;
 (list)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 '*-v[Increase logging verbosity]' \
 '*--verbose[Increase logging verbosity]' \
 '(-v --verbose)*-q[Decrease logging verbosity]' \
@@ -70,7 +70,7 @@ _arguments "${_arguments_options[@]}" \
 && ret=0
 ;;
 (add)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 '*-v[Increase logging verbosity]' \
 '*--verbose[Increase logging verbosity]' \
 '(-v --verbose)*-q[Decrease logging verbosity]' \
@@ -81,7 +81,7 @@ _arguments "${_arguments_options[@]}" \
 && ret=0
 ;;
 (remove)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 '*-v[Increase logging verbosity]' \
 '*--verbose[Increase logging verbosity]' \
 '(-v --verbose)*-q[Decrease logging verbosity]' \
@@ -92,7 +92,7 @@ _arguments "${_arguments_options[@]}" \
 && ret=0
 ;;
 (gui)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 '*-v[Increase logging verbosity]' \
 '*--verbose[Increase logging verbosity]' \
 '(-v --verbose)*-q[Decrease logging verbosity]' \
@@ -102,7 +102,7 @@ _arguments "${_arguments_options[@]}" \
 && ret=0
 ;;
 (help)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 ":: :_switcheroo__help_commands" \
 "*::: :->help" \
 && ret=0
@@ -114,31 +114,31 @@ _arguments "${_arguments_options[@]}" \
         curcontext="${curcontext%:*:*}:switcheroo-help-command-$line[1]:"
         case $line[1] in
             (execute)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 && ret=0
 ;;
 (device)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 && ret=0
 ;;
 (list)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 && ret=0
 ;;
 (add)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 && ret=0
 ;;
 (remove)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 && ret=0
 ;;
 (gui)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 && ret=0
 ;;
 (help)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 && ret=0
 ;;
         esac
@@ -168,40 +168,20 @@ _switcheroo__add_commands() {
     local commands; commands=()
     _describe -t commands 'switcheroo add commands' commands "$@"
 }
-(( $+functions[_switcheroo__help__add_commands] )) ||
-_switcheroo__help__add_commands() {
-    local commands; commands=()
-    _describe -t commands 'switcheroo help add commands' commands "$@"
-}
 (( $+functions[_switcheroo__device_commands] )) ||
 _switcheroo__device_commands() {
     local commands; commands=()
     _describe -t commands 'switcheroo device commands' commands "$@"
-}
-(( $+functions[_switcheroo__help__device_commands] )) ||
-_switcheroo__help__device_commands() {
-    local commands; commands=()
-    _describe -t commands 'switcheroo help device commands' commands "$@"
 }
 (( $+functions[_switcheroo__execute_commands] )) ||
 _switcheroo__execute_commands() {
     local commands; commands=()
     _describe -t commands 'switcheroo execute commands' commands "$@"
 }
-(( $+functions[_switcheroo__help__execute_commands] )) ||
-_switcheroo__help__execute_commands() {
-    local commands; commands=()
-    _describe -t commands 'switcheroo help execute commands' commands "$@"
-}
 (( $+functions[_switcheroo__gui_commands] )) ||
 _switcheroo__gui_commands() {
     local commands; commands=()
     _describe -t commands 'switcheroo gui commands' commands "$@"
-}
-(( $+functions[_switcheroo__help__gui_commands] )) ||
-_switcheroo__help__gui_commands() {
-    local commands; commands=()
-    _describe -t commands 'switcheroo help gui commands' commands "$@"
 }
 (( $+functions[_switcheroo__help_commands] )) ||
 _switcheroo__help_commands() {
@@ -216,6 +196,26 @@ _switcheroo__help_commands() {
     )
     _describe -t commands 'switcheroo help commands' commands "$@"
 }
+(( $+functions[_switcheroo__help__add_commands] )) ||
+_switcheroo__help__add_commands() {
+    local commands; commands=()
+    _describe -t commands 'switcheroo help add commands' commands "$@"
+}
+(( $+functions[_switcheroo__help__device_commands] )) ||
+_switcheroo__help__device_commands() {
+    local commands; commands=()
+    _describe -t commands 'switcheroo help device commands' commands "$@"
+}
+(( $+functions[_switcheroo__help__execute_commands] )) ||
+_switcheroo__help__execute_commands() {
+    local commands; commands=()
+    _describe -t commands 'switcheroo help execute commands' commands "$@"
+}
+(( $+functions[_switcheroo__help__gui_commands] )) ||
+_switcheroo__help__gui_commands() {
+    local commands; commands=()
+    _describe -t commands 'switcheroo help gui commands' commands "$@"
+}
 (( $+functions[_switcheroo__help__help_commands] )) ||
 _switcheroo__help__help_commands() {
     local commands; commands=()
@@ -226,15 +226,15 @@ _switcheroo__help__list_commands() {
     local commands; commands=()
     _describe -t commands 'switcheroo help list commands' commands "$@"
 }
-(( $+functions[_switcheroo__list_commands] )) ||
-_switcheroo__list_commands() {
-    local commands; commands=()
-    _describe -t commands 'switcheroo list commands' commands "$@"
-}
 (( $+functions[_switcheroo__help__remove_commands] )) ||
 _switcheroo__help__remove_commands() {
     local commands; commands=()
     _describe -t commands 'switcheroo help remove commands' commands "$@"
+}
+(( $+functions[_switcheroo__list_commands] )) ||
+_switcheroo__list_commands() {
+    local commands; commands=()
+    _describe -t commands 'switcheroo list commands' commands "$@"
 }
 (( $+functions[_switcheroo__remove_commands] )) ||
 _switcheroo__remove_commands() {

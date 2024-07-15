@@ -1,6 +1,6 @@
 use anyhow::{bail, Result};
 use camino::{Utf8Path, Utf8PathBuf};
-use log::{error, warn};
+use log::warn;
 use once_cell::sync::Lazy;
 use std::collections::BTreeSet;
 use std::fs;
@@ -35,17 +35,17 @@ impl Favorites {
     pub fn new() -> Self {
         let mut list = BTreeSet::new();
         let dir = Utf8Path::read_dir_utf8(Self::directory()).expect("Favorites directory exists");
-        for dir_res in dir {
-            let Ok(entry) = dir_res else {
-                warn!("Error parsing favorite: {}", dir_res.unwrap_err());
-                continue;
-            };
-            let file_name = entry.file_name();
-            if file_name == ".DS_Store" {
-                continue;
-            }
-
-            list.insert(Favorite::new(file_name));
+        for dir in dir
+            .filter_map(|x| match x {
+                Ok(dir) => Some(dir),
+                Err(e) => {
+                    warn!("Error parsing favorite: {}", e);
+                    None
+                }
+            })
+            .filter(|x| x.path().extension() == Some("bin"))
+        {
+            list.insert(Favorite::new(dir.file_name()));
         }
 
         Self { list }
@@ -84,7 +84,7 @@ impl Favorites {
         let path = utf8_path.as_std_path();
         #[cfg(feature = "gui")]
         if let Err(e) = trash::delete(path) {
-            error!("could not trash files: {}", e);
+            log::error!("could not trash files: {}", e);
             fs::remove_file(path).map_err(|x| x.with_path(path))?;
         };
         #[cfg(not(feature = "gui"))]
@@ -113,9 +113,9 @@ pub struct Favorite {
 }
 
 impl Favorite {
-    fn new(name: &str) -> Self {
+    fn new<S: AsRef<str>>(name: S) -> Self {
         Self {
-            name: name.trim().to_string().into_boxed_str(),
+            name: name.as_ref().trim().to_string().into_boxed_str(),
         }
     }
 
@@ -123,11 +123,13 @@ impl Favorite {
         self.name.as_ref()
     }
 
+    #[allow(dead_code)]
+    pub fn stem(&self) -> &str {
+        self.name().trim_end_matches(".bin")
+    }
+
     pub fn read(&self) -> Result<Payload> {
-        let utf8_path = self.path();
-        let path = utf8_path.as_std_path();
-        let payload_bytes = fs::read(path).map_err(|x| x.with_path(path))?;
-        Ok(Payload::new(&payload_bytes)?)
+        Ok(Payload::read(&*self.path())?)
     }
 
     pub fn path(&self) -> Box<Utf8Path> {
