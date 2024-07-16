@@ -8,12 +8,16 @@
   <metadata_license>MIT</metadata_license>
   <launchable type="desktop-id">dev.budd.Switcheroo.desktop</launchable>
   <!-- Translators: The application's summary / tagline -->
-  <summary>A GUI for the Nintendo Switch RCM exploit</summary>
+  <summary>Switch homebrew enablement</summary>
   <description>
     <p>
-        A CLI and GUI for the RCM BootRom exploit (Fusée Gelée exploit for Nintendo Switch).
+        A GUI for the RCM BootRom exploit (Fusée Gelée exploit for Nintendo Switch).
     </p>
   </description>
+  <branding>
+    <color type="primary" scheme_preference="light">#578db3</color>
+    <color type="primary" scheme_preference="dark">#730a23</color>
+  </branding>
   <screenshots>
     <screenshot type="default">
       <image>https://raw.githubusercontent.com/budde25/switcheroo/main/extra/images/gui.png</image>
