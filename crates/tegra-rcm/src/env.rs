@@ -29,4 +29,6 @@ pub fn check_env() -> Result<()> {
 
 /// Validates the environment
 #[cfg(not(target_os = "linux"))]
-pub fn check_env() -> Result<()> {}
+pub fn check_env() -> Result<()> {
+    Ok(())
+}
