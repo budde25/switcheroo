@@ -40,7 +40,7 @@
   </provides>
   <content_rating type="oars-1.0" />
   <releases>
-    <release version="0.7.0" date="2024-07-15">
+    <release version="0.7.1" date="2024-07-15">
       <description>
         <p>Initial Release.</p>
       </description>
