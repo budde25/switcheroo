@@ -20,8 +20,8 @@ modules:
       - install -Dm755 run.sh -t /app/bin
       - install -Dm755 target/release/switcheroo -t /app/bin
       - install -Dm644 dev.budd.Switcheroo.desktop -t /app/share/applications
-      - install -Dm644 dev.budd.Switcheroo.png -t /app/share/icons/hicolor/512x512/apps
-      # - install -Dm644 dev.budd.Switcheroo.metainfo.xml /app/share/metainfo
+      - install -Dm644 dev.budd.Switcheroo.png -t /app/share/icons/hicolor/256x256/apps
+      - install -Dm644 dev.budd.Switcheroo.metainfo.xml -t /app/share/metainfo
     sources:
       - type: dir
         path: "."
@@ -33,8 +33,8 @@ modules:
         path: "extra/logo/dev.budd.Switcheroo.png"
       - type: file
         path: "extra/linux/dev.budd.Switcheroo.desktop"
-      # - type: file
-      #   path: "extra/linux/dev.budd.Switcheroo.metainfo.xml"
+      - type: file
+        path: "extra/linux/dev.budd.Switcheroo.metainfo.xml"
     build-options:
       append-path: "/usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/llvm16/bin"
       build-args:
