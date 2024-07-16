@@ -10,9 +10,8 @@ finish-args:
   - "--share=ipc"
   - "--socket=fallback-x11"
   - "--socket=wayland"
-  - "--device=dri"
-  - "--filesystem=home"
   - "--device=all"
+  - "--filesystem=host-etc"
 modules:
   - name: switcheroo
     buildsystem: simple

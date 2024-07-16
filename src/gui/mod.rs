@@ -36,6 +36,10 @@ pub fn gui() -> eframe::Result<()> {
 
             egui_extras::install_image_loaders(&cc.egui_ctx);
 
+            if let Err(e) = tegra_rcm::check_env() {
+                return Ok(Box::new(InitError::new(e)));
+            }
+
             let switch = match Switch::find() {
                 Ok(a) => SwitchData::Available(a),
                 Err(SwitchError::SwitchNotFound) => SwitchData::None,

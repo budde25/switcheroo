@@ -10,44 +10,48 @@ pub(crate) type Result<T> = std::result::Result<T, SwitchError>;
 #[non_exhaustive]
 pub enum SwitchError {
     /// Expected to get a timeout after smashing the stack but we did not
-    #[error("Expected timeout error after smashing the stack")]
+    #[error("expected timeout error after smashing the stack")]
     ExpectedError,
 
     /// Cannot find a switch in RCM mode connected
-    #[error("Nintendo Switch in RCM mode not found")]
+    #[error("switch in RCM mode not found")]
     SwitchNotFound,
 
-    /// Usb device was not initalized
-    #[error("Usb device was not initalized")]
+    /// Usb device was not initialized
+    #[error("usb device was not initialized")]
     NotInit,
 
     /// Unable to claim the Switches interface
-    #[error("Unable to claim interface: `{0}`")]
+    #[error("unable to claim interface: `{0}`")]
     UsbBadInterface(u8),
 
     /// A linux environment error such as not having the correct usb driver support
     #[error(
-        "Linux environment error, typically this means the system lacks a supported USB driver"
+        "linux environment error, typically this means the system lacks a supported USB driver"
     )]
     LinuxEnv,
 
     /// USB permission error
     /// See <https://github.com/budde25/switcheroo#linux-permission-denied-error>
-    #[error("Access denied (insufficient permissions)")]
+    #[error("access denied (insufficient permissions)")]
     AccessDenied,
 
     /// Running on an unsupported platform
-    #[error("Platform not supported")]
+    #[error("platform not supported")]
     PlatformNotSupported,
 
     /// A Windows error that the switch RCM has the wrong driver, please install libusbK
     /// See <https://github.com/budde25/switcheroo#windows-wrong-driver-error>
-    #[error("Wrong RCM USB driver installed (installed: `{0}` but must be libusbK)")]
+    #[error("wrong RCM USB driver installed (installed: `{0}` but must be libusbK)")]
     WindowsWrongDriver(WindowsDriver),
+
+    /// udev rules not installed
+    #[error("udev rules not found at `/etc/udev/rules.d/99-switch.rules`")]
+    UdevRulesNotFound,
 
     /// This is a catchall error for various other things that can go wrong with underlying usb library.
     /// It has been converted to a string to not expose the underlying api
-    #[error("Usb Error: `{0}`")]
+    #[error("usb error: `{0}`")]
     Usb(String),
 }
 

@@ -81,7 +81,7 @@ gui = [
     "dep:egui-notify",
     "dep:trash",
 ]
-# Enables the alternative notify hotplug implementation for udev restrcited environments (such a flatpak)
+# Enables the alternative notify hotplug implementation for udev restricted environments (such a flatpak)
 notify = ["tegra-rcm/notify"]
 
 # The profile that 'cargo dist' will build with

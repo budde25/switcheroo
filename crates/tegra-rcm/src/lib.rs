@@ -5,6 +5,7 @@
 
 mod buffer;
 mod device;
+mod env;
 mod error;
 mod hotplug;
 mod payload;
@@ -14,6 +15,7 @@ mod vulnerability;
 use device::SwitchHandle;
 use error::Result;
 
+pub use env::check_env;
 pub use error::SwitchError;
 pub use hotplug::{create_hotplug, Actions};
 pub use payload::{Payload, PayloadError};
