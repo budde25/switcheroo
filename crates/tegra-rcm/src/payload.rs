@@ -109,11 +109,11 @@ pub enum PayloadError {
     Io(PathBuf),
 
     /// Payload is less than the minimum length
-    #[error("Payload invalid size: `{0}` (expected >= {})", PAYLOAD_MIN_LENGTH)]
+    #[error("Payload invalid size: `{0}` (expected >= {min})", min = PAYLOAD_MIN_LENGTH)]
     PayloadTooShort(usize),
 
     /// Payload is greater than the maximum length
-    #[error("Payload invalid size: `{0}` (expected < {})", PAYLOAD_MAX_LENGTH)]
+    #[error("Payload invalid size: `{0}` (expected < {max})", max =  PAYLOAD_MAX_LENGTH)]
     PayloadTooLong(usize),
 }
 

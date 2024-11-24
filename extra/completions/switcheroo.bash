@@ -21,9 +21,6 @@ _switcheroo() {
             switcheroo,execute)
                 cmd="switcheroo__execute"
                 ;;
-            switcheroo,gui)
-                cmd="switcheroo__gui"
-                ;;
             switcheroo,help)
                 cmd="switcheroo__help"
                 ;;
@@ -42,9 +39,6 @@ _switcheroo() {
             switcheroo__help,execute)
                 cmd="switcheroo__help__execute"
                 ;;
-            switcheroo__help,gui)
-                cmd="switcheroo__help__gui"
-                ;;
             switcheroo__help,help)
                 cmd="switcheroo__help__help"
                 ;;
@@ -61,7 +55,7 @@ _switcheroo() {
 
     case "${cmd}" in
         switcheroo)
-            opts="-v -q -h -V --verbose --quiet --help --version execute device list add remove gui help"
+            opts="-v -q -h -V --verbose --quiet --help --version execute device list add remove help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -124,22 +118,8 @@ _switcheroo() {
             COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
             return 0
             ;;
-        switcheroo__gui)
-            opts="-v -q -h --verbose --quiet --help"
-            if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
-                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
-                return 0
-            fi
-            case "${prev}" in
-                *)
-                    COMPREPLY=()
-                    ;;
-            esac
-            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
-            return 0
-            ;;
         switcheroo__help)
-            opts="execute device list add remove gui help"
+            opts="execute device list add remove help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -181,20 +161,6 @@ _switcheroo() {
             return 0
             ;;
         switcheroo__help__execute)
-            opts=""
-            if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
-                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
-                return 0
-            fi
-            case "${prev}" in
-                *)
-                    COMPREPLY=()
-                    ;;
-            esac
-            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
-            return 0
-            ;;
-        switcheroo__help__gui)
             opts=""
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )

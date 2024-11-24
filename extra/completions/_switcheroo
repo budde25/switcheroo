@@ -34,8 +34,8 @@ _switcheroo() {
         case $line[1] in
             (execute)
 _arguments "${_arguments_options[@]}" : \
-'-f+[Use a favorite payload instead]:FAVORITE: ' \
-'--favorite=[Use a favorite payload instead]:FAVORITE: ' \
+'-f+[Use a favorite payload instead]:FAVORITE:_default' \
+'--favorite=[Use a favorite payload instead]:FAVORITE:_default' \
 '-w[Wait for device to be connected]' \
 '--wait[Wait for device to be connected]' \
 '*-v[Increase logging verbosity]' \
@@ -88,17 +88,7 @@ _arguments "${_arguments_options[@]}" : \
 '(-v --verbose)*--quiet[Decrease logging verbosity]' \
 '-h[Print help]' \
 '--help[Print help]' \
-':favorite:' \
-&& ret=0
-;;
-(gui)
-_arguments "${_arguments_options[@]}" : \
-'*-v[Increase logging verbosity]' \
-'*--verbose[Increase logging verbosity]' \
-'(-v --verbose)*-q[Decrease logging verbosity]' \
-'(-v --verbose)*--quiet[Decrease logging verbosity]' \
-'-h[Print help]' \
-'--help[Print help]' \
+':favorite:_default' \
 && ret=0
 ;;
 (help)
@@ -133,10 +123,6 @@ _arguments "${_arguments_options[@]}" : \
 _arguments "${_arguments_options[@]}" : \
 && ret=0
 ;;
-(gui)
-_arguments "${_arguments_options[@]}" : \
-&& ret=0
-;;
 (help)
 _arguments "${_arguments_options[@]}" : \
 && ret=0
@@ -158,7 +144,6 @@ _switcheroo_commands() {
 'list:Lists favorite binaries' \
 'add:Add a favorite binary' \
 'remove:Remove a favorite binary' \
-'gui:Opens the graphical user interface' \
 'help:Print this message or the help of the given subcommand(s)' \
     )
     _describe -t commands 'switcheroo commands' commands "$@"
@@ -178,11 +163,6 @@ _switcheroo__execute_commands() {
     local commands; commands=()
     _describe -t commands 'switcheroo execute commands' commands "$@"
 }
-(( $+functions[_switcheroo__gui_commands] )) ||
-_switcheroo__gui_commands() {
-    local commands; commands=()
-    _describe -t commands 'switcheroo gui commands' commands "$@"
-}
 (( $+functions[_switcheroo__help_commands] )) ||
 _switcheroo__help_commands() {
     local commands; commands=(
@@ -191,7 +171,6 @@ _switcheroo__help_commands() {
 'list:Lists favorite binaries' \
 'add:Add a favorite binary' \
 'remove:Remove a favorite binary' \
-'gui:Opens the graphical user interface' \
 'help:Print this message or the help of the given subcommand(s)' \
     )
     _describe -t commands 'switcheroo help commands' commands "$@"
@@ -210,11 +189,6 @@ _switcheroo__help__device_commands() {
 _switcheroo__help__execute_commands() {
     local commands; commands=()
     _describe -t commands 'switcheroo help execute commands' commands "$@"
-}
-(( $+functions[_switcheroo__help__gui_commands] )) ||
-_switcheroo__help__gui_commands() {
-    local commands; commands=()
-    _describe -t commands 'switcheroo help gui commands' commands "$@"
 }
 (( $+functions[_switcheroo__help__help_commands] )) ||
 _switcheroo__help__help_commands() {
