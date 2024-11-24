@@ -1,14 +1,14 @@
 use anyhow::{bail, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use log::warn;
-use once_cell::sync::Lazy;
 use std::collections::BTreeSet;
 use std::fs;
+use std::sync::LazyLock;
 use tegra_rcm::Payload;
 
 use crate::error::AddPath;
 
-static FAVORITES_PATH: Lazy<Utf8PathBuf> = Lazy::new(|| {
+static FAVORITES_PATH: LazyLock<Utf8PathBuf> = LazyLock::new(|| {
     let mut favorites_dir = dirs::data_dir().expect("System data directory exists");
     favorites_dir.push("switcheroo");
     favorites_dir.push("favorites");
