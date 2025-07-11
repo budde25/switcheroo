@@ -73,11 +73,11 @@ impl Payload {
         let padding_size = 0x1000 - (payload_builder.len() % 0x1000);
         payload_builder.resize(payload_builder.len() + padding_size, b'\0');
 
-        debug_assert_eq!(payload_builder.len() % 0x1000, 0);
+        assert_eq!(payload_builder.len() % 0x1000, 0);
 
         let data = payload_builder.into_boxed_slice();
 
-        debug_assert!(data.len() <= BUILT_PAYLOAD_MAX_LENGTH);
+        assert!(data.len() <= BUILT_PAYLOAD_MAX_LENGTH);
         debug!(
             "A completed payload has been build with a size of: {} bytes",
             data.len()
@@ -88,8 +88,11 @@ impl Payload {
 
     /// Read a payload from a file
     pub fn read<P: AsRef<Path>>(path: P) -> Result<Self, PayloadError> {
-        let Ok(bytes) = std::fs::read(path.as_ref()) else {
-            return Err(PayloadError::Io(path.as_ref().into()));
+        let bytes = match std::fs::read(path.as_ref()) {
+            Ok(bytes) => bytes,
+            Err(e) => {
+                return Err(PayloadError::Io(e.kind(), path.as_ref().into()));
+            }
         };
         Self::new(&bytes)
     }
@@ -105,8 +108,8 @@ impl Payload {
 #[non_exhaustive]
 pub enum PayloadError {
     /// Reading payload failed, std::io::Error
-    #[error("Payload failed to read from file: {0}")]
-    Io(PathBuf),
+    #[error("Payload failed to read from file: {1}, io error: {0}")]
+    Io(std::io::ErrorKind, PathBuf),
 
     /// Payload is less than the minimum length
     #[error("Payload invalid size: `{0}` (expected >= {min})", min = PAYLOAD_MIN_LENGTH)]

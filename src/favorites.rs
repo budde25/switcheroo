@@ -129,7 +129,7 @@ impl Favorite {
     }
 
     pub fn read(&self) -> Result<Payload> {
-        Ok(Payload::read(&*self.path())?)
+        Ok(Payload::read(self.path().as_ref())?)
     }
 
     pub fn path(&self) -> Box<Utf8Path> {
