@@ -1,0 +1,25 @@
+<!doctype html><html class="dark" id="oranda" lang="en"><head><title>Switcheroo</title><meta content="https://github.com/budde25/switcheroo" property="og:url"/><link href="/switcheroo/favicon.ico" rel="icon"/><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="A cross platform CLI and GUI for the Nintendo Switch RCM exploit" name="description"/><meta content="A cross platform CLI and GUI for the Nintendo Switch RCM exploit" name="description"/><meta content="A cross platform CLI and GUI for the Nintendo Switch RCM exploit" property="og:description"/><meta content="website" property="og:type"/><meta content="Switcheroo" property="og:title"/><meta content="interest-cohort=()" http_equiv="Permissions-Policy"/><link href="/switcheroo/oranda-v0.1.1.css" rel="stylesheet"/></head><body><div class="container"><div class="page-body"><div class="repo_banner"><a href="https://github.com/budde25/switcheroo"><div class="github-icon" aria-hidden="true"></div>Check out our GitHub</a></div><main><header><h1 class="title">Switcheroo</h1><nav class="nav"><ul><li><a href="/switcheroo/">Home</a></li><li><a href="/switcheroo/troubleshooting/">troubleshooting</a></li><li><a href="/switcheroo/artifacts/">Install</a></li></ul></nav></header><div><div class="rendered-markdown"><div class="oranda-hide">
+<h1>Troubleshooting</h1>
+</div>
+<h3>Linux: Permission denied error</h3>
+<p>On many linux systems the usb control is blocked by default.
+This is also the case for the flatpak version of the application. These rules must be added outside of the sandbox.</p>
+<p>This can be fixed by adding the following file on your system:
+<code>/etc/udev/rules.d/99-switch.rules</code>
+with the following content:</p>
+<pre style="background-color:#263238;"><span style="color:#eeffff;">SUBSYSTEM=="usb", ATTRS{idVendor}=="057e", ATTRS{idProduct}=="3000", MODE="0666"
+</span><span style="color:#eeffff;">SUBSYSTEM=="usb", ATTRS{idVendor}=="0955", ATTRS{idProduct}=="7321", MODE="0666"
+</span><span style="color:#eeffff;">
+</span></pre>
+
+<p>alternatively run this command command (will prompt for password)</p>
+<pre style="background-color:#263238;"><span style="color:#82aaff;">printf </span><span style="color:#89ddff;">'</span><span style="color:#c3e88d;">SUBSYSTEM=="usb", ATTRS{idVendor}=="057e", ATTRS{idProduct}=="3000", MODE="0666"\nSUBSYSTEM=="usb", ATTRS{idVendor}=="0955", ATTRS{idProduct}=="7321", MODE="0666"\n</span><span style="color:#89ddff;">' | </span><span style="color:#82aaff;">sudo tee /etc/udev/rules.d/99-switch.rules
+</span></pre>
+
+<p>then reload the udev rules:
+<code>sudo udevadm control --reload-rules</code></p>
+<p>then unplug and plug back in the switch and restart the application.</p>
+<h3>Windows: Wrong driver error</h3>
+<p>On windows the rcm connection will only work if the Switch is using the libusbK drivers.
+The easiest way to install them is to plug in the switch in RCM mode and use <a href="https://zadig.akeo.ie/" rel="noopener noreferrer">zadig</a> to install the correct driver.</p>
+</div></div></main></div><footer><a href="https://github.com/budde25/switcheroo"><div class="github-icon" aria-hidden="true"></div></a><span>Switcheroo, GPL-2.0-or-later license.</span></footer></div><div></div></body></html>
