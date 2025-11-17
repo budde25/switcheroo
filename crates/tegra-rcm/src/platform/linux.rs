@@ -2,8 +2,7 @@
 use crate::error::Result;
 
 /// Validates the environment
-#[cfg(target_os = "linux")]
-pub fn check_env() -> Result<()> {
+pub fn validate_environment() -> Result<()> {
     use log::info;
 
     const UDEV_RULES: &str = "/etc/udev/rules.d/99-switch.rules";
@@ -25,10 +24,4 @@ pub fn check_env() -> Result<()> {
     } else {
         Err(crate::SwitchError::UdevRulesNotFound)
     }
-}
-
-/// Validates the environment
-#[cfg(not(target_os = "linux"))]
-pub fn check_env() -> Result<()> {
-    Ok(())
 }

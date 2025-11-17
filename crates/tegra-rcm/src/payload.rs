@@ -45,7 +45,7 @@ impl Payload {
             payload.len()
         );
 
-        const INTERMEZZO: &[u8; 124] = include_bytes!("intermezzo/intermezzo.bin");
+        const INTERMEZZO: &[u8; 124] = include_bytes!("assets/intermezzo.bin");
         trace!("Injected intermezzo.bin");
 
         let mut payload_builder = Vec::with_capacity(BUILT_PAYLOAD_MAX_LENGTH);

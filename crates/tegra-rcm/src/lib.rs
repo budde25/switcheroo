@@ -17,19 +17,19 @@
 //! }
 //! ```
 
-mod env;
 mod error;
 mod exploit;
 mod hotplug;
 mod payload;
+mod platform;
 mod switch;
 mod usb;
 
 use error::Result;
 use usb::SwitchHandle;
 
-pub use env::check_env;
 pub use error::SwitchError;
 pub use hotplug::{create_hotplug, Actions};
 pub use payload::{Payload, PayloadError};
+pub use platform::validate_environment;
 pub use switch::Switch;

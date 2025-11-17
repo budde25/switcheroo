@@ -39,7 +39,7 @@ impl Hotplug<Context> for HotplugHandler {
     }
 }
 
-/// create a hotplug setup, this blocks
+/// Create a hotplug setup, this blocks
 pub fn create_hotplug(
     tx: Sender<Result<Switch, SwitchError>>,
     callback: Option<impl Fn() + Send + Sync + 'static>,
