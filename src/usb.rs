@@ -1,14 +1,14 @@
 use log::{debug, warn};
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::thread;
-use tegra_rcm::{create_hotplug, Actions, Switch, SwitchError};
+use tegra_rcm::{create_hotplug, Hotplug, Switch, SwitchError, UsbError};
 
 #[allow(dead_code)]
 pub(crate) struct HotplugHandler {
     sender: Sender<Result<Switch, SwitchError>>,
 }
 
-impl Actions for HotplugHandler {
+impl Hotplug for HotplugHandler {
     fn arrives(&mut self, switch: Result<Switch, SwitchError>) {
         debug!("Switch has been plugged in");
         if let Err(e) = self.sender.send(switch) {
@@ -18,7 +18,7 @@ impl Actions for HotplugHandler {
 
     fn leaves(&mut self) {
         debug!("Switch has been unplugged");
-        if let Err(e) = self.sender.send(Err(SwitchError::SwitchNotFound)) {
+        if let Err(e) = self.sender.send(Err(UsbError::SwitchNotFound.into())) {
             warn!("Failed to send hotplug leaves event {}", e);
         }
     }

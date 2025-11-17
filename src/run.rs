@@ -1,5 +1,5 @@
 use console::{style, Emoji};
-use tegra_rcm::{Payload, Switch, SwitchError};
+use tegra_rcm::{Payload, Switch, SwitchError, UsbError};
 
 use crate::cli::{Add, Device, Execute, List, Remove};
 use crate::error::Error;
@@ -32,30 +32,31 @@ impl RunCommand for Execute {
 
         if !self.wait {
             let switch = Switch::find();
-            let Ok(mut switch) = switch else {
+            let Ok(switch) = switch else {
                 println!("{}Switch in RCM mode not found", EMOJI_NOT_FOUND);
                 return Ok(());
             };
-            let handle = switch.handle()?;
-            handle.execute(&payload)?;
+            switch.execute(&payload)?;
             println!("{success_msg}");
         } else {
             let _spinner = spinner();
 
             let switch = Switch::find();
-            if let Ok(mut switch) = switch {
-                switch.handle()?.execute(&payload)?;
+            if let Ok(switch) = switch {
+                switch.execute(&payload)?;
+                println!("{success_msg}");
                 return Ok(());
             }
 
             let rx = spawn_thread();
             while let Ok(switch) = rx.recv() {
                 match switch {
-                    Ok(mut switch) => {
-                        switch.handle()?.execute(&payload)?;
+                    Ok(switch) => {
+                        switch.execute(&payload)?;
+                        println!("{success_msg}");
                         return Ok(());
                     }
-                    Err(SwitchError::SwitchNotFound) => (),
+                    Err(SwitchError::Usb(UsbError::SwitchNotFound)) => (),
                     Err(e) => return Err(e.into()),
                 }
             }
@@ -69,7 +70,7 @@ impl RunCommand for Device {
         if !self.wait {
             match Switch::find() {
                 Ok(_) => println!("{}Switch is in RCM mode and connected", EMOJI_FOUND),
-                Err(SwitchError::SwitchNotFound) => {
+                Err(SwitchError::Usb(UsbError::SwitchNotFound)) => {
                     println!("{}Switch in RCM mode not found", EMOJI_NOT_FOUND)
                 }
                 Err(e) => return Err(e.into()),
@@ -78,8 +79,7 @@ impl RunCommand for Device {
             let _spinner = spinner();
 
             let switch = Switch::find();
-            if let Ok(mut switch) = switch {
-                switch.handle()?;
+            if switch.is_ok() {
                 println!("{}Switch is in RCM mode and connected", EMOJI_FOUND);
                 return Ok(());
             }
@@ -87,12 +87,11 @@ impl RunCommand for Device {
             let rx = spawn_thread();
             while let Ok(switch) = rx.recv() {
                 match switch {
-                    Ok(mut switch) => {
-                        switch.handle()?;
+                    Ok(_) => {
                         println!("{}Switch is in RCM mode and connected", EMOJI_FOUND);
                         return Ok(());
                     }
-                    Err(SwitchError::SwitchNotFound) => (),
+                    Err(SwitchError::Usb(UsbError::SwitchNotFound)) => (),
                     Err(e) => return Err(e.into()),
                 }
             }

@@ -1,4 +1,5 @@
 use eframe::egui::{CentralPanel, Context, RichText};
+use tegra_rcm::{ExploitError, UsbError};
 
 pub struct InitError {
     error: String,
@@ -33,17 +34,17 @@ impl eframe::App for InitError {
 
 pub(crate) fn gen_error(error: &tegra_rcm::SwitchError) -> (String, String) {
     match error {
-        tegra_rcm::SwitchError::UdevRulesNotFound => {
+        tegra_rcm::SwitchError::Exploit(ExploitError::UdevRulesNotFound) => {
             let error = "Udev rules not installed and must be installed separately, see the following for instructions";
             let link = "https://budde25.github.io/switcheroo/troubleshooting/#linux-permission-denied-error";
             (error.to_string(), link.to_string())
         }
-        tegra_rcm::SwitchError::AccessDenied => {
+        tegra_rcm::SwitchError::Usb(UsbError::AccessDenied) => {
             let link = "https://budde25.github.io/switcheroo/troubleshooting/#linux-permission-denied-error";
             let error = "USB permission error, see the following to troubleshoot:";
             (error.to_string(), link.to_string())
         }
-        tegra_rcm::SwitchError::WindowsWrongDriver(i) => {
+        tegra_rcm::SwitchError::Exploit(ExploitError::WindowsWrongDriver(i)) => {
             let error = format!("Wrong USB driver installed, expected libusbK but found `{i}`, see the following to troubleshoot:");
             let link =
                 "https://budde25.github.io/switcheroo/troubleshooting/#windows-wrong-driver-error";
