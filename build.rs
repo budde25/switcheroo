@@ -9,6 +9,10 @@ use std::{env, process};
 include!("src/cli.rs");
 
 fn main() -> Result<(), Error> {
+    // TODO: Rework to generate on releases not builds
+    return Ok(());
+
+    #[expect(unreachable_code)]
     let mut outdir = match env::var_os("CARGO_MANIFEST_DIR") {
         None => {
             eprintln!("CARGO_MANIFEST_DIR not defined");
@@ -18,7 +22,7 @@ fn main() -> Result<(), Error> {
     };
 
     app_dir(&outdir)?;
-    outdir.push("extra");
+    outdir.push("assets");
 
     let mut cmd = Cli::command();
 

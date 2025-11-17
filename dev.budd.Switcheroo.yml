@@ -30,11 +30,11 @@ modules:
         commands:
           - switcheroo gui -vvv "$@"
       - type: file
-        path: "extra/logo/dev.budd.Switcheroo.png"
+        path: "assets/logo/dev.budd.Switcheroo.png"
       - type: file
-        path: "extra/linux/dev.budd.Switcheroo.desktop"
+        path: "assets/linux/dev.budd.Switcheroo.desktop"
       - type: file
-        path: "extra/linux/dev.budd.Switcheroo.metainfo.xml"
+        path: "assets/linux/dev.budd.Switcheroo.metainfo.xml"
     build-options:
       append-path: "/usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/llvm16/bin"
       build-args:
