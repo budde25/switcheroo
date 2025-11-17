@@ -35,7 +35,7 @@ libusbk = { version = "0.2.0", features = ["vendored"] }
 winapi = { version = "0.3.9", features = ["ioapiset", "errhandlingapi"] }
 
 [lints.rust]
-unused_code = "allow"
+dead_code = "allow"
 missing_docs = "deny"
 missing_debug_implementations = "deny"
 trivial_casts = "deny"
