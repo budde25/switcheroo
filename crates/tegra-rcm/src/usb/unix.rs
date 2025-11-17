@@ -3,7 +3,7 @@ use super::{RCM_PID, RCM_VID};
 use rusb::{Context, Device, DeviceHandle, UsbContext};
 use std::time::Duration;
 
-use crate::vulnerability::Vulnerability;
+use crate::exploit::Exploit;
 use crate::Result;
 
 /// A connected and init switch device connection

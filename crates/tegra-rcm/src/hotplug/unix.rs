@@ -4,8 +4,8 @@ use log::{error, info};
 use rusb::{has_hotplug, Context, Device, Hotplug, HotplugBuilder, UsbContext};
 
 use super::{HotplugError, HotplugHandler};
-use crate::device::{SwitchDevice, RCM_PID, RCM_VID};
 use crate::switch::Switch;
+use crate::usb::{SwitchDevice, RCM_PID, RCM_VID};
 use crate::SwitchError;
 
 impl Hotplug<Context> for HotplugHandler {

@@ -2,32 +2,51 @@ use log::{debug, trace};
 
 use crate::Result;
 
-use crate::buffer::BufferState;
-use crate::device::{Device, DeviceHandle, SwitchDevice, SwitchHandle};
-use crate::vulnerability::Vulnerability;
+use crate::exploit::Exploit;
+use crate::usb::{Device, DeviceHandle, SwitchDevice, SwitchHandle};
 use crate::Payload;
 
-/// Switch Device
+/// A Switch device in RCM (Recovery Mode)
+///
+/// This represents a Nintendo Switch device connected in RCM mode,
+/// ready to receive and execute payloads via the Fusée Gelée exploit.
 #[derive(Debug, Clone)]
 pub struct Switch {
     switch: SwitchDevice,
 }
 
 impl Switch {
-    /// Create a new Rcm object from an existing SwitchDevice
-    /// Should not have its interface claimed yet
+    /// Create a new Switch from an existing SwitchDevice
+    ///
+    /// This is used internally by the hotplug system.
+    /// Should not have its interface claimed yet.
     pub(crate) fn new(device: SwitchDevice) -> Self {
         Self { switch: device }
     }
 
-    /// Finds and connects to a Switch device
+    /// Find and connect to a Switch device in RCM mode
+    ///
+    /// This will search for a connected Switch device in RCM mode.
+    /// Returns an error if no device is found.
     pub fn find() -> Result<Self> {
         let device = SwitchDevice::find_device()?;
         Ok(Self { switch: device })
     }
 
-    /// Gets the Switch handle
-    pub fn handle(&mut self) -> Result<Handle> {
+    /// Execute a payload on the Switch
+    ///
+    /// This will send the payload to the Switch and trigger the exploit.
+    /// The payload is executed and the Switch will boot into the payload.
+    ///
+    /// This method consumes the Switch as the device connection is closed
+    /// after execution.
+    pub fn execute(mut self, payload: &Payload) -> Result<()> {
+        let handle = self.init_handle()?;
+        handle.execute_payload(payload)
+    }
+
+    /// Initialize a handle for internal operations
+    fn init_handle(&mut self) -> Result<Handle> {
         let handle = self.switch.init()?;
         Ok(Handle {
             handle,
@@ -37,19 +56,17 @@ impl Switch {
     }
 }
 
-/// An RCM connection object
-/// This is the main interface to communicate with the switch
+/// An RCM connection handle
 #[derive(Debug)]
-pub struct Handle {
+struct Handle {
     handle: SwitchHandle,
     current_buffer: BufferState,
     total_written: usize,
 }
 
 impl Handle {
-    /// This will execute the payload on the connected device
-    /// This consumes the device
-    pub fn execute(mut self, payload: &Payload) -> Result<()> {
+    /// Execute the payload on the connected device
+    pub(crate) fn execute_payload(mut self, payload: &Payload) -> Result<()> {
         let device_id = self.read_device_id()?;
         trace!("Device ID: {:?}", device_id);
 
@@ -58,6 +75,15 @@ impl Handle {
 
         // Smash the stack
         self.trigger_controlled_memcopy()
+    }
+
+    /// Reads the device ID
+    ///
+    /// Note: This is a REQUIRED step before executing
+    fn read_device_id(&mut self) -> Result<[u8; 16]> {
+        let mut buf = [b'\0'; 16];
+        self.read(&mut buf)?;
+        Ok(buf)
     }
 
     /// Writes data to the RCM protocol endpoint
@@ -109,14 +135,6 @@ impl Handle {
         Ok(())
     }
 
-    /// Reads the device ID
-    /// Note: The is a REQUIRED step before executing
-    fn read_device_id(&mut self) -> Result<[u8; 16]> {
-        let mut buf = [b'\0'; 16];
-        self.read(&mut buf)?;
-        Ok(buf)
-    }
-
     fn write_buffer(&mut self, buf: &[u8]) -> Result<usize> {
         self.current_buffer.toggle();
         let written = self.handle.write(buf)?;
@@ -128,5 +146,33 @@ impl Handle {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
         let read = self.handle.read(buf)?;
         Ok(read)
+    }
+}
+
+/// The current state of the Buffer
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum BufferState {
+    #[default]
+    Low,
+    High,
+}
+
+impl BufferState {
+    /// Toggle the buffer
+    pub(crate) fn toggle(&mut self) {
+        match self {
+            BufferState::High => *self = BufferState::Low,
+            BufferState::Low => *self = BufferState::High,
+        }
+    }
+
+    /// Gets the address of the buffer
+    pub(crate) fn address(self) -> usize {
+        const COPY_BUFFER_ADDRESSES_LOW: usize = 0x4000_5000;
+        const COPY_BUFFER_ADDRESSES_HIGH: usize = 0x4000_9000;
+        match self {
+            BufferState::Low => COPY_BUFFER_ADDRESSES_LOW,
+            BufferState::High => COPY_BUFFER_ADDRESSES_HIGH,
+        }
     }
 }

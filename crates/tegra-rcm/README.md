@@ -2,23 +2,21 @@
 
 A library to help exploit the bootROM exploit for the Tegra X1's RCM mode.  
 
-Currently compatible with Linux and macOS.  
-Windows support is WIP.
+Currently compatible with Linux, macOS, and Windows.
 
 ## Example
 
 ```rust
-    use std::fs;
-    use tegra_rcm::{Payload, Rcm};
+use tegra_rcm::{Payload, Switch};
 
-    let payload_bytes = fs::read(&payload).unwrap();
-    let payload = Payload::new(&payload_bytes).unwrap();
-    let mut switch = Rcm::new(wait).unwrap();
-    // Init the switch device (should only be done once)
-    switch.init().unwrap();
-    // We MUST to read the device id first
-    let _ = switch.read_device_id().unwrap();
-    switch.execute(&payload).unwrap();
-    println!("Done!");
+// Load a payload from a file
+let payload = Payload::read("payload.bin")?;
 
+// Find and connect to a Switch in RCM mode
+let switch = Switch::find()?;
+
+// Execute the payload on the Switch
+switch.execute(&payload)?;
+
+println!("Done!");
 ```
