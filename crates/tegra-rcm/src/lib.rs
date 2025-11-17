@@ -30,7 +30,7 @@ use error::Result;
 use usb::SwitchHandle;
 
 pub use error::{ExploitError, PayloadError, SwitchError, UsbError, WindowsDriver};
-pub use hotplug::{create_hotplug, Hotplug};
+pub use hotplug::{create_channel, spawn_hotplug, spawn_hotplug_callback};
 pub use payload::Payload;
 pub use platform::validate_environment;
 pub use switch::Switch;

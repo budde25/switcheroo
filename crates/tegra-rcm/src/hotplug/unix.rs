@@ -43,21 +43,6 @@ impl Hotplug<Context> for HotplugHandler {
     }
 }
 
-/// Create a hotplug setup, this blocks
-pub fn create_hotplug(
-    tx: Sender<Result<Switch, SwitchError>>,
-    callback: Option<impl Fn() + Send + Sync + 'static>,
-) -> Result<(), HotplugError> {
-    cfg_if::cfg_if! {
-        if #[cfg(all(feature = "notify", target_os = "linux"))] {
-            super::notify::watcher_hotplug(tx, callback)
-                .map_err(|_| HotplugError::Watcher)
-        } else {
-            libusb_hotplug(tx, callback)
-        }
-    }
-}
-
 pub fn libusb_hotplug(
     tx: Sender<Result<Switch, SwitchError>>,
     callback: Option<impl Fn() + Send + Sync + 'static>,
@@ -85,7 +70,7 @@ pub fn libusb_hotplug(
         .product_id(RCM_PID)
         .enumerate(true)
         .register(context.clone(), Box::new(hotplug_handler))
-        .expect("able to successfully wrap the context");
+        .expect("We where able to successfully wrap the context");
 
     loop {
         // blocks thread

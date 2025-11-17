@@ -1,9 +1,8 @@
 use console::{style, Emoji};
-use tegra_rcm::{Payload, Switch, SwitchError, UsbError};
+use tegra_rcm::{spawn_hotplug, Payload, Switch, SwitchError, UsbError};
 
 use crate::cli::{Add, Device, Execute, List, Remove};
 use crate::error::Error;
-use crate::usb::spawn_thread;
 use crate::{favorites::Favorites, spinner};
 
 type CliError = Error;
@@ -48,7 +47,7 @@ impl RunCommand for Execute {
                 return Ok(());
             }
 
-            let rx = spawn_thread();
+            let rx = spawn_hotplug();
             while let Ok(switch) = rx.recv() {
                 match switch {
                     Ok(switch) => {
@@ -84,7 +83,7 @@ impl RunCommand for Device {
                 return Ok(());
             }
 
-            let rx = spawn_thread();
+            let rx = spawn_hotplug();
             while let Ok(switch) = rx.recv() {
                 match switch {
                     Ok(_) => {

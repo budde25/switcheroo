@@ -63,7 +63,5 @@ pub fn gui() -> eframe::Result<()> {
 
 /// Spawn a separate thread
 pub fn spawn_thread_context(ctx: Context) -> Receiver<Result<Switch, SwitchError>> {
-    let (tx, rx) = std::sync::mpsc::channel();
-    std::thread::spawn(move || tegra_rcm::create_hotplug(tx, Some(move || ctx.request_repaint())));
-    rx
+    tegra_rcm::spawn_hotplug_callback(move || ctx.request_repaint())
 }
