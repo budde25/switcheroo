@@ -22,6 +22,7 @@ mod exploit;
 mod hotplug;
 mod payload;
 mod platform;
+mod rcm;
 mod switch;
 mod usb;
 
