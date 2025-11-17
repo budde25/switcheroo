@@ -1,7 +1,7 @@
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
+use crate::error::PayloadError;
 use log::{debug, trace};
-use thiserror::Error;
 
 /// A constructed payload, this is transferred to the switch in RCM mode to execute bootROM exploit
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -13,9 +13,9 @@ pub struct Payload {
 const BUILT_PAYLOAD_MAX_LENGTH: usize = 0x30298;
 // TODO: find out if this is true
 /// The min length of the provided payload (inclusive)
-const PAYLOAD_MIN_LENGTH: usize = PADDING_SIZE_2;
+pub(crate) const PAYLOAD_MIN_LENGTH: usize = PADDING_SIZE_2;
 /// The max length of the provided payload (exclusive)
-const PAYLOAD_MAX_LENGTH: usize = 183_640;
+pub(crate) const PAYLOAD_MAX_LENGTH: usize = 183_640;
 
 /// hardcoded address for the start of the stack spray
 const STACK_SPRAY_START: usize = 0x4001_4E40;
@@ -101,23 +101,6 @@ impl Payload {
     pub fn data(&self) -> &[u8] {
         &self.data
     }
-}
-
-/// An error while trying to create a payload
-#[derive(Debug, PartialEq, Eq, Error, Clone)]
-#[non_exhaustive]
-pub enum PayloadError {
-    /// Reading payload failed, std::io::Error
-    #[error("Payload failed to read from file: {1}, io error: {0}")]
-    Io(std::io::ErrorKind, PathBuf),
-
-    /// Payload is less than the minimum length
-    #[error("Payload invalid size: `{0}` (expected >= {min})", min = PAYLOAD_MIN_LENGTH)]
-    PayloadTooShort(usize),
-
-    /// Payload is greater than the maximum length
-    #[error("Payload invalid size: `{0}` (expected < {max})", max =  PAYLOAD_MAX_LENGTH)]
-    PayloadTooLong(usize),
 }
 
 #[cfg(test)]

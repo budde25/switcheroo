@@ -29,8 +29,8 @@ mod usb;
 use error::Result;
 use usb::SwitchHandle;
 
-pub use error::SwitchError;
+pub use error::{PayloadError, SwitchError};
 pub use hotplug::{create_hotplug, Actions};
-pub use payload::{Payload, PayloadError};
+pub use payload::Payload;
 pub use platform::validate_environment;
 pub use switch::Switch;
