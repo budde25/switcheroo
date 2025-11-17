@@ -1,7 +1,5 @@
 use std::sync::mpsc::Sender;
 
-use thiserror::Error;
-
 use crate::error::Result;
 use crate::Switch;
 
@@ -21,7 +19,7 @@ cfg_if::cfg_if! {
 }
 
 /// Defines the two actions for when a device is plugged in or removed
-pub trait Actions {
+pub trait Hotplug {
     /// A switch device has a arrived
     fn arrives(&mut self, switch: Result<Switch>);
     /// A switch device has left
@@ -31,13 +29,4 @@ pub trait Actions {
 struct HotplugHandler {
     sender: Sender<Result<Switch>>,
     callback: Option<Box<dyn Fn() + Send + Sync>>,
-}
-
-#[derive(Debug, Error)]
-pub enum HotplugError {
-    #[error("The hotplug API is not supported on this platform")]
-    NotSupported,
-
-    #[error("A file watcher error occurred")]
-    Watcher,
 }

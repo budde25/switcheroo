@@ -22,6 +22,6 @@ pub fn validate_environment() -> Result<()> {
     if path.exists() {
         Ok(())
     } else {
-        Err(crate::SwitchError::UdevRulesNotFound)
+        Err(crate::error::ExploitError::UdevRulesNotFound.into())
     }
 }

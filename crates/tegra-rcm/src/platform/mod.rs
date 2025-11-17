@@ -1,5 +1,3 @@
-mod linux;
-
 use super::error::Result;
 use cfg_if::cfg_if;
 

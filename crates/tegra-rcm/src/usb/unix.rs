@@ -24,7 +24,7 @@ impl super::Device for SwitchDevice {
             }
         }
         // We did not find the device
-        Err(crate::SwitchError::SwitchNotFound)
+        Err(crate::error::UsbError::SwitchNotFound.into())
     }
 
     /// Init the device

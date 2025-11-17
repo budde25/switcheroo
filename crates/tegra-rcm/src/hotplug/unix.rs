@@ -1,9 +1,10 @@
 use std::sync::mpsc::Sender;
 
+use crate::error::HotplugError;
 use log::{error, info};
 use rusb::{has_hotplug, Context, Device, Hotplug, HotplugBuilder, UsbContext};
 
-use super::{HotplugError, HotplugHandler};
+use super::HotplugHandler;
 use crate::switch::Switch;
 use crate::usb::{SwitchDevice, RCM_PID, RCM_VID};
 use crate::SwitchError;
@@ -27,7 +28,10 @@ impl Hotplug<Context> for HotplugHandler {
 
     /// Gets called whenever a usb device leaves
     fn device_left(&mut self, _device: Device<Context>) {
-        if let Err(e) = self.sender.send(Err(crate::SwitchError::SwitchNotFound)) {
+        if let Err(e) = self
+            .sender
+            .send(Err(crate::error::UsbError::SwitchNotFound.into()))
+        {
             error!("device left event {e}");
         }
 
@@ -63,7 +67,7 @@ pub fn libusb_hotplug(
     }
 
     let mut callback = callback;
-    let context = Context::new().unwrap();
+    let context = Context::new().expect("new context is successful");
 
     let hotplug_handler = match callback.take() {
         Some(callback) => HotplugHandler {
@@ -81,7 +85,7 @@ pub fn libusb_hotplug(
         .product_id(RCM_PID)
         .enumerate(true)
         .register(context.clone(), Box::new(hotplug_handler))
-        .expect("We where able to successfully wrap the context");
+        .expect("able to successfully wrap the context");
 
     loop {
         // blocks thread
