@@ -1,7 +1,7 @@
 use anyhow::Result;
 use camino::Utf8PathBuf;
 use eframe::egui::{
-    global_dark_light_mode_switch, Button, Context, Layout, RichText, ScrollArea, SidePanel,
+    global_theme_preference_switch, Button, Context, Layout, RichText, ScrollArea, SidePanel,
     TextStyle, Ui, Visuals,
 };
 use eframe::emath::Align;
@@ -151,7 +151,7 @@ impl SelectedData {
                 ui.horizontal(|ui| {
                     ui.label(RichText::new("Favorites").text_style(TextStyle::Heading));
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                        global_dark_light_mode_switch(ui);
+                        global_theme_preference_switch(ui);
                         let refresh_button =
                             ui.button("🔄").on_hover_text("Refresh favorites list");
                         if refresh_button.clicked() {
