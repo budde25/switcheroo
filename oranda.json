@@ -10,7 +10,7 @@
     },
     "styles": {
         "theme": "dark",
-        "favicon": "extra/logo/favicon.ico"
+        "favicon": "assets/logo/favicon.ico"
     },
     "components": {
         "artifacts": {

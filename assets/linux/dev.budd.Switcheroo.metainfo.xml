@@ -11,7 +11,7 @@
   <summary>Switch homebrew enablement</summary>
   <description>
     <p>
-        A GUI for the RCM BootRom exploit (Fusée Gelée exploit for Nintendo Switch).
+      A GUI for the RCM BootRom exploit (Fusée Gelée exploit for Nintendo Switch).
     </p>
   </description>
   <branding>
@@ -20,7 +20,7 @@
   </branding>
   <screenshots>
     <screenshot type="default">
-      <image>https://raw.githubusercontent.com/budde25/switcheroo/main/extra/images/gui.png</image>
+      <image>https://raw.githubusercontent.com/budde25/switcheroo/main/assets/images/gui.png</image>
       <caption>A GUI for the Nintendo Switch RCM exploit</caption>
     </screenshot>
   </screenshots>
@@ -35,8 +35,8 @@
   <developer id="dev.budd">
     <name>Ethan Budd</name>
   </developer>
-   <provides>
-  <id>dev.budd.Switcheroo.desktop</id>
+  <provides>
+    <id>dev.budd.Switcheroo.desktop</id>
   </provides>
   <content_rating type="oars-1.0" />
   <releases>
