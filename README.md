@@ -23,12 +23,12 @@ Only works on unpatched Switches: <https://ismyswitchpatched.com/>
 
 </br>
 <p align="center">
-<img width="" alt="Command Line Interface Example" src="https://raw.githubusercontent.com/budde25/switcheroo/main/extra/images/cli.png">
+<img width="" alt="Command Line Interface Example" src="https://raw.githubusercontent.com/budde25/switcheroo/main/assets/images/cli.png">
 </p>
 
 </br>
 <p align="center">
-<img width="" alt="Graphical User Interface Example" src="https://raw.githubusercontent.com/budde25/switcheroo/main/extra/images/gui.png">
+<img width="" alt="Graphical User Interface Example" src="https://raw.githubusercontent.com/budde25/switcheroo/main/assets/images/gui.png">
 </p>
 
 ## Installation

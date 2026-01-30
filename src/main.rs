@@ -14,7 +14,6 @@ mod favorites;
 mod gui;
 mod run;
 mod switch;
-mod usb;
 
 use cli::{Cli, Commands};
 

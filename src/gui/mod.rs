@@ -13,7 +13,7 @@ use self::error::InitError;
 use eframe::egui::{style, Context, ViewportBuilder};
 use egui_notify::Toasts;
 use selected::SelectedData;
-use tegra_rcm::{Switch, SwitchError};
+use tegra_rcm::{Switch, SwitchError, UsbError};
 
 const APP_NAME: &str = "Switcheroo";
 
@@ -36,13 +36,13 @@ pub fn gui() -> eframe::Result<()> {
 
             egui_extras::install_image_loaders(&cc.egui_ctx);
 
-            if let Err(e) = tegra_rcm::check_env() {
+            if let Err(e) = tegra_rcm::validate_environment() {
                 return Ok(Box::new(InitError::new(e)));
             }
 
             let switch = match Switch::find() {
                 Ok(a) => SwitchData::Available(a),
-                Err(SwitchError::SwitchNotFound) => SwitchData::None,
+                Err(SwitchError::Usb(UsbError::SwitchNotFound)) => SwitchData::None,
                 Err(e) => return Ok(Box::new(InitError::new(e))),
             };
 
@@ -63,7 +63,5 @@ pub fn gui() -> eframe::Result<()> {
 
 /// Spawn a separate thread
 pub fn spawn_thread_context(ctx: Context) -> Receiver<Result<Switch, SwitchError>> {
-    let (tx, rx) = std::sync::mpsc::channel();
-    std::thread::spawn(move || tegra_rcm::create_hotplug(tx, Some(move || ctx.request_repaint())));
-    rx
+    tegra_rcm::spawn_hotplug_callback(move || ctx.request_repaint())
 }

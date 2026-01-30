@@ -9,7 +9,7 @@ use camino::Utf8Path;
 use eframe::egui::{Button, CentralPanel, Color32, Context, RichText, Ui};
 use egui_notify::Toasts;
 use log::error;
-use tegra_rcm::{Payload, Switch, SwitchError};
+use tegra_rcm::{Payload, Switch, SwitchError, UsbError};
 
 pub struct MyApp {
     pub(crate) switch: SwitchData,
@@ -151,7 +151,7 @@ impl MyApp {
 
         match switch_res {
             Ok(s) => self.switch = SwitchData::Available(s),
-            Err(SwitchError::SwitchNotFound) => self.switch = SwitchData::None,
+            Err(SwitchError::Usb(UsbError::SwitchNotFound)) => self.switch = SwitchData::None,
             Err(e) => {
                 self.toast.error(e.to_string());
             }
@@ -160,16 +160,8 @@ impl MyApp {
 }
 
 /// Execute the payload on the switch, returns true on success
-fn execute_helper(mut switch: Switch, payload: &Payload, toast: &mut Toasts) -> bool {
-    let handle = match switch.handle() {
-        Ok(handle) => handle,
-        Err(e) => {
-            toast.error(e.to_string());
-            return false;
-        }
-    };
-
-    if let Err(e) = handle.execute(payload) {
+fn execute_helper(switch: Switch, payload: &Payload, toast: &mut Toasts) -> bool {
+    if let Err(e) = switch.execute(payload) {
         error!("error executing payload: {e}");
         toast.error(e.to_string());
         return false;

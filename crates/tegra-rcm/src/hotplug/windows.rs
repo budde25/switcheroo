@@ -40,7 +40,7 @@ impl Hotplug for HotplugHandler {
 }
 
 /// create a hotplug setup, this blocks
-pub fn create_hotplug(
+pub(crate) fn windows_hotplug(
     tx: Sender<Result<Switch, SwitchError>>,
     mut callback: Option<impl Fn() + Send + Sync + 'static>,
 ) -> Result<(), HotplugError> {
@@ -67,6 +67,7 @@ pub fn create_hotplug(
 
     register.init().expect("Register init should pass");
 
+    // TODO: use proper lifetimes
     let leak = Box::new(register);
     let _ = Box::leak(leak);
 
